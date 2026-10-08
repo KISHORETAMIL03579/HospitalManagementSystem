@@ -37,9 +37,14 @@ public class AuthService : IAuthService
         }
 
         var user = await _userRepository.GetByEmailOrUsernameAsync(request.UsernameOrEmail.Trim(), cancellationToken);
-        if (user is null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+        if (user is null)
         {
-            throw new UnauthorizedAccessException("Invalid credentials provided.");
+            throw new KeyNotFoundException($"Account '{request.UsernameOrEmail}' is not registered in CareFlow HMS.");
+        }
+
+        if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Incorrect password provided. Please verify your password.");
         }
 
         if (!user.IsActive)

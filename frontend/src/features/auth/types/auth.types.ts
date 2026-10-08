@@ -27,3 +27,11 @@ export interface LoginRequest {
   usernameOrEmail: string;
   password: string;
 }
+
+export interface RegisterUserRequest {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+  role: UserRole;
+}

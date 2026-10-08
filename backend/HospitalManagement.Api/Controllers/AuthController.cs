@@ -35,6 +35,10 @@ public class AuthController : ControllerBase
             _logger.LogInformation("User '{Username}' logged in successfully.", response.User.Username);
             return Ok(response);
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message, isNotRegistered = true });
+        }
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(new { message = ex.Message });
