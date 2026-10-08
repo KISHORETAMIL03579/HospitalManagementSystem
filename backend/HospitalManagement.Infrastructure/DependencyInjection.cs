@@ -1,5 +1,7 @@
+using HospitalManagement.Application.Appointments.Interfaces;
 using HospitalManagement.Application.Auth.Interfaces;
 using HospitalManagement.Application.Common.Security;
+using HospitalManagement.Application.Doctors.Interfaces;
 using HospitalManagement.Application.Patients.Interfaces;
 using HospitalManagement.Infrastructure.Persistence;
 using HospitalManagement.Infrastructure.Repositories;
@@ -33,6 +35,8 @@ public static class DependencyInjection
 
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IDoctorRepository, DoctorRepository>();
+        services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 

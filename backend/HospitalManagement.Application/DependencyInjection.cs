@@ -1,5 +1,7 @@
 using FluentValidation;
+using HospitalManagement.Application.Appointments.Services;
 using HospitalManagement.Application.Auth.Services;
+using HospitalManagement.Application.Doctors.Services;
 using HospitalManagement.Application.Patients.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +16,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IDoctorService, DoctorService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
 
         return services;
     }

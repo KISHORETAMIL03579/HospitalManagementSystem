@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePatients } from "../../patients/hooks/usePatients";
+import { useDoctors, useDepartments } from "../../doctors/hooks/useDoctors";
+import { useAppointments } from "../../appointments/hooks/useAppointments";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { formatDate, calculateAge } from "../../../lib/utils";
 import { Link } from "react-router-dom";
@@ -13,22 +15,55 @@ import {
   ShieldCheck,
   TrendingUp,
   Clock,
+  Building,
+  CheckCircle,
 } from "lucide-react";
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+
+  // Real-time API Queries
   const { data: patientData, isLoading: isPatientsLoading } = usePatients(
     "",
     1,
     5,
   );
+  const { data: doctors, isLoading: isDoctorsLoading } = useDoctors();
+  const { data: departments, isLoading: isDeptsLoading } = useDepartments();
+  const { data: appointments, isLoading: isAppointmentsLoading } =
+    useAppointments();
+
+  // Real-time Live Clock state
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Computed Real-time Metrics
+  const totalPatientsCount = patientData?.totalCount ?? 0;
+  const totalDoctorsCount = doctors?.length ?? 0;
+  const activeDoctorsCount = doctors?.filter((d) => d.isActive).length ?? 0;
+  const totalDepartmentsCount = departments?.length ?? 0;
+  const totalAppointmentsCount = appointments?.length ?? 0;
+
+  // Filter today's appointments
+  const todayDateString = new Date().toISOString().split("T")[0];
+  const todayAppointments =
+    appointments?.filter((a) =>
+      a.appointmentDate.startsWith(todayDateString),
+    ) ?? [];
+  const todayScheduledCount = todayAppointments.filter(
+    (a) => a.status === 0 || a.status === 1,
+  ).length;
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
+      {/* Welcome Banner with Live Real-time Clock */}
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-64 h-64 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs font-semibold border border-blue-400/20 mb-3">
               <Activity className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
@@ -42,23 +77,45 @@ export const DashboardPage: React.FC = () => {
               <span className="font-semibold text-white capitalize">
                 {user?.roleName || "Staff"}
               </span>
-              . Here is your hospital overview for today.
+              . Here is your live hospital overview.
             </p>
           </div>
 
-          <Link
-            to="/patients/new"
-            className="px-4 py-2.5 bg-blue-500 hover:bg-blue-400 text-white font-medium rounded-xl text-sm shadow-md flex items-center gap-2 transition-all shrink-0"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Register New Patient</span>
-          </Link>
+          {/* Real-time Clock Widget */}
+          <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
+            <div className="flex items-center gap-2 bg-blue-950/60 backdrop-blur border border-blue-400/20 px-4 py-2 rounded-xl">
+              <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
+              <div className="text-sm font-mono font-semibold tracking-wide">
+                {currentTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </div>
+              <div className="text-xs text-blue-300 font-sans border-l border-blue-400/30 pl-2">
+                {currentTime.toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </div>
+            </div>
+
+            <Link
+              to="/patients/new"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white font-medium rounded-xl text-sm shadow-md flex items-center gap-2 transition-all"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Register New Patient</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Metrics Cards Grid */}
+      {/* Real-time Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 */}
+        {/* Metric 1: Total Patients */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow">
           <div className="flex justify-between items-start mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -69,7 +126,7 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-800">
-            {isPatientsLoading ? "..." : (patientData?.totalCount ?? 0)}
+            {isPatientsLoading ? "..." : totalPatientsCount}
           </div>
           <div className="text-xs text-emerald-600 flex items-center gap-1 mt-1 font-medium">
             <TrendingUp className="w-3.5 h-3.5" />
@@ -77,7 +134,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Metric 2 */}
+        {/* Metric 2: Appointments */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow">
           <div className="flex justify-between items-start mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -87,14 +144,16 @@ export const DashboardPage: React.FC = () => {
               <Calendar className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-800">12 Scheduled</div>
+          <div className="text-2xl font-bold text-slate-800">
+            {isAppointmentsLoading ? "..." : `${totalAppointmentsCount} Total`}
+          </div>
           <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
             <Clock className="w-3.5 h-3.5" />
-            <span>4 Check-ins pending today</span>
+            <span>{todayScheduledCount} pending today</span>
           </div>
         </div>
 
-        {/* Metric 3 */}
+        {/* Metric 3: Doctors On Duty */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow">
           <div className="flex justify-between items-start mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -104,14 +163,19 @@ export const DashboardPage: React.FC = () => {
               <Stethoscope className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-slate-800">8 Active</div>
+          <div className="text-2xl font-bold text-slate-800">
+            {isDoctorsLoading ? "..." : `${activeDoctorsCount} Active`}
+          </div>
           <div className="text-xs text-emerald-600 flex items-center gap-1 mt-1 font-medium">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Across 4 Departments</span>
+            <span>
+              Across {isDeptsLoading ? "..." : totalDepartmentsCount}{" "}
+              Departments
+            </span>
           </div>
         </div>
 
-        {/* Metric 4 */}
+        {/* Metric 4: System Status */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow transition-shadow">
           <div className="flex justify-between items-start mb-3">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -131,9 +195,9 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Action Navigation Buttons & Recent Registrations */}
+      {/* Main Real-time Data Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Patients Table Preview (2 Cols) */}
+        {/* Recent Patient Registrations (2 Cols) */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
@@ -141,7 +205,7 @@ export const DashboardPage: React.FC = () => {
                 Recent Patient Registrations
               </h2>
               <p className="text-xs text-slate-400">
-                Latest patients saved to SQL Server database
+                Latest patient records saved to database
               </p>
             </div>
             <Link
@@ -186,7 +250,7 @@ export const DashboardPage: React.FC = () => {
                   patientData.items.map((patient) => (
                     <tr
                       key={patient.patientId}
-                      className="hover:bg-slate-50/60"
+                      className="hover:bg-slate-50/60 transition"
                     >
                       <td className="py-3 font-mono text-xs font-bold text-blue-600">
                         {patient.medicalRecordNumber}
@@ -208,57 +272,101 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Actions Panel (1 Col) */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="font-bold text-slate-800 text-base">
-              Quick Actions
-            </h2>
-            <p className="text-xs text-slate-400">
-              Shortcuts to main hospital functions
-            </p>
+        {/* Upcoming Appointments Preview & Quick Actions (1 Col) */}
+        <div className="space-y-6">
+          {/* Upcoming Appointments */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="font-bold text-slate-800 text-base">
+                  Recent Appointments
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Scheduled patient visits
+                </p>
+              </div>
+              <Link
+                to="/appointments"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+              >
+                <span>View All</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {isAppointmentsLoading ? (
+                <div className="text-xs text-slate-400 py-4 text-center">
+                  Loading appointments...
+                </div>
+              ) : !appointments || appointments.length === 0 ? (
+                <div className="text-xs text-slate-400 py-4 text-center">
+                  No appointments booked yet.
+                </div>
+              ) : (
+                appointments.slice(0, 4).map((apt) => (
+                  <div
+                    key={apt.appointmentId}
+                    className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-800">
+                        {apt.patientName}
+                      </div>
+                      <div className="text-slate-500 flex items-center gap-1 mt-0.5">
+                        <Stethoscope className="w-3 h-3 text-indigo-500" />
+                        {apt.doctorName}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono font-medium text-slate-700">
+                        {apt.timeSlot}
+                      </div>
+                      <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-700">
+                        {apt.statusName}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2.5">
-            <Link
-              to="/patients/new"
-              className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <UserPlus className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">
-                    Register Patient
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Add new patient demographics
-                  </div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-            </Link>
-
-            <Link
-              to="/patients"
-              className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-800">
-                    Patient Directory
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Search & view all patient records
-                  </div>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-            </Link>
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">
+            <h2 className="font-bold text-slate-800 text-sm">
+              Quick Operations
+            </h2>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                to="/patients/new"
+                className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+              >
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                <span>New Patient</span>
+              </Link>
+              <Link
+                to="/appointments"
+                className="p-3 bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+              >
+                <Calendar className="w-5 h-5 text-purple-600" />
+                <span>Book Visit</span>
+              </Link>
+              <Link
+                to="/doctors"
+                className="p-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+              >
+                <Stethoscope className="w-5 h-5 text-emerald-600" />
+                <span>Doctors</span>
+              </Link>
+              <Link
+                to="/patients"
+                className="p-3 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+              >
+                <Users className="w-5 h-5 text-amber-600" />
+                <span>Patients</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

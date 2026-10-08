@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
 import { PatientListPage } from "../features/patients/pages/PatientListPage";
 import { PatientCreatePage } from "../features/patients/pages/PatientCreatePage";
+import { DoctorListPage } from "../features/doctors/pages/DoctorListPage";
+import { AppointmentListPage } from "../features/appointments/pages/AppointmentListPage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
@@ -29,6 +31,14 @@ export const router = createBrowserRouter([
           {
             path: "patients/new",
             element: <PatientCreatePage />,
+          },
+          {
+            path: "doctors",
+            element: <DoctorListPage />,
+          },
+          {
+            path: "appointments",
+            element: <AppointmentListPage />,
           },
         ],
       },

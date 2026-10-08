@@ -25,9 +25,8 @@ export const AppLayout: React.FC = () => {
       label: "Appointments",
       path: "/appointments",
       icon: Calendar,
-      badge: "Soon",
     },
-    { label: "Doctors", path: "/doctors", icon: Stethoscope, badge: "Soon" },
+    { label: "Doctors", path: "/doctors", icon: Stethoscope },
     {
       label: "Prescriptions",
       path: "/prescriptions",

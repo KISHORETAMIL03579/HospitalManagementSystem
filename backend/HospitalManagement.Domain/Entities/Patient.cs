@@ -18,5 +18,6 @@ public class Patient : BaseEntity
     public string? EmergencyContactPhone { get; set; }
 
     public string FullName => $"{FirstName} {LastName}";
-}
 
+    public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+}

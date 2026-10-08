@@ -33,7 +33,7 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login(data);
-      navigate("/patients");
+      navigate("/");
     } catch (err) {
       console.error("Login failed:", err);
     }
