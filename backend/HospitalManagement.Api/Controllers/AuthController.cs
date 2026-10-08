@@ -123,4 +123,15 @@ public class AuthController : ControllerBase
 
         return Unauthorized(new { message = "User not found or unauthenticated." });
     }
+
+    /// <summary>
+    /// Get list of active system roles with hierarchy levels and permissions
+    /// </summary>
+    [HttpGet("roles")]
+    [ProducesResponseType(typeof(IEnumerable<RoleDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
+    {
+        var roles = await _authService.GetRolesAsync(cancellationToken);
+        return Ok(roles);
+    }
 }

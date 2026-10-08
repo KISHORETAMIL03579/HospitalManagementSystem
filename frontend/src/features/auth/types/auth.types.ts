@@ -1,9 +1,18 @@
 export enum UserRole {
-  Admin = 1,
-  Doctor = 2,
-  Receptionist = 3,
-  Nurse = 4,
-  Patient = 5,
+  Admin = 100,
+  Doctor = 80,
+  Nurse = 60,
+  Receptionist = 40,
+  Patient = 20,
+}
+
+export interface RoleDto {
+  roleId: number;
+  name: string;
+  description?: string;
+  level: number;
+  parentRoleId?: number;
+  permissions: string[];
 }
 
 export interface UserDto {
@@ -13,6 +22,8 @@ export interface UserDto {
   fullName: string;
   role: UserRole;
   roleName: string;
+  hierarchyLevel: number;
+  permissions: string[];
   lastLoginAt?: string;
 }
 

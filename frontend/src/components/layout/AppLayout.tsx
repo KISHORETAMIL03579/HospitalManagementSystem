@@ -106,9 +106,16 @@ export const AppLayout: React.FC = () => {
               <div className="text-xs font-semibold text-slate-200 truncate">
                 {user?.fullName || "Authenticated User"}
               </div>
-              <div className="text-[10px] text-slate-400 flex items-center gap-1">
+              <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span className="capitalize">{user?.roleName || "User"}</span>
+                <span className="capitalize font-medium text-slate-300">
+                  {user?.roleName || "User"}
+                </span>
+                {user?.hierarchyLevel && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                    Lvl {user.hierarchyLevel}
+                  </span>
+                )}
               </div>
             </div>
           </div>

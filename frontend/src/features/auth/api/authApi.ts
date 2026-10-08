@@ -3,6 +3,7 @@ import {
   AuthResponse,
   LoginRequest,
   RegisterUserRequest,
+  RoleDto,
   UserDto,
 } from "../types/auth.types";
 
@@ -22,6 +23,11 @@ export const authApi = {
 
   getCurrentUser: async (): Promise<UserDto> => {
     const response = await apiClient.get<UserDto>("/auth/me");
+    return response.data;
+  },
+
+  getRoles: async (): Promise<RoleDto[]> => {
+    const response = await apiClient.get<RoleDto[]>("/auth/roles");
     return response.data;
   },
 

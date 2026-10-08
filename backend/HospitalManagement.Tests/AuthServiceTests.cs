@@ -59,7 +59,8 @@ public class AuthServiceTests
             Email = "admin@careflow.com",
             PasswordHash = passwordHash,
             FullName = "System Administrator",
-            Role = UserRole.Admin,
+            RoleId = 1,
+            Role = new Role { RoleId = 1, Name = "Admin", Level = 100 },
             IsActive = true
         };
 

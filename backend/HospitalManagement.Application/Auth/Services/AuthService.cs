@@ -3,6 +3,7 @@ using HospitalManagement.Application.Auth.DTOs;
 using HospitalManagement.Application.Auth.Interfaces;
 using HospitalManagement.Application.Common.Security;
 using HospitalManagement.Domain.Entities;
+using HospitalManagement.Domain.Enums;
 
 namespace HospitalManagement.Application.Auth.Services;
 
@@ -87,13 +88,16 @@ public class AuthService : IAuthService
             throw new InvalidOperationException($"Username '{request.Username}' is already taken.");
         }
 
+        var role = await _userRepository.GetRoleByIdOrNameAsync((int)request.Role, request.Role.ToString(), cancellationToken);
+
         var user = new User
         {
             Username = request.Username.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             FullName = request.FullName.Trim(),
-            Role = request.Role,
+            RoleId = role?.RoleId ?? 4,
+            Role = role!,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
@@ -143,13 +147,36 @@ public class AuthService : IAuthService
         return user is null ? null : MapToUserDto(user);
     }
 
-    private static UserDto MapToUserDto(User u) => new()
+    public async Task<IEnumerable<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
-        UserId = u.UserId,
-        Username = u.Username,
-        Email = u.Email,
-        FullName = u.FullName,
-        Role = u.Role,
-        LastLoginAt = u.LastLoginAt
-    };
+        var roles = await _userRepository.GetActiveRolesAsync(cancellationToken);
+        return roles.Select(r => new RoleDto
+        {
+            RoleId = r.RoleId,
+            Name = r.Name,
+            Description = r.Description,
+            Level = r.Level,
+            ParentRoleId = r.ParentRoleId,
+            Permissions = r.RolePermissions.Select(rp => rp.Permission.Name).ToList()
+        });
+    }
+
+    private static UserDto MapToUserDto(User u)
+    {
+        Enum.TryParse<UserRole>(u.Role?.Name, true, out var parsedRole);
+        if ((int)parsedRole == 0 && u.Role != null)
+        {
+            parsedRole = (UserRole)u.Role.Level;
+        }
+
+        return new UserDto
+        {
+            UserId = u.UserId,
+            Username = u.Username,
+            Email = u.Email,
+            FullName = u.FullName,
+            Role = parsedRole,
+            LastLoginAt = u.LastLoginAt
+        };
+    }
 }

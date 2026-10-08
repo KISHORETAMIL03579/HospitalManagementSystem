@@ -33,10 +33,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(u => u.Role)
-            .HasConversion<string>()
-            .HasMaxLength(20)
-            .IsRequired();
+        builder.HasOne(u => u.Role)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(u => u.RefreshToken)
             .HasMaxLength(200);

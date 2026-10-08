@@ -9,6 +9,8 @@ public interface IUserRepository
     Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
+    Task<Role?> GetRoleByIdOrNameAsync(int? roleId, string? roleName, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Role>> GetActiveRolesAsync(CancellationToken cancellationToken = default);
     Task<User> AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
 }

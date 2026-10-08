@@ -2,9 +2,9 @@ namespace HospitalManagement.Domain.Enums;
 
 public enum UserRole
 {
-    Admin = 1,
-    Doctor = 2,
-    Receptionist = 3,
-    Nurse = 4,
-    Patient = 5
+    Admin = 100,
+    Doctor = 80,
+    Nurse = 60,
+    Receptionist = 40,
+    Patient = 20
 }
