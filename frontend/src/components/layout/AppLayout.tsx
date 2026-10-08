@@ -1,9 +1,11 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Stethoscope, Pill, TestTube, CreditCard, Activity, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+import { LayoutDashboard, Users, Calendar, Stethoscope, Pill, TestTube, CreditCard, Activity, LogOut, ShieldCheck } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -15,13 +17,18 @@ export const AppLayout: React.FC = () => {
     { label: 'Billing', path: '/billing', icon: CreditCard, badge: 'Soon' },
   ];
 
+  const getInitials = (name?: string) => {
+    if (!name) return 'US';
+    return name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col shrink-0 border-r border-slate-800">
         <div className="p-5 border-b border-slate-800 flex items-center gap-3">
           <div className="p-2 bg-blue-600 rounded-xl text-white">
-            <Activity className="w-6 h-6" />
+            <Activity className="w-6 h-6 animate-pulse" />
           </div>
           <div>
             <h1 className="font-bold text-base tracking-tight leading-none text-white">CareFlow HMS</h1>
@@ -58,18 +65,28 @@ export const AppLayout: React.FC = () => {
           })}
         </nav>
 
-        {/* User Session Info */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs">
-            RC
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <div className="text-sm font-medium text-slate-200 truncate">Reception Desk</div>
-            <div className="text-xs text-slate-500 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Receptionist Role</span>
+        {/* User Session Info & Logout */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+              {getInitials(user?.fullName)}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <div className="text-xs font-semibold text-slate-200 truncate">{user?.fullName || 'Authenticated User'}</div>
+              <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span className="capitalize">{user?.roleName || 'User'}</span>
+              </div>
             </div>
           </div>
+
+          <button
+            onClick={logout}
+            title="Sign Out"
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
@@ -86,7 +103,7 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              API Connected (v1)
+              API & Auth Connected (v1)
             </span>
           </div>
         </header>
@@ -99,4 +116,3 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
-

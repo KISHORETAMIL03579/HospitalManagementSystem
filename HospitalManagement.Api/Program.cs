@@ -1,6 +1,10 @@
+using System.Text;
 using HospitalManagement.Application;
+using HospitalManagement.Application.Common.Security;
 using HospitalManagement.Infrastructure;
 using HospitalManagement.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
@@ -18,6 +22,33 @@ builder.Host.UseSerilog();
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure JWT Authentication
+var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "CareFlow_Super_Secret_JWT_Signing_Key_2026_Minimum_32_Bytes!";
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "CareFlowHMS";
+var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "CareFlowHMSClient";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // Configure Swagger / OpenAPI documentation
 builder.Services.AddSwaggerGen(options =>
@@ -90,14 +121,18 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Ensure database migration / creation on startup
+// Ensure database migration / creation & seed users on startup
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var dbContext = services.GetRequiredService<HospitalDbContext>();
+        var passwordHasher = services.GetRequiredService<IPasswordHasher>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
         dbContext.Database.EnsureCreated();
+        await DbInitializer.SeedAsync(dbContext, passwordHasher, logger);
     }
     catch (Exception ex)
     {

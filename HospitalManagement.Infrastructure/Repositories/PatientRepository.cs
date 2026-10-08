@@ -29,9 +29,9 @@ public class PatientRepository : IPatientRepository
     }
 
     public async Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPagedAsync(
-        string? search, 
-        int page, 
-        int pageSize, 
+        string? search,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Patients.AsNoTracking().Where(p => p.IsActive);
@@ -39,7 +39,7 @@ public class PatientRepository : IPatientRepository
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchPattern = $"%{search.Trim()}%";
-            query = query.Where(p => 
+            query = query.Where(p =>
                 EF.Functions.Like(p.FirstName, searchPattern) ||
                 EF.Functions.Like(p.LastName, searchPattern) ||
                 EF.Functions.Like(p.MedicalRecordNumber, searchPattern) ||
@@ -74,7 +74,7 @@ public class PatientRepository : IPatientRepository
     {
         var year = DateTime.UtcNow.Year;
         var prefix = $"MRN-{year}-";
-        
+
         var maxNumber = await _context.Patients
             .Where(p => p.MedicalRecordNumber.StartsWith(prefix))
             .Select(p => p.MedicalRecordNumber)
