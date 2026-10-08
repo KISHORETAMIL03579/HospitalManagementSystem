@@ -1,10 +1,17 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, LoginFormValues } from '../schemas/loginSchema';
-import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { Activity, Lock, User, AlertCircle, LogIn, KeyRound } from 'lucide-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, LoginFormValues } from "../schemas/loginSchema";
+import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  Activity,
+  Lock,
+  User,
+  AlertCircle,
+  LogIn,
+  KeyRound,
+} from "lucide-react";
 
 export const LoginForm: React.FC = () => {
   const { login, isLoggingIn, loginError } = useAuth();
@@ -18,23 +25,23 @@ export const LoginForm: React.FC = () => {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      usernameOrEmail: '',
-      password: '',
+      usernameOrEmail: "",
+      password: "",
     },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       await login(data);
-      navigate('/patients');
+      navigate("/patients");
     } catch (err) {
-      console.error('Login failed:', err);
+      console.error("Login failed:", err);
     }
   };
 
   const handleDemoFill = (username: string, pass: string) => {
-    setValue('usernameOrEmail', username);
-    setValue('password', pass);
+    setValue("usernameOrEmail", username);
+    setValue("password", pass);
   };
 
   return (
@@ -43,8 +50,12 @@ export const LoginForm: React.FC = () => {
         <div className="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
           <Activity className="w-8 h-8 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">CareFlow HMS</h1>
-        <p className="text-sm text-slate-500">Sign in to access your hospital workspace</p>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+          CareFlow HMS
+        </h1>
+        <p className="text-sm text-slate-500">
+          Sign in to access your hospital workspace
+        </p>
       </div>
 
       {loginError && (
@@ -63,12 +74,16 @@ export const LoginForm: React.FC = () => {
             <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              {...register('usernameOrEmail')}
+              {...register("usernameOrEmail")}
               className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               placeholder="e.g. admin@careflow.com"
             />
           </div>
-          {errors.usernameOrEmail && <p className="text-xs text-rose-500 mt-1">{errors.usernameOrEmail.message}</p>}
+          {errors.usernameOrEmail && (
+            <p className="text-xs text-rose-500 mt-1">
+              {errors.usernameOrEmail.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -79,12 +94,16 @@ export const LoginForm: React.FC = () => {
             <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="password"
-              {...register('password')}
+              {...register("password")}
               className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               placeholder="••••••••"
             />
           </div>
-          {errors.password && <p className="text-xs text-rose-500 mt-1">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="text-xs text-rose-500 mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <button
@@ -114,14 +133,16 @@ export const LoginForm: React.FC = () => {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => handleDemoFill('admin@careflow.com', 'Admin123!')}
+            onClick={() => handleDemoFill("admin@careflow.com", "Admin123!")}
             className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors"
           >
             Admin Account
           </button>
           <button
             type="button"
-            onClick={() => handleDemoFill('reception@careflow.com', 'Reception123!')}
+            onClick={() =>
+              handleDemoFill("reception@careflow.com", "Reception123!")
+            }
             className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors"
           >
             Receptionist

@@ -1,7 +1,7 @@
-import React from 'react';
-import { PatientTable } from '../components/PatientTable';
-import { Link } from 'react-router-dom';
-import { UserPlus, Users } from 'lucide-react';
+import React from "react";
+import { PatientTable } from "../components/PatientTable";
+import { Link } from "react-router-dom";
+import { UserPlus, Users } from "lucide-react";
 
 export const PatientListPage: React.FC = () => {
   return (
@@ -12,7 +12,9 @@ export const PatientListPage: React.FC = () => {
             <Users className="w-7 h-7 text-blue-600" />
             <span>Patient Directory</span>
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Manage and view all registered hospital patients</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Manage and view all registered hospital patients
+          </p>
         </div>
 
         <Link
@@ -28,4 +30,3 @@ export const PatientListPage: React.FC = () => {
     </div>
   );
 };
-

@@ -1,10 +1,13 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createPatientSchema, CreatePatientFormValues } from '../schemas/patientSchema';
-import { useCreatePatient } from '../hooks/useCreatePatient';
-import { Gender } from '../types/patient.types';
-import { UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createPatientSchema,
+  CreatePatientFormValues,
+} from "../schemas/patientSchema";
+import { useCreatePatient } from "../hooks/useCreatePatient";
+import { Gender } from "../types/patient.types";
+import { UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface PatientFormProps {
   onSuccess?: () => void;
@@ -21,15 +24,15 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
   } = useForm<CreatePatientFormValues>({
     resolver: zodResolver(createPatientSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
       gender: Gender.Male,
-      phone: '',
-      email: '',
-      address: '',
-      emergencyContactName: '',
-      emergencyContactPhone: '',
+      phone: "",
+      email: "",
+      address: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
     },
   });
 
@@ -42,7 +45,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
       reset();
       if (onSuccess) onSuccess();
     } catch (err) {
-      console.error('Failed to create patient:', err);
+      console.error("Failed to create patient:", err);
     }
   };
 
@@ -53,66 +56,98 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
           <UserPlus className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Register New Patient</h2>
-          <p className="text-sm text-slate-500">Enter patient demographics and emergency contact details</p>
+          <h2 className="text-xl font-bold text-slate-800">
+            Register New Patient
+          </h2>
+          <p className="text-sm text-slate-500">
+            Enter patient demographics and emergency contact details
+          </p>
         </div>
       </div>
 
       {isSuccess && (
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3 text-emerald-800 text-sm">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>Patient registered successfully with a new Medical Record Number (MRN)!</span>
+          <span>
+            Patient registered successfully with a new Medical Record Number
+            (MRN)!
+          </span>
         </div>
       )}
 
       {error && (
         <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-800 text-sm">
           <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-          <span>Registration failed. Please check the information provided and try again.</span>
+          <span>
+            Registration failed. Please check the information provided and try
+            again.
+          </span>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Details Section */}
         <div>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Personal Demographics</h3>
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Personal Demographics
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">First Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                First Name *
+              </label>
               <input
                 type="text"
-                {...register('firstName')}
+                {...register("firstName")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="e.g. John"
               />
-              {errors.firstName && <p className="text-xs text-rose-500 mt-1">{errors.firstName.message}</p>}
+              {errors.firstName && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.firstName.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Last Name *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Last Name *
+              </label>
               <input
                 type="text"
-                {...register('lastName')}
+                {...register("lastName")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="e.g. Doe"
               />
-              {errors.lastName && <p className="text-xs text-rose-500 mt-1">{errors.lastName.message}</p>}
+              {errors.lastName && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.lastName.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Date of Birth *
+              </label>
               <input
                 type="date"
-                {...register('dateOfBirth')}
+                {...register("dateOfBirth")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
-              {errors.dateOfBirth && <p className="text-xs text-rose-500 mt-1">{errors.dateOfBirth.message}</p>}
+              {errors.dateOfBirth && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.dateOfBirth.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Gender *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Gender *
+              </label>
               <select
-                {...register('gender', { valueAsNumber: true })}
+                {...register("gender", { valueAsNumber: true })}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
               >
                 <option value={Gender.Male}>Male</option>
@@ -120,69 +155,99 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
                 <option value={Gender.Other}>Other</option>
                 <option value={Gender.Unspecified}>Unspecified</option>
               </select>
-              {errors.gender && <p className="text-xs text-rose-500 mt-1">{errors.gender.message}</p>}
+              {errors.gender && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.gender.message}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Contact Information */}
         <div>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Contact Details</h3>
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Contact Details
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Phone Number *
+              </label>
               <input
                 type="tel"
-                {...register('phone')}
+                {...register("phone")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="+1 (555) 000-0000"
               />
-              {errors.phone && <p className="text-xs text-rose-500 mt-1">{errors.phone.message}</p>}
+              {errors.phone && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Email Address
+              </label>
               <input
                 type="email"
-                {...register('email')}
+                {...register("email")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="john.doe@example.com"
               />
-              {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Residential Address</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Residential Address
+              </label>
               <input
                 type="text"
-                {...register('address')}
+                {...register("address")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="123 Main St, Apt 4B, City, State"
               />
-              {errors.address && <p className="text-xs text-rose-500 mt-1">{errors.address.message}</p>}
+              {errors.address && (
+                <p className="text-xs text-rose-500 mt-1">
+                  {errors.address.message}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Emergency Contact */}
         <div>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Emergency Contact</h3>
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Emergency Contact
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Contact Name</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Contact Name
+              </label>
               <input
                 type="text"
-                {...register('emergencyContactName')}
+                {...register("emergencyContactName")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="Jane Doe"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Contact Phone</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Contact Phone
+              </label>
               <input
                 type="tel"
-                {...register('emergencyContactPhone')}
+                {...register("emergencyContactPhone")}
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 placeholder="+1 (555) 999-8888"
               />
@@ -217,4 +282,3 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
     </div>
   );
 };
-

@@ -41,4 +41,3 @@ export interface PatientListResponse {
   pageSize: number;
   totalPages: number;
 }
-

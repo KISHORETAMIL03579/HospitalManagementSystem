@@ -47,3 +47,4 @@ public static class DbInitializer
         logger.LogInformation("User seeding completed successfully.");
     }
 }
+

@@ -1,20 +1,20 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { AppLayout } from '../components/layout/AppLayout';
-import { PatientListPage } from '../features/patients/pages/PatientListPage';
-import { PatientCreatePage } from '../features/patients/pages/PatientCreatePage';
-import { LoginPage } from '../features/auth/pages/LoginPage';
-import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { AppLayout } from "../components/layout/AppLayout";
+import { PatientListPage } from "../features/patients/pages/PatientListPage";
+import { PatientCreatePage } from "../features/patients/pages/PatientCreatePage";
+import { LoginPage } from "../features/auth/pages/LoginPage";
+import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
-    path: '/login',
+    path: "/login",
     element: <LoginPage />,
   },
   {
     element: <ProtectedRoute />,
     children: [
       {
-        path: '/',
+        path: "/",
         element: <AppLayout />,
         children: [
           {
@@ -22,11 +22,11 @@ export const router = createBrowserRouter([
             element: <Navigate to="/patients" replace />,
           },
           {
-            path: 'patients',
+            path: "patients",
             element: <PatientListPage />,
           },
           {
-            path: 'patients/new',
+            path: "patients/new",
             element: <PatientCreatePage />,
           },
         ],
@@ -34,7 +34,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: '*',
+    path: "*",
     element: <Navigate to="/patients" replace />,
   },
 ]);

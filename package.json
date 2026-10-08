@@ -4,6 +4,9 @@
   "scripts": {
     "start": "npm --prefix frontend start",
     "dev": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build"
+    "build": "npm --prefix frontend run build",
+    "format": "npm --prefix frontend run format && dotnet format HospitalManagement.slnx",
+    "format:frontend": "npm --prefix frontend run format",
+    "format:dotnet": "dotnet format HospitalManagement.slnx"
   }
 }

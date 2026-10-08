@@ -1,25 +1,51 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../features/auth/hooks/useAuth';
-import { LayoutDashboard, Users, Calendar, Stethoscope, Pill, TestTube, CreditCard, Activity, LogOut, ShieldCheck } from 'lucide-react';
+import React from "react";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Stethoscope,
+  Pill,
+  TestTube,
+  CreditCard,
+  Activity,
+  LogOut,
+  ShieldCheck,
+} from "lucide-react";
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { label: 'Patients', path: '/patients', icon: Users },
-    { label: 'Appointments', path: '/appointments', icon: Calendar, badge: 'Soon' },
-    { label: 'Doctors', path: '/doctors', icon: Stethoscope, badge: 'Soon' },
-    { label: 'Prescriptions', path: '/prescriptions', icon: Pill, badge: 'Soon' },
-    { label: 'Laboratory', path: '/laboratory', icon: TestTube, badge: 'Soon' },
-    { label: 'Billing', path: '/billing', icon: CreditCard, badge: 'Soon' },
+    { label: "Dashboard", path: "/", icon: LayoutDashboard },
+    { label: "Patients", path: "/patients", icon: Users },
+    {
+      label: "Appointments",
+      path: "/appointments",
+      icon: Calendar,
+      badge: "Soon",
+    },
+    { label: "Doctors", path: "/doctors", icon: Stethoscope, badge: "Soon" },
+    {
+      label: "Prescriptions",
+      path: "/prescriptions",
+      icon: Pill,
+      badge: "Soon",
+    },
+    { label: "Laboratory", path: "/laboratory", icon: TestTube, badge: "Soon" },
+    { label: "Billing", path: "/billing", icon: CreditCard, badge: "Soon" },
   ];
 
   const getInitials = (name?: string) => {
-    if (!name) return 'US';
-    return name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
+    if (!name) return "US";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
   return (
@@ -31,15 +57,21 @@ export const AppLayout: React.FC = () => {
             <Activity className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <h1 className="font-bold text-base tracking-tight leading-none text-white">CareFlow HMS</h1>
-            <span className="text-[10px] uppercase font-semibold text-blue-400 tracking-wider">Hospital System</span>
+            <h1 className="font-bold text-base tracking-tight leading-none text-white">
+              CareFlow HMS
+            </h1>
+            <span className="text-[10px] uppercase font-semibold text-blue-400 tracking-wider">
+              Hospital System
+            </span>
           </div>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/" && location.pathname.startsWith(item.path));
 
             return (
               <Link
@@ -47,8 +79,8 @@ export const AppLayout: React.FC = () => {
                 to={item.path}
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    ? "bg-blue-600 text-white font-semibold"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -72,10 +104,12 @@ export const AppLayout: React.FC = () => {
               {getInitials(user?.fullName)}
             </div>
             <div className="flex-1 overflow-hidden">
-              <div className="text-xs font-semibold text-slate-200 truncate">{user?.fullName || 'Authenticated User'}</div>
+              <div className="text-xs font-semibold text-slate-200 truncate">
+                {user?.fullName || "Authenticated User"}
+              </div>
               <div className="text-[10px] text-slate-400 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span className="capitalize">{user?.roleName || 'User'}</span>
+                <span className="capitalize">{user?.roleName || "User"}</span>
               </div>
             </div>
           </div>
@@ -97,7 +131,9 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <span className="font-semibold text-slate-800">CareFlow HMS</span>
             <span>/</span>
-            <span className="capitalize">{location.pathname.split('/')[1] || 'Dashboard'}</span>
+            <span className="capitalize">
+              {location.pathname.split("/")[1] || "Dashboard"}
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
