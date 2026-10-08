@@ -4,6 +4,7 @@ import { PatientListPage } from "../features/patients/pages/PatientListPage";
 import { PatientCreatePage } from "../features/patients/pages/PatientCreatePage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
+import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 
 export const router = createBrowserRouter([
   {
@@ -19,7 +20,7 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="/patients" replace />,
+            element: <DashboardPage />,
           },
           {
             path: "patients",
@@ -35,6 +36,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/patients" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);
