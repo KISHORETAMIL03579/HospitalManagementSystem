@@ -157,27 +157,50 @@ app.UseSwaggerUI(options =>
                         if (modal && !document.getElementById('careflow-modal-login')) {
                             var container = document.createElement('div');
                             container.id = 'careflow-modal-login';
-                            container.style.cssText = 'margin-bottom: 20px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-family: sans-serif;';
+                            container.style.cssText = 'margin-bottom: 20px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-family: system-ui, -apple-system, sans-serif;';
                             container.innerHTML = `
-                                <div style=""margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;"">
-                                    <h4 style=""margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;"">🔑 Option 1: Login with Username & Password</h4>
+                                <div style=""margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;"">
+                                    <h4 style=""margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;"">🔑 Option 1: Quick Staff Login (Auto-Fetch Token)</h4>
                                     <p style=""margin: 4px 0 0 0; font-size: 11px; color: #64748b;"">Enter hospital credentials to automatically fetch & authorize JWT token.</p>
                                 </div>
-                                <div style=""display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;"">
-                                    <input id=""swag-user"" type=""text"" placeholder=""Username or Email"" value=""admin@careflow.com"" style=""flex: 1; min-width: 140px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;"" />
-                                    <input id=""swag-pass"" type=""password"" placeholder=""Password"" value=""Admin123!"" style=""flex: 1; min-width: 140px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;"" />
+                                <div style=""display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;"">
+                                    <div style=""flex: 1; min-width: 180px;"">
+                                        <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Username or Work Email</label>
+                                        <input id=""swag-user"" type=""text"" placeholder=""admin@careflow.com"" value=""admin@careflow.com"" style=""width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
+                                    </div>
+                                    <div style=""flex: 1; min-width: 180px;"">
+                                        <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Password</label>
+                                        <div style=""position: relative; width: 100%; box-sizing: border-box;"">
+                                            <input id=""swag-pass"" type=""password"" placeholder=""••••••••"" value=""Admin123!"" style=""width: 100%; box-sizing: border-box; padding: 8px 36px 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
+                                            <button id=""swag-toggle-pass"" type=""button"" title=""Toggle password visibility"" style=""position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; cursor: pointer; padding: 2px 4px; opacity: 0.7;"">👁️</button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div style=""display: flex; align-items: center; justify-content: space-between;"">
-                                    <button id=""swag-login-btn"" type=""button"" style=""background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s;"">
-                                        Login & Authorize Now
-                                    </button>
-                                    <span id=""swag-msg"" style=""font-size: 12px; font-weight: 600;""></span>
+                                <div style=""display: flex; flex-direction: column; gap: 8px;"">
+                                    <div style=""display: flex; align-items: center; justify-content: space-between;"">
+                                        <button id=""swag-login-btn"" type=""button"" style=""background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s;"">
+                                            Login & Authorize Now
+                                        </button>
+                                    </div>
+                                    <div id=""swag-msg"" style=""font-size: 12px; font-weight: 600; min-height: 18px; word-break: break-word;""></div>
                                 </div>
                                 <div style=""margin-top: 16px; border-top: 1px dashed #cbd5e1; padding-top: 12px; font-weight: 700; color: #0f172a; font-size: 13px;"">
                                     🔒 Option 2: Direct Bearer Token Input (Manual)
                                 </div>
                             `;
                             modal.insertBefore(container, modal.firstChild);
+
+                            var passInput = document.getElementById('swag-pass');
+                            var toggleBtn = document.getElementById('swag-toggle-pass');
+                            toggleBtn.addEventListener('click', function () {
+                                if (passInput.type === 'password') {
+                                    passInput.type = 'text';
+                                    toggleBtn.innerText = '🙈';
+                                } else {
+                                    passInput.type = 'password';
+                                    toggleBtn.innerText = '👁️';
+                                }
+                            });
 
                             document.getElementById('swag-login-btn').addEventListener('click', async function () {
                                 var u = document.getElementById('swag-user').value;
@@ -202,7 +225,7 @@ app.UseSwaggerUI(options =>
                                     }
                                 } catch (e) {
                                     msg.style.color = '#dc2626';
-                                    msg.innerText = '❌ Request failed.';
+                                    msg.innerText = '❌ Connection error.';
                                 }
                             });
                         }
