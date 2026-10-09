@@ -20,11 +20,15 @@ public class RegisterUserRequestValidator : AbstractValidator<RegisterUserReques
             .NotEmpty().WithMessage("Password is required.")
             .MinimumLength(6).WithMessage("Password must be at least 6 characters.");
 
+        RuleFor(x => x.ConfirmPassword)
+            .NotEmpty().WithMessage("Password confirmation is required.")
+            .Equal(x => x.Password).WithMessage("Passwords do not match.");
+
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Full name is required.")
             .MaximumLength(100).WithMessage("Full name cannot exceed 100 characters.");
 
-        RuleFor(x => x.Role)
-            .IsInEnum().WithMessage("A valid user role is required.");
+        RuleFor(x => x.InvitationCode)
+            .NotEmpty().WithMessage("Invitation code is required for staff registration.");
     }
 }

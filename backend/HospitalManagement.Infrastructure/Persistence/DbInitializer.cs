@@ -11,7 +11,105 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(HospitalDbContext context, IPasswordHasher passwordHasher, ILogger logger)
     {
-        logger.LogInformation("Checking dynamic RBAC database seed status...");
+        logger.LogInformation("Checking dynamic RBAC database schema and seed status...");
+
+        // Ensure newly added schema columns exist in existing database tables
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync(@"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'TimeFormat')
+                    ALTER TABLE Users ADD TimeFormat INT NOT NULL DEFAULT 12;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'TimeZone')
+                    ALTER TABLE Users ADD TimeZone NVARCHAR(100) NOT NULL DEFAULT 'UTC';
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Language')
+                    ALTER TABLE Users ADD Language NVARCHAR(10) NOT NULL DEFAULT 'en-US';
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'ResetToken')
+                    ALTER TABLE Users ADD ResetToken NVARCHAR(256) NULL;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'ResetTokenExpiry')
+                    ALTER TABLE Users ADD ResetTokenExpiry DATETIME2 NULL;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'EmployeeId')
+                    ALTER TABLE Users ADD EmployeeId NVARCHAR(50) NULL;
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Patients') AND name = 'BloodGroup')
+                    ALTER TABLE Patients ADD BloodGroup INT NOT NULL DEFAULT 0;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Patients') AND name = 'MedicalHistory')
+                    ALTER TABLE Patients ADD MedicalHistory NVARCHAR(MAX) NULL;
+
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'InvitationCodes')
+                BEGIN
+                    CREATE TABLE InvitationCodes (
+                        InvitationCodeId INT IDENTITY(1,1) PRIMARY KEY,
+                        Code NVARCHAR(100) NOT NULL,
+                        CodeHash NVARCHAR(256) NOT NULL,
+                        TargetRoleId INT NOT NULL,
+                        BoundHospitalId NVARCHAR(100) NULL,
+                        BoundEmail NVARCHAR(256) NULL,
+                        BoundEmployeeId NVARCHAR(50) NULL,
+                        IsUsed BIT NOT NULL DEFAULT 0,
+                        UsedAt DATETIME2 NULL,
+                        UsedByUserId INT NULL,
+                        ExpiresAt DATETIME2 NOT NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                        CreatedBy NVARCHAR(100) NULL,
+                        UpdatedAt DATETIME2 NULL,
+                        UpdatedBy NVARCHAR(100) NULL,
+                        IsActive BIT NOT NULL DEFAULT 1,
+                        RowVersion VARBINARY(MAX) NULL,
+                        CONSTRAINT FK_InvitationCodes_Roles FOREIGN KEY (TargetRoleId) REFERENCES Roles(RoleId) ON DELETE CASCADE
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PasswordResetTokens')
+                BEGIN
+                    CREATE TABLE PasswordResetTokens (
+                        PasswordResetTokenId INT IDENTITY(1,1) PRIMARY KEY,
+                        Email NVARCHAR(256) NOT NULL,
+                        TokenHash NVARCHAR(256) NOT NULL,
+                        ExpiresAt DATETIME2 NOT NULL,
+                        IsUsed BIT NOT NULL DEFAULT 0,
+                        UsedAt DATETIME2 NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                        CreatedBy NVARCHAR(100) NULL,
+                        UpdatedAt DATETIME2 NULL,
+                        UpdatedBy NVARCHAR(100) NULL,
+                        IsActive BIT NOT NULL DEFAULT 1,
+                        RowVersion VARBINARY(MAX) NULL
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'StaffRegistrationRequests')
+                BEGIN
+                    CREATE TABLE StaffRegistrationRequests (
+                        StaffRegistrationRequestId INT IDENTITY(1,1) PRIMARY KEY,
+                        FullName NVARCHAR(100) NOT NULL,
+                        Email NVARCHAR(256) NOT NULL,
+                        Username NVARCHAR(50) NOT NULL,
+                        PasswordHash NVARCHAR(MAX) NOT NULL,
+                        EmployeeId NVARCHAR(50) NULL,
+                        DepartmentId INT NULL,
+                        RequestedRoleId INT NOT NULL,
+                        InvitationCode NVARCHAR(100) NOT NULL,
+                        Status INT NOT NULL DEFAULT 0,
+                        ReviewedByUserId INT NULL,
+                        ReviewedAt DATETIME2 NULL,
+                        RejectionReason NVARCHAR(MAX) NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                        CreatedBy NVARCHAR(100) NULL,
+                        UpdatedAt DATETIME2 NULL,
+                        UpdatedBy NVARCHAR(100) NULL,
+                        IsActive BIT NOT NULL DEFAULT 1,
+                        RowVersion VARBINARY(MAX) NULL,
+                        CONSTRAINT FK_StaffReq_Departments FOREIGN KEY (DepartmentId) REFERENCES Departments(DepartmentId),
+                        CONSTRAINT FK_StaffReq_Roles FOREIGN KEY (RequestedRoleId) REFERENCES Roles(RoleId) ON DELETE CASCADE,
+                        CONSTRAINT FK_StaffReq_Users FOREIGN KEY (ReviewedByUserId) REFERENCES Users(UserId)
+                    );
+                END
+            ");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Schema alignment check encountered non-critical error.");
+        }
 
         // 1. Seed Dynamic Roles if empty
         if (!await context.Roles.AnyAsync())
@@ -284,6 +382,311 @@ public static class DbInitializer
             await context.Doctors.AddRangeAsync(doctors);
             await context.SaveChangesAsync();
             logger.LogInformation("Department and Doctor seeding completed successfully.");
+        }
+
+        // 5. Seed Patients if empty
+        if (!await context.Patients.AnyAsync())
+        {
+            logger.LogInformation("Seeding initial Sample Patients...");
+
+            var patients = new[]
+            {
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0001",
+                    FirstName = "John",
+                    LastName = "Smith",
+                    DateOfBirth = new DateTime(1985, 4, 12, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Male,
+                    Phone = "+1 (555) 111-2222",
+                    Email = "john.smith@careflow.com",
+                    Address = "123 Maple Street, New York, NY",
+                    EmergencyContactName = "Mary Smith",
+                    EmergencyContactPhone = "+1 (555) 111-9999",
+                    CreatedAt = DateTime.UtcNow.AddDays(-30)
+                },
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0002",
+                    FirstName = "Emma",
+                    LastName = "Watson",
+                    DateOfBirth = new DateTime(1992, 9, 18, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Female,
+                    Phone = "+1 (555) 222-3333",
+                    Email = "emma.watson@careflow.com",
+                    Address = "456 Oak Avenue, Boston, MA",
+                    EmergencyContactName = "Arthur Watson",
+                    EmergencyContactPhone = "+1 (555) 222-8888",
+                    CreatedAt = DateTime.UtcNow.AddDays(-25)
+                },
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0003",
+                    FirstName = "Robert",
+                    LastName = "Downey",
+                    DateOfBirth = new DateTime(1975, 1, 25, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Male,
+                    Phone = "+1 (555) 333-4444",
+                    Email = "robert.downey@careflow.com",
+                    Address = "789 Pine Road, Los Angeles, CA",
+                    EmergencyContactName = "Susan Downey",
+                    EmergencyContactPhone = "+1 (555) 333-7777",
+                    CreatedAt = DateTime.UtcNow.AddDays(-20)
+                },
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0004",
+                    FirstName = "Sophia",
+                    LastName = "Martinez",
+                    DateOfBirth = new DateTime(1998, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Female,
+                    Phone = "+1 (555) 444-5555",
+                    Email = "sophia.martinez@careflow.com",
+                    Address = "321 Cedar Lane, Chicago, IL",
+                    EmergencyContactName = "Carlos Martinez",
+                    EmergencyContactPhone = "+1 (555) 444-6666",
+                    CreatedAt = DateTime.UtcNow.AddDays(-15)
+                },
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0005",
+                    FirstName = "David",
+                    LastName = "Beckham",
+                    DateOfBirth = new DateTime(1980, 11, 5, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Male,
+                    Phone = "+1 (555) 555-6666",
+                    Email = "david.beckham@careflow.com",
+                    Address = "654 Elm Street, Miami, FL",
+                    EmergencyContactName = "Victoria Beckham",
+                    EmergencyContactPhone = "+1 (555) 555-5555",
+                    CreatedAt = DateTime.UtcNow.AddDays(-10)
+                },
+                new Patient
+                {
+                    MedicalRecordNumber = "MRN-2026-0006",
+                    FirstName = "Grace",
+                    LastName = "Hopper",
+                    DateOfBirth = new DateTime(1990, 12, 9, 0, 0, 0, DateTimeKind.Utc),
+                    Gender = Gender.Female,
+                    Phone = "+1 (555) 666-7777",
+                    Email = "grace.hopper@careflow.com",
+                    Address = "987 Birch Drive, Seattle, WA",
+                    EmergencyContactName = "Admiral Hopper",
+                    EmergencyContactPhone = "+1 (555) 666-4444",
+                    CreatedAt = DateTime.UtcNow.AddDays(-5)
+                }
+            };
+
+            await context.Patients.AddRangeAsync(patients);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Sample Patients seeded successfully.");
+        }
+
+        // 6. Seed Appointments if empty
+        if (!await context.Appointments.AnyAsync())
+        {
+            logger.LogInformation("Seeding initial Sample Appointments...");
+
+            var patients = await context.Patients.ToListAsync();
+            var doctors = await context.Doctors.ToListAsync();
+
+            if (patients.Any() && doctors.Any())
+            {
+                var p1 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0001");
+                var p2 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0002");
+                var p3 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0003");
+                var p4 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0004");
+                var p5 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0005");
+                var p6 = patients.First(p => p.MedicalRecordNumber == "MRN-2026-0006");
+
+                var doc1 = doctors.First(d => d.LicenseNumber == "DOC-1001"); // Cardiology
+                var doc2 = doctors.First(d => d.LicenseNumber == "DOC-1002"); // Neurology
+                var doc3 = doctors.First(d => d.LicenseNumber == "DOC-1003"); // Orthopedics
+                var doc4 = doctors.First(d => d.LicenseNumber == "DOC-1004"); // Pediatrics
+
+                var today = DateTime.UtcNow.Date;
+
+                var appointments = new[]
+                {
+                    new Appointment
+                    {
+                        PatientId = p1.PatientId,
+                        DoctorId = doc1.DoctorId,
+                        AppointmentDate = today,
+                        TimeSlot = TimeSpan.Parse("09:30:00"),
+                        Reason = "Routine Cardiovascular Checkup",
+                        Notes = "Patient reported mild palpitation last week.",
+                        Status = AppointmentStatus.Completed,
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new Appointment
+                    {
+                        PatientId = p2.PatientId,
+                        DoctorId = doc2.DoctorId,
+                        AppointmentDate = today,
+                        TimeSlot = TimeSpan.Parse("10:30:00"),
+                        Reason = "Severe Migraine & Dizziness",
+                        Notes = "Review MRI scan results.",
+                        Status = AppointmentStatus.InConsultation,
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new Appointment
+                    {
+                        PatientId = p3.PatientId,
+                        DoctorId = doc3.DoctorId,
+                        AppointmentDate = today,
+                        TimeSlot = TimeSpan.Parse("11:45:00"),
+                        Reason = "Knee Joint Pain Consultation",
+                        Notes = "Patient waiting in room 204.",
+                        Status = AppointmentStatus.CheckedIn,
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new Appointment
+                    {
+                        PatientId = p4.PatientId,
+                        DoctorId = doc4.DoctorId,
+                        AppointmentDate = today,
+                        TimeSlot = TimeSpan.Parse("14:00:00"),
+                        Reason = "Pediatric Annual Checkup",
+                        Notes = "Routine vaccination schedule.",
+                        Status = AppointmentStatus.Confirmed,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Appointment
+                    {
+                        PatientId = p5.PatientId,
+                        DoctorId = doc1.DoctorId,
+                        AppointmentDate = today.AddDays(1),
+                        TimeSlot = TimeSpan.Parse("10:00:00"),
+                        Reason = "Post-operative ECG Evaluation",
+                        Notes = "Check stress test baseline.",
+                        Status = AppointmentStatus.Confirmed,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Appointment
+                    {
+                        PatientId = p6.PatientId,
+                        DoctorId = doc2.DoctorId,
+                        AppointmentDate = today.AddDays(-1),
+                        TimeSlot = TimeSpan.Parse("15:30:00"),
+                        Reason = "Neurological Consultation",
+                        Notes = "Patient missed scheduled appointment.",
+                        Status = AppointmentStatus.NoShow,
+                        CreatedAt = DateTime.UtcNow.AddDays(-2)
+                    },
+                    new Appointment
+                    {
+                        PatientId = p1.PatientId,
+                        DoctorId = doc3.DoctorId,
+                        AppointmentDate = today.AddDays(-2),
+                        TimeSlot = TimeSpan.Parse("16:00:00"),
+                        Reason = "Ankle Fracture Follow-up",
+                        Notes = "Cancelled by patient via phone call.",
+                        Status = AppointmentStatus.Cancelled,
+                        CreatedAt = DateTime.UtcNow.AddDays(-3)
+                    }
+                };
+
+                await context.Appointments.AddRangeAsync(appointments);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Sample Appointments seeded successfully.");
+            }
+        }
+
+        // 7. Seed Invitation Codes if empty
+        if (!await context.InvitationCodes.AnyAsync())
+        {
+            logger.LogInformation("Seeding system Invitation Codes for staff registration...");
+            var roles = await context.Roles.ToDictionaryAsync(r => r.Name);
+
+            var invitations = new[]
+            {
+                new InvitationCode
+                {
+                    Code = "ADMIN-2026",
+                    CodeHash = passwordHasher.HashPassword("ADMIN-2026"),
+                    TargetRoleId = roles["Admin"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "DOC-CARDIO",
+                    CodeHash = passwordHasher.HashPassword("DOC-CARDIO"),
+                    TargetRoleId = roles["Doctor"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "NURSE-ICU",
+                    CodeHash = passwordHasher.HashPassword("NURSE-ICU"),
+                    TargetRoleId = roles["Nurse"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "RECEPT-MAIN",
+                    CodeHash = passwordHasher.HashPassword("RECEPT-MAIN"),
+                    TargetRoleId = roles["Receptionist"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "PHARMA-MAIN",
+                    CodeHash = passwordHasher.HashPassword("PHARMA-MAIN"),
+                    TargetRoleId = roles["Pharmacist"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "LAB-MICRO",
+                    CodeHash = passwordHasher.HashPassword("LAB-MICRO"),
+                    TargetRoleId = roles["LabTechnician"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddYears(1),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new InvitationCode
+                {
+                    Code = "EXPIRED-2025",
+                    CodeHash = passwordHasher.HashPassword("EXPIRED-2025"),
+                    TargetRoleId = roles["Doctor"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddDays(-10),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow.AddDays(-30)
+                },
+                new InvitationCode
+                {
+                    Code = "USED-CODE-999",
+                    CodeHash = passwordHasher.HashPassword("USED-CODE-999"),
+                    TargetRoleId = roles["Receptionist"].RoleId,
+                    BoundHospitalId = "CAREFLOW-HQ",
+                    ExpiresAt = DateTime.UtcNow.AddDays(10),
+                    IsUsed = true,
+                    UsedAt = DateTime.UtcNow.AddDays(-1),
+                    CreatedAt = DateTime.UtcNow.AddDays(-5)
+                }
+            };
+
+            await context.InvitationCodes.AddRangeAsync(invitations);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Invitation Codes seeded successfully.");
         }
     }
 }

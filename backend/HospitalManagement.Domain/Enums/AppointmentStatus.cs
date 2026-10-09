@@ -2,10 +2,11 @@ namespace HospitalManagement.Domain.Enums;
 
 public enum AppointmentStatus
 {
-    Scheduled = 1,
-    CheckedIn = 2,
-    InConsultation = 3,
-    Completed = 4,
-    Cancelled = 5,
-    NoShow = 6
+    Pending = 0,
+    Confirmed = 10,
+    CheckedIn = 20,
+    InConsultation = 30,
+    Completed = 40,
+    Cancelled = 50,
+    NoShow = 60
 }

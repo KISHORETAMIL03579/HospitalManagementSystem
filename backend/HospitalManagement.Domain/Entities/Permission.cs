@@ -11,3 +11,4 @@ public class Permission : BaseEntity
 
     public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
 }
+

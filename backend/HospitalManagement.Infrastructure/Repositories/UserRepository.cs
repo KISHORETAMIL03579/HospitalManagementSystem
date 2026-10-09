@@ -100,4 +100,113 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<InvitationCode?> GetInvitationByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var normalized = code.Trim();
+        return await _context.InvitationCodes
+            .Include(i => i.TargetRole)
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+            .FirstOrDefaultAsync(i => i.Code.ToLower() == normalized.ToLower(), cancellationToken);
+    }
+
+    public async Task MarkInvitationAsUsedAsync(int invitationCodeId, int userId, CancellationToken cancellationToken = default)
+    {
+        var invitation = await _context.InvitationCodes.FindAsync(new object[] { invitationCodeId }, cancellationToken);
+        if (invitation != null)
+        {
+            invitation.IsUsed = true;
+            invitation.UsedAt = DateTime.UtcNow;
+            invitation.UsedByUserId = userId;
+            _context.InvitationCodes.Update(invitation);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    // Password Reset Token Methods
+    public async Task SavePasswordResetTokenAsync(PasswordResetToken resetToken, CancellationToken cancellationToken = default)
+    {
+        await _context.PasswordResetTokens.AddAsync(resetToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<PasswordResetToken?> GetValidPasswordResetTokenAsync(string email, string tokenHash, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLower();
+        return await _context.PasswordResetTokens
+            .FirstOrDefaultAsync(t => t.Email.ToLower() == normalizedEmail &&
+                                      t.TokenHash == tokenHash &&
+                                      !t.IsUsed &&
+                                      t.ExpiresAt > DateTime.UtcNow, cancellationToken);
+    }
+
+    public async Task MarkPasswordResetTokenAsUsedAsync(int resetTokenId, CancellationToken cancellationToken = default)
+    {
+        var token = await _context.PasswordResetTokens.FindAsync(new object[] { resetTokenId }, cancellationToken);
+        if (token != null)
+        {
+            token.IsUsed = true;
+            token.UsedAt = DateTime.UtcNow;
+            _context.PasswordResetTokens.Update(token);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    // Staff Registration Request Methods
+    public async Task<StaffRegistrationRequest> AddStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default)
+    {
+        await _context.StaffRegistrationRequests.AddAsync(request, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return request;
+    }
+
+    public async Task<StaffRegistrationRequest?> GetStaffRegistrationRequestByIdAsync(int requestId, CancellationToken cancellationToken = default)
+    {
+        return await _context.StaffRegistrationRequests
+            .Include(s => s.Department)
+            .Include(s => s.RequestedRole)
+            .Include(s => s.ReviewedByUser)
+            .FirstOrDefaultAsync(s => s.StaffRegistrationRequestId == requestId, cancellationToken);
+    }
+
+    public async Task<StaffRegistrationRequest?> GetStaffRegistrationRequestByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalized = email.Trim().ToLower();
+        return await _context.StaffRegistrationRequests
+            .Include(s => s.Department)
+            .Include(s => s.RequestedRole)
+            .Include(s => s.ReviewedByUser)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync(s => s.Email.ToLower() == normalized, cancellationToken);
+    }
+
+    public async Task<IEnumerable<StaffRegistrationRequest>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default)
+    {
+        var query = _context.StaffRegistrationRequests
+            .Include(s => s.Department)
+            .Include(s => s.RequestedRole)
+            .Include(s => s.ReviewedByUser)
+            .AsNoTracking();
+
+        if (status.HasValue)
+        {
+            query = query.Where(s => s.Status == status.Value);
+        }
+
+        return await query.OrderByDescending(s => s.CreatedAt).ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default)
+    {
+        _context.StaffRegistrationRequests.Update(request);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExistsPendingStaffRequestByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalized = email.Trim().ToLower();
+        return await _context.StaffRegistrationRequests
+            .AnyAsync(s => s.Email.ToLower() == normalized && s.Status == RegistrationStatus.Pending, cancellationToken);
+    }
 }

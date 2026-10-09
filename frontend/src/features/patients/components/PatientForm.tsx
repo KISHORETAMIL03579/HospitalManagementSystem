@@ -6,7 +6,7 @@ import {
   CreatePatientFormValues,
 } from "../schemas/patientSchema";
 import { useCreatePatient } from "../hooks/useCreatePatient";
-import { Gender } from "../types/patient.types";
+import { Gender, BloodGroup } from "../types/patient.types";
 import { UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface PatientFormProps {
@@ -28,6 +28,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
       lastName: "",
       dateOfBirth: "",
       gender: Gender.Male,
+      bloodGroup: BloodGroup.Unknown,
       phone: "",
       email: "",
       address: "",
@@ -160,6 +161,26 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
                   {errors.gender.message}
                 </p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Blood Group
+              </label>
+              <select
+                {...register("bloodGroup", { valueAsNumber: true })}
+                className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+              >
+                <option value={BloodGroup.Unknown}>Unknown / Not Tested</option>
+                <option value={BloodGroup.APositive}>A+ (A Positive)</option>
+                <option value={BloodGroup.ANegative}>A- (A Negative)</option>
+                <option value={BloodGroup.BPositive}>B+ (B Positive)</option>
+                <option value={BloodGroup.BNegative}>B- (B Negative)</option>
+                <option value={BloodGroup.ABPositive}>AB+ (AB Positive)</option>
+                <option value={BloodGroup.ABNegative}>AB- (AB Negative)</option>
+                <option value={BloodGroup.OPositive}>O+ (O Positive)</option>
+                <option value={BloodGroup.ONegative}>O- (O Negative)</option>
+              </select>
             </div>
           </div>
         </div>

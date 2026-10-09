@@ -13,4 +13,20 @@ public interface IUserRepository
     Task<IEnumerable<Role>> GetActiveRolesAsync(CancellationToken cancellationToken = default);
     Task<User> AddAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
+
+    Task<InvitationCode?> GetInvitationByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task MarkInvitationAsUsedAsync(int invitationCodeId, int userId, CancellationToken cancellationToken = default);
+
+    // Password Reset Tokens
+    Task SavePasswordResetTokenAsync(PasswordResetToken resetToken, CancellationToken cancellationToken = default);
+    Task<PasswordResetToken?> GetValidPasswordResetTokenAsync(string email, string tokenHash, CancellationToken cancellationToken = default);
+    Task MarkPasswordResetTokenAsUsedAsync(int resetTokenId, CancellationToken cancellationToken = default);
+
+    // Staff Registration Requests
+    Task<StaffRegistrationRequest> AddStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default);
+    Task<StaffRegistrationRequest?> GetStaffRegistrationRequestByIdAsync(int requestId, CancellationToken cancellationToken = default);
+    Task<StaffRegistrationRequest?> GetStaffRegistrationRequestByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<IEnumerable<StaffRegistrationRequest>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default);
+    Task UpdateStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default);
+    Task<bool> ExistsPendingStaffRequestByEmailAsync(string email, CancellationToken cancellationToken = default);
 }

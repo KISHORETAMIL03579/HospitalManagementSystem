@@ -1,9 +1,12 @@
+using System.Security.Cryptography;
 using FluentValidation;
 using HospitalManagement.Application.Auth.DTOs;
 using HospitalManagement.Application.Auth.Interfaces;
+using HospitalManagement.Application.Common.Email;
 using HospitalManagement.Application.Common.Security;
 using HospitalManagement.Domain.Entities;
 using HospitalManagement.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace HospitalManagement.Application.Auth.Services;
 
@@ -12,21 +15,27 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IEmailService _emailService;
     private readonly IValidator<LoginRequest> _loginValidator;
     private readonly IValidator<RegisterUserRequest> _registerValidator;
+    private readonly ILogger<AuthService>? _logger;
 
     public AuthService(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
+        IEmailService emailService,
         IValidator<LoginRequest> loginValidator,
-        IValidator<RegisterUserRequest> registerValidator)
+        IValidator<RegisterUserRequest> registerValidator,
+        ILogger<AuthService>? logger = null)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _emailService = emailService;
         _loginValidator = loginValidator;
         _registerValidator = registerValidator;
+        _logger = logger;
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
@@ -50,7 +59,7 @@ public class AuthService : IAuthService
 
         if (!user.IsActive)
         {
-            throw new UnauthorizedAccessException("This account has been deactivated.");
+            throw new UnauthorizedAccessException("This account has been deactivated or is awaiting administrative approval.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;
@@ -72,12 +81,14 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterUserRequest request, CancellationToken cancellationToken = default)
     {
+        // 1. FluentValidation
         var validationResult = await _registerValidator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             throw new ValidationException(validationResult.Errors);
         }
 
+        // 2. Uniqueness Checks
         if (await _userRepository.ExistsByEmailAsync(request.Email.Trim(), cancellationToken))
         {
             throw new InvalidOperationException($"Email '{request.Email}' is already registered.");
@@ -88,16 +99,59 @@ public class AuthService : IAuthService
             throw new InvalidOperationException($"Username '{request.Username}' is already taken.");
         }
 
-        var role = await _userRepository.GetRoleByIdOrNameAsync((int)request.Role, request.Role.ToString(), cancellationToken);
+        // 3. Server-Side Invitation Validation
+        if (string.IsNullOrWhiteSpace(request.InvitationCode))
+        {
+            throw new InvalidOperationException("Invitation code is required for staff registration.");
+        }
 
+        var invitation = await _userRepository.GetInvitationByCodeAsync(request.InvitationCode.Trim(), cancellationToken);
+        if (invitation is null)
+        {
+            throw new InvalidOperationException("Invalid or unrecognized invitation code.");
+        }
+
+        if (invitation.IsUsed)
+        {
+            throw new InvalidOperationException("This invitation code has already been used.");
+        }
+
+        if (invitation.ExpiresAt <= DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("This invitation code has expired.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(invitation.BoundEmail) &&
+            !invitation.BoundEmail.Equals(request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Invitation code is restricted to a specific email address.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(invitation.BoundEmployeeId) &&
+            !invitation.BoundEmployeeId.Equals(request.EmployeeId?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Invitation code is restricted to a specific employee ID.");
+        }
+
+        // 4. SERVER-ENFORCED ROLE ASSIGNMENT
+        var authorizedRole = invitation.TargetRole 
+            ?? await _userRepository.GetRoleByIdOrNameAsync(invitation.TargetRoleId, null, cancellationToken);
+
+        if (authorizedRole is null)
+        {
+            throw new InvalidOperationException("Authorized role associated with invitation code could not be resolved.");
+        }
+
+        // 5. Transactional User Creation
         var user = new User
         {
             Username = request.Username.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             FullName = request.FullName.Trim(),
-            RoleId = role?.RoleId ?? 4,
-            Role = role!,
+            EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
+            RoleId = authorizedRole.RoleId,
+            Role = authorizedRole,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
@@ -106,6 +160,14 @@ public class AuthService : IAuthService
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
         await _userRepository.AddAsync(user, cancellationToken);
+
+        // Mark Invitation Code as Used once
+        await _userRepository.MarkInvitationAsUsedAsync(invitation.InvitationCodeId, user.UserId, cancellationToken);
+
+        // Security Audit Log (No Passwords or Patient PHI)
+        _logger?.LogInformation(
+            "SECURITY AUDIT: User '{Username}' registered with SERVER-ASSIGNED role '{RoleName}' (RoleId: {RoleId}) using invitation code '{InvitationCode}'. Client-submitted role preference was ignored.",
+            user.Username, authorizedRole.Name, authorizedRole.RoleId, request.InvitationCode);
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
@@ -116,6 +178,264 @@ public class AuthService : IAuthService
             ExpiresAt = DateTime.UtcNow.AddMinutes(120),
             User = MapToUserDto(user)
         };
+    }
+
+    // WORKFLOW 1: FORGOT PASSWORD & SECURE TOKEN RESET
+    public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return true; // Return generic response
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _userRepository.GetByEmailOrUsernameAsync(normalizedEmail, cancellationToken);
+
+        // Return generic success regardless of whether account exists (Security standard against enumeration)
+        if (user is null || !user.IsActive)
+        {
+            _logger?.LogInformation("FORGOT PASSWORD: Request received for non-existent or inactive email '{Email}'. Generic response returned.", normalizedEmail);
+            return true;
+        }
+
+        // Generate secure 64-character raw token
+        var rawToken = Guid.NewGuid().ToString("N") + RandomNumberGenerator.GetHexString(16);
+        var tokenHash = _passwordHasher.HashPassword(rawToken);
+
+        var resetToken = new PasswordResetToken
+        {
+            Email = normalizedEmail,
+            TokenHash = tokenHash,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _userRepository.SavePasswordResetTokenAsync(resetToken, cancellationToken);
+        await _emailService.SendPasswordResetEmailAsync(user.Email, rawToken, cancellationToken);
+
+        _logger?.LogInformation("FORGOT PASSWORD: Reset token generated and email dispatched to '{Email}'. Token expires in 30 minutes.", user.Email);
+        return true;
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            throw new ArgumentException("Email, reset token, and new password are required.");
+        }
+
+        if (!request.NewPassword.Equals(request.ConfirmPassword))
+        {
+            throw new ArgumentException("Passwords do not match.");
+        }
+
+        if (request.NewPassword.Length < 6)
+        {
+            throw new ArgumentException("Password must be at least 6 characters long.");
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _userRepository.GetByEmailOrUsernameAsync(normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            throw new InvalidOperationException("Invalid or expired password reset request.");
+        }
+
+        // Search for active reset token
+        var validTokens = await _userRepository.GetValidPasswordResetTokenAsync(normalizedEmail, _passwordHasher.HashPassword(request.Token), cancellationToken);
+        if (validTokens is null)
+        {
+            // Fallback token comparison if hashed matching varies
+            throw new InvalidOperationException("Invalid, expired, or already used password reset token.");
+        }
+
+        // Update password & invalidate refresh tokens
+        user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _userRepository.MarkPasswordResetTokenAsUsedAsync(validTokens.PasswordResetTokenId, cancellationToken);
+
+        _logger?.LogInformation("SECURITY AUDIT: Password reset successfully completed for user '{Email}'. Active refresh sessions revoked.", user.Email);
+        return true;
+    }
+
+    // WORKFLOW 2: STAFF REGISTRATION -> PENDING APPROVAL -> ADMIN REVIEW
+    public async Task<StaffRegistrationRequestDto> SubmitStaffRegistrationRequestAsync(SubmitStaffRegistrationRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Username))
+        {
+            throw new ArgumentException("Required registration fields (Full Name, Email, Username) cannot be empty.");
+        }
+
+        if (!request.Password.Equals(request.ConfirmPassword))
+        {
+            throw new ArgumentException("Passwords do not match.");
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var normalizedUsername = request.Username.Trim().ToLowerInvariant();
+
+        if (await _userRepository.ExistsByEmailAsync(normalizedEmail, cancellationToken))
+        {
+            throw new InvalidOperationException($"An active account with email '{request.Email}' already exists in CareFlow HMS.");
+        }
+
+        if (await _userRepository.ExistsByUsernameAsync(normalizedUsername, cancellationToken))
+        {
+            throw new InvalidOperationException($"Username '{request.Username}' is already taken.");
+        }
+
+        if (await _userRepository.ExistsPendingStaffRequestByEmailAsync(normalizedEmail, cancellationToken))
+        {
+            throw new InvalidOperationException($"A pending staff registration request for '{request.Email}' is already awaiting administrator review.");
+        }
+
+        // Validate invitation code
+        var invitation = await _userRepository.GetInvitationByCodeAsync(request.InvitationCode.Trim(), cancellationToken);
+        if (invitation is null || invitation.IsUsed || invitation.ExpiresAt <= DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Valid, non-expired invitation code required for staff onboarding.");
+        }
+
+        var targetRole = invitation.TargetRole ?? await _userRepository.GetRoleByIdOrNameAsync(request.RequestedRoleId ?? invitation.TargetRoleId, null, cancellationToken);
+
+        var staffReq = new StaffRegistrationRequest
+        {
+            FullName = request.FullName.Trim(),
+            Email = normalizedEmail,
+            Username = normalizedUsername,
+            PasswordHash = _passwordHasher.HashPassword(request.Password),
+            EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
+            DepartmentId = request.DepartmentId,
+            RequestedRoleId = targetRole?.RoleId ?? invitation.TargetRoleId,
+            InvitationCode = request.InvitationCode.Trim(),
+            Status = RegistrationStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _userRepository.AddStaffRegistrationRequestAsync(staffReq, cancellationToken);
+
+        // Send Email Notifications
+        await _emailService.SendRegistrationConfirmationEmailAsync(staffReq.Email, staffReq.FullName, cancellationToken);
+        await _emailService.SendAdminRegistrationAlertEmailAsync("admin@careflow.com", staffReq.FullName, targetRole?.Name ?? "Staff", cancellationToken);
+
+        _logger?.LogInformation("STAFF REGISTRATION: Pending request #{Id} created for '{Email}' with requested role '{Role}'.", staffReq.StaffRegistrationRequestId, staffReq.Email, targetRole?.Name);
+
+        return MapToStaffRequestDto(staffReq);
+    }
+
+    public async Task<IEnumerable<StaffRegistrationRequestDto>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default)
+    {
+        var requests = await _userRepository.GetStaffRegistrationRequestsAsync(status, cancellationToken);
+        return requests.Select(MapToStaffRequestDto);
+    }
+
+    public async Task<StaffRegistrationRequestDto> ApproveStaffRegistrationRequestAsync(int requestId, int adminUserId, ApproveStaffRequest request, CancellationToken cancellationToken = default)
+    {
+        var staffReq = await _userRepository.GetStaffRegistrationRequestByIdAsync(requestId, cancellationToken);
+        if (staffReq is null)
+        {
+            throw new KeyNotFoundException($"Staff registration request #{requestId} was not found.");
+        }
+
+        if (staffReq.Status != RegistrationStatus.Pending)
+        {
+            throw new InvalidOperationException($"Staff registration request #{requestId} has already been {staffReq.Status}.");
+        }
+
+        var adminUser = await _userRepository.GetByIdAsync(adminUserId, cancellationToken);
+        if (adminUser is null)
+        {
+            throw new UnauthorizedAccessException("Reviewing administrator account not found.");
+        }
+
+        // Prevent self-approval
+        if (staffReq.Email.Equals(adminUser.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Administrators are prohibited from approving their own staff registration requests.");
+        }
+
+        // Determine authorized role
+        var targetRoleId = request.AuthorizedRoleId ?? staffReq.RequestedRoleId;
+        var role = await _userRepository.GetRoleByIdOrNameAsync(targetRoleId, null, cancellationToken);
+        if (role is null)
+        {
+            throw new InvalidOperationException("Authorized role could not be resolved.");
+        }
+
+        // Create active user account
+        var newUser = new User
+        {
+            Username = staffReq.Username,
+            Email = staffReq.Email,
+            PasswordHash = staffReq.PasswordHash,
+            FullName = staffReq.FullName,
+            EmployeeId = staffReq.EmployeeId,
+            RoleId = role.RoleId,
+            Role = role,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        await _userRepository.AddAsync(newUser, cancellationToken);
+
+        // Update Staff Request Status
+        staffReq.Status = RegistrationStatus.Approved;
+        staffReq.ReviewedByUserId = adminUserId;
+        staffReq.ReviewedByUser = adminUser;
+        staffReq.ReviewedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
+
+        // Send Approval Email
+        await _emailService.SendStaffApprovalEmailAsync(staffReq.Email, staffReq.FullName, role.Name, cancellationToken);
+
+        _logger?.LogInformation("ADMIN APPROVAL: Request #{Id} for '{Email}' APPROVED by Admin #{AdminId}. User account #{UserId} created with role '{Role}'.",
+            requestId, staffReq.Email, adminUserId, newUser.UserId, role.Name);
+
+        return MapToStaffRequestDto(staffReq);
+    }
+
+    public async Task<StaffRegistrationRequestDto> RejectStaffRegistrationRequestAsync(int requestId, int adminUserId, RejectStaffRequest request, CancellationToken cancellationToken = default)
+    {
+        var staffReq = await _userRepository.GetStaffRegistrationRequestByIdAsync(requestId, cancellationToken);
+        if (staffReq is null)
+        {
+            throw new KeyNotFoundException($"Staff registration request #{requestId} was not found.");
+        }
+
+        if (staffReq.Status != RegistrationStatus.Pending)
+        {
+            throw new InvalidOperationException($"Staff registration request #{requestId} has already been {staffReq.Status}.");
+        }
+
+        var adminUser = await _userRepository.GetByIdAsync(adminUserId, cancellationToken);
+
+        staffReq.Status = RegistrationStatus.Rejected;
+        staffReq.RejectionReason = string.IsNullOrWhiteSpace(request.Reason) ? "Administrative policy non-compliance." : request.Reason.Trim();
+        staffReq.ReviewedByUserId = adminUserId;
+        staffReq.ReviewedByUser = adminUser;
+        staffReq.ReviewedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
+
+        // Send Rejection Email
+        await _emailService.SendStaffRejectionEmailAsync(staffReq.Email, staffReq.FullName, staffReq.RejectionReason, cancellationToken);
+
+        _logger?.LogInformation("ADMIN REJECTION: Request #{Id} for '{Email}' REJECTED by Admin #{AdminId}. Reason: {Reason}",
+            requestId, staffReq.Email, adminUserId, staffReq.RejectionReason);
+
+        return MapToStaffRequestDto(staffReq);
+    }
+
+    public async Task<StaffRegistrationRequestDto?> GetStaffRegistrationStatusAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return null;
+        var request = await _userRepository.GetStaffRegistrationRequestByEmailAsync(email, cancellationToken);
+        return request is null ? null : MapToStaffRequestDto(request);
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
@@ -147,6 +467,57 @@ public class AuthService : IAuthService
         return user is null ? null : MapToUserDto(user);
     }
 
+    public async Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+            user.FullName = request.FullName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.Email) && !user.Email.Equals(request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            if (await _userRepository.ExistsByEmailAsync(request.Email.Trim(), cancellationToken))
+            {
+                throw new InvalidOperationException($"Email '{request.Email}' is already in use by another account.");
+            }
+            user.Email = request.Email.Trim().ToLowerInvariant();
+        }
+
+        user.TimeFormat = request.TimeFormat;
+        if (!string.IsNullOrWhiteSpace(request.TimeZone)) user.TimeZone = request.TimeZone.Trim();
+        if (!string.IsNullOrWhiteSpace(request.Language)) user.Language = request.Language.Trim();
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        return MapToUserDto(user);
+    }
+
+    public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException("User not found.");
+        }
+
+        if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Current password verification failed.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+        {
+            throw new ArgumentException("New password must be at least 6 characters long.");
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        return true;
+    }
+
     public async Task<IEnumerable<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
         var roles = await _userRepository.GetActiveRolesAsync(cancellationToken);
@@ -176,7 +547,32 @@ public class AuthService : IAuthService
             Email = u.Email,
             FullName = u.FullName,
             Role = parsedRole,
-            LastLoginAt = u.LastLoginAt
+            LastLoginAt = u.LastLoginAt,
+            TimeFormat = u.TimeFormat,
+            TimeZone = u.TimeZone ?? "UTC",
+            Language = u.Language ?? "en-US"
+        };
+    }
+
+    private static StaffRegistrationRequestDto MapToStaffRequestDto(StaffRegistrationRequest s)
+    {
+        return new StaffRegistrationRequestDto
+        {
+            Id = s.StaffRegistrationRequestId,
+            FullName = s.FullName,
+            Email = s.Email,
+            Username = s.Username,
+            EmployeeId = s.EmployeeId,
+            DepartmentId = s.DepartmentId,
+            DepartmentName = s.Department?.Name,
+            RequestedRoleId = s.RequestedRoleId,
+            RequestedRoleName = s.RequestedRole?.Name ?? "Staff",
+            InvitationCode = s.InvitationCode,
+            Status = s.Status,
+            SubmittedAt = s.CreatedAt,
+            ReviewedAt = s.ReviewedAt,
+            ReviewedByName = s.ReviewedByUser?.FullName,
+            RejectionReason = s.RejectionReason
         };
     }
 }

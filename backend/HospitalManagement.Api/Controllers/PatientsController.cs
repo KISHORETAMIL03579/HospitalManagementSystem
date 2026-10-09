@@ -3,9 +3,12 @@ using HospitalManagement.Application.Patients.DTOs;
 using HospitalManagement.Application.Patients.Services;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/[controller]")]
 public class PatientsController : ControllerBase
 {

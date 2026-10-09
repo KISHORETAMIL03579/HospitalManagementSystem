@@ -20,6 +20,7 @@ export const createPatientSchema = z.object({
   gender: z.nativeEnum(Gender, {
     errorMap: () => ({ message: "Please select a gender" }),
   }),
+  bloodGroup: z.number().optional(),
   phone: z
     .string()
     .min(1, "Phone number is required")

@@ -56,7 +56,7 @@ public class AppointmentServiceTests
                 Doctor = new Doctor { DoctorId = 2, FirstName = "Eleanor", LastName = "Vance", Specialization = "Cardiologist" },
                 AppointmentDate = DateTime.Today.AddDays(1).Date,
                 TimeSlot = TimeSpan.FromHours(10),
-                Status = AppointmentStatus.Scheduled,
+                Status = AppointmentStatus.Confirmed,
                 Reason = "Routine checkup"
             });
 
@@ -68,7 +68,7 @@ public class AppointmentServiceTests
         Assert.Equal(100, result.AppointmentId);
         Assert.Equal("Alice Smith", result.PatientName);
         Assert.Equal("Dr. Eleanor Vance", result.DoctorName);
-        Assert.Equal(AppointmentStatus.Scheduled, result.Status);
+        Assert.Equal(AppointmentStatus.Confirmed, result.Status);
     }
 
     [Fact]

@@ -20,11 +20,15 @@ export interface UserDto {
   username: string;
   email: string;
   fullName: string;
+  phone?: string;
   role: UserRole;
   roleName: string;
   hierarchyLevel: number;
   permissions: string[];
   lastLoginAt?: string;
+  timeFormat?: "Hour12" | "Hour24" | 12 | 24;
+  timeZone?: string;
+  language?: string;
 }
 
 export interface AuthResponse {
@@ -45,4 +49,18 @@ export interface RegisterUserRequest {
   password: string;
   fullName: string;
   role: UserRole;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+  email: string;
+  phone?: string;
+  timeFormat?: number;
+  timeZone?: string;
+  language?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }

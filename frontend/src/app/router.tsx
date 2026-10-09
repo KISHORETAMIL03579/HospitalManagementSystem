@@ -7,6 +7,7 @@ import { AppointmentListPage } from "../features/appointments/pages/AppointmentL
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
+import { SettingsPage } from "../features/settings/pages/SettingsPage";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
           {
             path: "appointments",
             element: <AppointmentListPage />,
+          },
+          {
+            path: "settings",
+            element: <SettingsPage />,
           },
         ],
       },

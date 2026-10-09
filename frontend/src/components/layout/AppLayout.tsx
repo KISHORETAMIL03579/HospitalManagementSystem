@@ -12,6 +12,7 @@ import {
   Activity,
   LogOut,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 
 export const AppLayout: React.FC = () => {
@@ -35,6 +36,7 @@ export const AppLayout: React.FC = () => {
     },
     { label: "Laboratory", path: "/laboratory", icon: TestTube, badge: "Soon" },
     { label: "Billing", path: "/billing", icon: CreditCard, badge: "Soon" },
+    { label: "Settings", path: "/settings", icon: Settings },
   ];
 
   const getInitials = (name?: string) => {
@@ -108,14 +110,9 @@ export const AppLayout: React.FC = () => {
               </div>
               <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span className="capitalize font-medium text-slate-300">
+                <span className="capitalize font-semibold text-slate-200">
                   {user?.roleName || "User"}
                 </span>
-                {user?.hierarchyLevel && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                    Lvl {user.hierarchyLevel}
-                  </span>
-                )}
               </div>
             </div>
           </div>

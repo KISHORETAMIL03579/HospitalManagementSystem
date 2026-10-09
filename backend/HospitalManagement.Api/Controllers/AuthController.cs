@@ -4,10 +4,12 @@ using HospitalManagement.Application.Auth.DTOs;
 using HospitalManagement.Application.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
+[EnableRateLimiting("AuthPolicy")]
 [Route("api/v1/[controller]")]
 public class AuthController : ControllerBase
 {
@@ -24,6 +26,7 @@ public class AuthController : ControllerBase
     /// Authenticate user credentials and receive JWT access token
     /// </summary>
     [HttpPost("login")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -57,6 +60,7 @@ public class AuthController : ControllerBase
     /// Register a new system user
     /// </summary>
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
@@ -85,6 +89,7 @@ public class AuthController : ControllerBase
     /// Obtain new JWT access token using refresh token
     /// </summary>
     [HttpPost("refresh")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshToken([FromBody] string refreshToken, CancellationToken cancellationToken)
@@ -125,13 +130,133 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Update profile settings of the currently authenticated user
+    /// </summary>
+    [HttpPut("profile")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            try
+            {
+                var updatedUser = await _authService.UpdateProfileAsync(userId, request, cancellationToken);
+                return Ok(updatedUser);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        return Unauthorized();
+    }
+
+    /// <summary>
+    /// Change password for currently authenticated user
+    /// </summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            try
+            {
+                await _authService.ChangePasswordAsync(userId, request, cancellationToken);
+                return Ok(new { message = "Password updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        return Unauthorized();
+    }
+
+    /// <summary>
     /// Get list of active system roles with hierarchy levels and permissions
     /// </summary>
     [HttpGet("roles")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(IEnumerable<RoleDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
     {
         var roles = await _authService.GetRolesAsync(cancellationToken);
         return Ok(roles);
+    }
+
+    /// <summary>
+    /// Request password reset email with secure token
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await _authService.ForgotPasswordAsync(request, cancellationToken);
+        return Ok(new { message = "If an active account is associated with this email address, password reset instructions have been dispatched." });
+    }
+
+    /// <summary>
+    /// Reset password using secure email token
+    /// </summary>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(request, cancellationToken);
+            return Ok(new { message = "Password successfully reset. You may now sign in with your new credentials." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Submit staff onboarding registration request for administrative review
+    /// </summary>
+    [HttpPost("staff-registration-requests")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SubmitStaffRegistrationRequest([FromBody] SubmitStaffRegistrationRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var created = await _authService.SubmitStaffRegistrationRequestAsync(request, cancellationToken);
+            return CreatedAtAction(nameof(GetRegistrationStatus), new { email = created.Email }, created);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Check registration status for a staff onboarding request
+    /// </summary>
+    [HttpGet("registration-status")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetRegistrationStatus([FromQuery] string email, CancellationToken cancellationToken)
+    {
+        var status = await _authService.GetStaffRegistrationStatusAsync(email, cancellationToken);
+        if (status is null)
+        {
+            return NotFound(new { message = $"No registration record found for email '{email}'." });
+        }
+        return Ok(status);
     }
 }

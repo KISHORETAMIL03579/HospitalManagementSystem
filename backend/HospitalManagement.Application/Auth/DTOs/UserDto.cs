@@ -14,4 +14,8 @@ public class UserDto
     public int HierarchyLevel => (int)Role;
     public List<string> Permissions => RolePermissions.GetPermissions(Role);
     public DateTime? LastLoginAt { get; set; }
+
+    public TimeFormat TimeFormat { get; set; } = TimeFormat.Hour12;
+    public string TimeZone { get; set; } = "UTC";
+    public string Language { get; set; } = "en-US";
 }

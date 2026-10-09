@@ -2,8 +2,15 @@ import React, { useState, useEffect } from "react";
 import { usePatients } from "../../patients/hooks/usePatients";
 import { useDoctors, useDepartments } from "../../doctors/hooks/useDoctors";
 import { useAppointments } from "../../appointments/hooks/useAppointments";
+import { AppointmentStatus } from "../../appointments/types/appointment.types";
 import { useAuth } from "../../auth/hooks/useAuth";
+import { useSettings } from "../../../hooks/useSettings";
 import { formatDate, calculateAge } from "../../../lib/utils";
+import {
+  formatTimeSlot,
+  formatLiveTime,
+  formatDateByPattern,
+} from "../../../utils/dateUtils";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -21,6 +28,7 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const settings = useSettings();
 
   // Real-time API Queries
   const { data: patientData, isLoading: isPatientsLoading } = usePatients(
@@ -55,7 +63,11 @@ export const DashboardPage: React.FC = () => {
       a.appointmentDate.startsWith(todayDateString),
     ) ?? [];
   const todayScheduledCount = todayAppointments.filter(
-    (a) => a.status === 0 || a.status === 1,
+    (a) =>
+      a.status === AppointmentStatus.Confirmed ||
+      a.status === AppointmentStatus.CheckedIn ||
+      String(a.status) === "Confirmed" ||
+      String(a.status) === "CheckedIn",
   ).length;
 
   return (
@@ -86,19 +98,10 @@ export const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-2 bg-blue-950/60 backdrop-blur border border-blue-400/20 px-4 py-2 rounded-xl">
               <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
               <div className="text-sm font-mono font-semibold tracking-wide">
-                {currentTime.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
+                {formatLiveTime(currentTime, settings.timeFormat)}
               </div>
               <div className="text-xs text-blue-300 font-sans border-l border-blue-400/30 pl-2">
-                {currentTime.toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatDateByPattern(currentTime, settings.dateFormat)}
               </div>
             </div>
 
@@ -320,7 +323,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-medium text-slate-700">
-                        {apt.timeSlot}
+                        {formatTimeSlot(apt.timeSlot, settings.timeFormat)}
                       </div>
                       <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-700">
                         {apt.statusName}

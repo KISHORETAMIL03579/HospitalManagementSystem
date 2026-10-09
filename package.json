@@ -2,7 +2,7 @@
   "name": "hospital-management-system",
   "private": true,
   "scripts": {
-    "start:frontend": "npm --prefix frontend start",
+    "start": "npm --prefix frontend start",
     "start:backend": "dotnet run --project backend/HospitalManagement.Api/HospitalManagement.Api.csproj",
     "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build && dotnet build backend/HospitalManagement.slnx",
@@ -10,5 +10,8 @@
     "format:frontend": "npm --prefix frontend run format",
     "format:backend": "dotnet format backend/HospitalManagement.slnx",
     "test": "dotnet test backend/HospitalManagement.slnx"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
   }
 }

@@ -9,3 +9,4 @@ public class RoleDto
     public int? ParentRoleId { get; set; }
     public List<string> Permissions { get; set; } = new();
 }
+

@@ -17,6 +17,9 @@ public class HospitalDbContext : DbContext
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<InvitationCode> InvitationCodes => Set<InvitationCode>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<StaffRegistrationRequest> StaffRegistrationRequests => Set<StaffRegistrationRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

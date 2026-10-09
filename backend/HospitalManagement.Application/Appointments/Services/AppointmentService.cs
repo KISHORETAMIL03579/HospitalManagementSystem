@@ -50,7 +50,7 @@ public class AppointmentService : IAppointmentService
             DoctorId = request.DoctorId,
             AppointmentDate = request.AppointmentDate.Date,
             TimeSlot = timeSlot,
-            Status = AppointmentStatus.Scheduled,
+            Status = AppointmentStatus.Confirmed,
             Reason = request.Reason.Trim(),
             Notes = request.Notes?.Trim(),
             CreatedAt = DateTime.UtcNow,

@@ -27,3 +27,4 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             .HasMaxLength(250);
     }
 }
+
