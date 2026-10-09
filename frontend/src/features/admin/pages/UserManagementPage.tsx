@@ -4,7 +4,6 @@ import {
   UserPlus,
   UserCheck,
   UserX,
-  ShieldCheck,
   Search,
   RefreshCw,
   Edit,
@@ -14,12 +13,18 @@ import {
   CheckCircle2,
   XCircle,
   UserCog,
+  Clock,
 } from "lucide-react";
-import { authApi, AdminUserDto } from "../../auth/api/authApi";
+import {
+  authApi,
+  AdminUserDto,
+  StaffRegistrationRequest,
+} from "../../auth/api/authApi";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 export const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<AdminUserDto[]>([]);
+  const [requests, setRequests] = useState<StaffRegistrationRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [roles, setRoles] = useState<{ roleId: number; name: string }[]>([]);
 
@@ -28,9 +33,9 @@ export const UserManagementPage: React.FC = () => {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<
     number | undefined
   >(undefined);
-  const [statusTab, setStatusTab] = useState<"all" | "active" | "inactive">(
-    "all",
-  );
+  const [statusTab, setStatusTab] = useState<
+    "all" | "active" | "inactive" | "pending"
+  >("all");
 
   // Loading indicator for specific actions
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
@@ -48,6 +53,14 @@ export const UserManagementPage: React.FC = () => {
     null,
   );
   const [deletingUser, setDeletingUser] = useState<AdminUserDto | null>(null);
+
+  // Approval & Rejection Modals for Pending Onboarding Requests
+  const [approveRequest, setApproveRequest] =
+    useState<StaffRegistrationRequest | null>(null);
+  const [approveRoleId, setApproveRoleId] = useState<number>(0);
+  const [rejectRequest, setRejectRequest] =
+    useState<StaffRegistrationRequest | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string>("");
 
   // Create Form State
   const [createForm, setCreateForm] = useState({
@@ -73,8 +86,12 @@ export const UserManagementPage: React.FC = () => {
   const fetchUsers = async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const data = await authApi.getAllAdminUsers();
-      setUsers(data);
+      const [userData, requestsData] = await Promise.all([
+        authApi.getAllAdminUsers(),
+        authApi.getStaffRequests(),
+      ]);
+      setUsers(userData);
+      setRequests(requestsData);
     } catch (err: any) {
       setFeedback({
         type: "error",
@@ -109,6 +126,7 @@ export const UserManagementPage: React.FC = () => {
     const total = users.length;
     const active = users.filter((u) => u.isActive).length;
     const inactive = users.filter((u) => !u.isActive).length;
+    const pending = requests.filter((r) => r.status === 0).length;
     const clinical = users.filter(
       (u) =>
         u.roleName.toLowerCase().includes("doc") ||
@@ -116,8 +134,8 @@ export const UserManagementPage: React.FC = () => {
         u.roleName.toLowerCase().includes("pharma") ||
         u.roleName.toLowerCase().includes("lab"),
     ).length;
-    return { total, active, inactive, clinical };
-  }, [users]);
+    return { total, active, inactive, pending, clinical };
+  }, [users, requests]);
 
   // Filtered Users
   const filteredUsers = useMemo(() => {
@@ -145,6 +163,31 @@ export const UserManagementPage: React.FC = () => {
       return true;
     });
   }, [users, statusTab, selectedRoleFilter, searchQuery]);
+
+  // Filtered Pending Onboarding Requests
+  const filteredRequests = useMemo(() => {
+    return requests.filter((r) => {
+      if (r.status !== 0) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const nameMatch = r.fullName.toLowerCase().includes(q);
+        const emailMatch = r.email.toLowerCase().includes(q);
+        const userMatch = r.username.toLowerCase().includes(q);
+        const codeMatch = r.invitationCode.toLowerCase().includes(q);
+        const deptMatch = r.departmentName?.toLowerCase().includes(q) ?? false;
+        const roleMatch = r.requestedRoleName.toLowerCase().includes(q);
+        return (
+          nameMatch ||
+          emailMatch ||
+          userMatch ||
+          codeMatch ||
+          deptMatch ||
+          roleMatch
+        );
+      }
+      return true;
+    });
+  }, [requests, searchQuery]);
 
   // CREATE USER HANDLER
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -274,6 +317,58 @@ export const UserManagementPage: React.FC = () => {
         type: "error",
         message:
           err?.response?.data?.message || "Failed to remove user account.",
+      });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // APPROVE STAFF REQUEST HANDLER
+  const handleApproveSubmit = async () => {
+    if (!approveRequest) return;
+    setActionLoadingId(approveRequest.id);
+    try {
+      await authApi.approveStaffRequest(approveRequest.id, {
+        authorizedRoleId: approveRoleId || approveRequest.requestedRoleId,
+      });
+      setFeedback({
+        type: "success",
+        message: `Employee account for ${approveRequest.fullName} approved and activated successfully!`,
+      });
+      setApproveRequest(null);
+      fetchUsers();
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message:
+          err?.response?.data?.message || "Failed to approve staff request.",
+      });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // REJECT STAFF REQUEST HANDLER
+  const handleRejectSubmit = async () => {
+    if (!rejectRequest) return;
+    setActionLoadingId(rejectRequest.id);
+    try {
+      await authApi.rejectStaffRequest(
+        rejectRequest.id,
+        rejectionReason || "Application rejected by administrator.",
+      );
+      setFeedback({
+        type: "success",
+        message: `Application for ${rejectRequest.fullName} has been rejected.`,
+      });
+      setRejectRequest(null);
+      setRejectionReason("");
+      fetchUsers();
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message:
+          err?.response?.data?.message || "Failed to reject staff request.",
       });
     } finally {
       setActionLoadingId(null);
@@ -433,23 +528,28 @@ export const UserManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Clinical Personnel */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        {/* Pending Approvals */}
+        <div
+          onClick={() => setStatusTab("pending")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            statusTab === "pending"
+              ? "bg-amber-500/10 border-amber-400 ring-2 ring-amber-500/20 shadow-sm"
+              : "bg-white border-slate-200 hover:border-slate-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-              Clinical Personnel
+            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+              Pending Approvals
             </span>
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
-              <ShieldCheck className="w-4 h-4" />
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+              <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">
-              {metrics.clinical}
+              {metrics.pending}
             </span>
-            <span className="text-xs text-slate-500">
-              doctors & clinical staff
-            </span>
+            <span className="text-xs text-slate-500">awaiting review</span>
           </div>
         </div>
       </div>
@@ -487,6 +587,25 @@ export const UserManagementPage: React.FC = () => {
             }`}
           >
             Inactive ({metrics.inactive})
+          </button>
+          <button
+            onClick={() => setStatusTab("pending")}
+            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              statusTab === "pending"
+                ? "bg-amber-500 text-white shadow-xs font-bold"
+                : "text-amber-800 hover:bg-amber-50"
+            }`}
+          >
+            <span>Pending Approvals</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                statusTab === "pending"
+                  ? "bg-white text-amber-800"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+            >
+              {metrics.pending}
+            </span>
           </button>
         </div>
 
@@ -531,6 +650,122 @@ export const UserManagementPage: React.FC = () => {
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
             Loading user accounts...
           </div>
+        ) : statusTab === "pending" ? (
+          filteredRequests.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 text-xs">
+              <Clock className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+              No pending staff onboarding requests matching criteria.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-amber-50/60 border-b border-amber-200/60 text-[11px] font-semibold text-amber-900 uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Applicant & Contact</th>
+                    <th className="py-3.5 px-4">Requested Role & Dept</th>
+                    <th className="py-3.5 px-4">Invitation Code</th>
+                    <th className="py-3.5 px-4">Submitted Date</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRequests.map((req) => (
+                    <tr
+                      key={req.id}
+                      className="hover:bg-amber-50/40 transition-colors"
+                    >
+                      {/* Applicant details */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0">
+                            {req.fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .substring(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                              <span>{req.fullName}</span>
+                              <span className="text-[11px] text-slate-400 font-normal">
+                                ({req.username})
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-0.5">
+                              <a
+                                href={`mailto:${req.email}`}
+                                className="hover:underline text-blue-600 font-medium"
+                              >
+                                {req.email}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Requested Role & Dept */}
+                      <td className="py-4 px-4">
+                        <div className="space-y-1">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
+                              req.requestedRoleName,
+                            )}`}
+                          >
+                            <User className="w-3 h-3" />
+                            {req.requestedRoleName}
+                          </span>
+                          {req.departmentName && (
+                            <div className="text-[11px] text-slate-500 font-medium">
+                              Dept: {req.departmentName}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Invitation Code */}
+                      <td className="py-4 px-4">
+                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-bold border border-slate-200">
+                          {req.invitationCode}
+                        </span>
+                      </td>
+
+                      {/* Submitted Date */}
+                      <td className="py-4 px-4 text-slate-500 text-xs">
+                        {formatDateByPattern(
+                          req.submittedAt,
+                          "MMM dd, yyyy - hh:mm a",
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setApproveRequest(req);
+                              setApproveRoleId(req.requestedRoleId);
+                            }}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Approve & Activate
+                          </button>
+                          <button
+                            onClick={() => setRejectRequest(req)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : filteredUsers.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs">
             <UserCog className="w-8 h-8 text-slate-300 mx-auto mb-2" />
@@ -1110,6 +1345,164 @@ export const UserManagementPage: React.FC = () => {
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 )}
                 Confirm Archive & Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* APPROVE STAFF REQUEST MODAL */}
+      {approveRequest && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Approve Staff Onboarding
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Activate account and grant access for{" "}
+                  {approveRequest.fullName}.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Applicant:</span>
+                <span className="font-bold text-slate-900">
+                  {approveRequest.fullName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Email:</span>
+                <span className="font-medium text-slate-800">
+                  {approveRequest.email}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Invitation Code:</span>
+                <span className="font-mono font-bold text-slate-700">
+                  {approveRequest.invitationCode}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="block font-semibold text-slate-700">
+                Confirm or Override Assigned Role
+              </label>
+              <select
+                value={approveRoleId}
+                onChange={(e) => setApproveRoleId(Number(e.target.value))}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              >
+                {roles.map((r) => (
+                  <option key={r.roleId} value={r.roleId}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-slate-400 italic">
+                The account will be activated immediately with the selected role
+                credentials.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setApproveRequest(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveSubmit}
+                disabled={actionLoadingId !== null}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+              >
+                {actionLoadingId === approveRequest.id && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
+                Approve & Activate Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT STAFF REQUEST MODAL */}
+      {rejectRequest && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
+                <XCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Reject Onboarding Request
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Decline registration request for {rejectRequest.fullName}.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Applicant:</span>
+                <span className="font-bold text-slate-900">
+                  {rejectRequest.fullName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Email:</span>
+                <span className="font-medium text-slate-800">
+                  {rejectRequest.email}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="block font-semibold text-slate-700">
+                Reason for Rejection (Optional)
+              </label>
+              <textarea
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="e.g. Invalid credentials or expired invitation code."
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectRequest(null);
+                  setRejectionReason("");
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRejectSubmit}
+                disabled={actionLoadingId !== null}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+              >
+                {actionLoadingId === rejectRequest.id && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
+                Reject Request
               </button>
             </div>
           </div>
