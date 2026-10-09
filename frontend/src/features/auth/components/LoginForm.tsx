@@ -48,13 +48,6 @@ export const LoginForm: React.FC = () => {
   // Demo Credentials Accordion State (Collapsed by Default in Production UI)
   const [showDemoCredentials, setShowDemoCredentials] = useState(false);
 
-  useEffect(() => {
-    authApi
-      .getRoles()
-      .then((data: RoleDto[]) => setAvailableRoles(data))
-      .catch(() => {});
-  }, []);
-
   // Registration state
   const [regData, setRegData] = useState({
     username: "",
