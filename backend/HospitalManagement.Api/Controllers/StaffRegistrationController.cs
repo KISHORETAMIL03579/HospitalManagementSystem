@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using HospitalManagement.Application.Auth.DTOs;
-using HospitalManagement.Application.Auth.Services;
+using HospitalManagement.Application.StaffRegistration.Services;
 using HospitalManagement.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +11,12 @@ namespace HospitalManagement.Api.Controllers;
 [Route("api/v1/[controller]")]
 public class StaffRegistrationController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IStaffRegistrationService _staffRegistrationService;
     private readonly ILogger<StaffRegistrationController> _logger;
 
-    public StaffRegistrationController(IAuthService authService, ILogger<StaffRegistrationController> logger)
+    public StaffRegistrationController(IStaffRegistrationService staffRegistrationService, ILogger<StaffRegistrationController> logger)
     {
-        _authService = authService;
+        _staffRegistrationService = staffRegistrationService;
         _logger = logger;
     }
 
@@ -31,7 +31,7 @@ public class StaffRegistrationController : ControllerBase
     {
         try
         {
-            var created = await _authService.SubmitStaffRegistrationRequestAsync(request, cancellationToken);
+            var created = await _staffRegistrationService.SubmitStaffRegistrationRequestAsync(request, cancellationToken);
             return CreatedAtAction(nameof(GetRegistrationStatus), new { email = created.Email }, created);
         }
         catch (Exception ex)
@@ -49,7 +49,7 @@ public class StaffRegistrationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRegistrationStatus([FromQuery] string email, CancellationToken cancellationToken)
     {
-        var status = await _authService.GetStaffRegistrationStatusAsync(email, cancellationToken);
+        var status = await _staffRegistrationService.GetStaffRegistrationStatusAsync(email, cancellationToken);
         if (status is null)
         {
             return NotFound(new { message = $"No registration record found for email '{email}'." });
@@ -60,19 +60,19 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// List staff registration requests for administrative review
     /// </summary>
-    [HttpGet("admin/requests")]
+    [HttpGet("requests/admin")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(IEnumerable<StaffRegistrationRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStaffRequests([FromQuery] RegistrationStatus? status, CancellationToken cancellationToken)
     {
-        var requests = await _authService.GetStaffRegistrationRequestsAsync(status, cancellationToken);
+        var requests = await _staffRegistrationService.GetStaffRegistrationRequestsAsync(status, cancellationToken);
         return Ok(requests);
     }
 
     /// <summary>
     /// Approve a staff registration request and provision user account
     /// </summary>
-    [HttpPost("admin/requests/{id:int}/approve")]
+    [HttpPost("requests/{id:int}/approve")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -87,7 +87,7 @@ public class StaffRegistrationController : ControllerBase
 
         try
         {
-            var approved = await _authService.ApproveStaffRegistrationRequestAsync(id, adminUserId, request, cancellationToken);
+            var approved = await _staffRegistrationService.ApproveStaffRegistrationRequestAsync(id, adminUserId, request, cancellationToken);
             _logger.LogInformation("Admin #{AdminId} approved staff request #{RequestId}", adminUserId, id);
             return Ok(approved);
         }
@@ -104,7 +104,7 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// Reject a staff registration request
     /// </summary>
-    [HttpPost("admin/requests/{id:int}/reject")]
+    [HttpPost("requests/{id:int}/reject")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -119,7 +119,7 @@ public class StaffRegistrationController : ControllerBase
 
         try
         {
-            var rejected = await _authService.RejectStaffRegistrationRequestAsync(id, adminUserId, request, cancellationToken);
+            var rejected = await _staffRegistrationService.RejectStaffRegistrationRequestAsync(id, adminUserId, request, cancellationToken);
             _logger.LogInformation("Admin #{AdminId} rejected staff request #{RequestId}", adminUserId, id);
             return Ok(rejected);
         }
@@ -136,7 +136,7 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// Retry sending notification email for a staff registration request
     /// </summary>
-    [HttpPost("admin/requests/{id:int}/retry-email")]
+    [HttpPost("requests/{id:int}/retry-email")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -144,7 +144,7 @@ public class StaffRegistrationController : ControllerBase
     {
         try
         {
-            var retried = await _authService.RetryStaffNotificationEmailAsync(id, cancellationToken);
+            var retried = await _staffRegistrationService.RetryStaffNotificationEmailAsync(id, cancellationToken);
             _logger.LogInformation("Admin requested email retry for staff request #{RequestId}", id);
             return Ok(retried);
         }

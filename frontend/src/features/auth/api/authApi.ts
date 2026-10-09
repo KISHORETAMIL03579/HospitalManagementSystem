@@ -207,21 +207,18 @@ export const authApi = {
     return response.data;
   },
 
-  // Legacy Approval Support
+  // Staff Registration & Onboarding API Endpoints
   submitStaffRegistration: async (
     data: any,
   ): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post(
-      "/auth/staff-registration-requests",
-      data,
-    );
+    const response = await apiClient.post("/StaffRegistration/requests", data);
     return response.data;
   },
 
   getStaffRequests: async (
     status?: number,
   ): Promise<StaffRegistrationRequest[]> => {
-    const response = await apiClient.get("/admin/staff-requests", {
+    const response = await apiClient.get("/StaffRegistration/requests/admin", {
       params: { status },
     });
     return response.data;
@@ -232,7 +229,7 @@ export const authApi = {
     data: { authorizedRoleId?: number; notes?: string },
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/admin/staff-requests/${requestId}/approve`,
+      `/StaffRegistration/requests/${requestId}/approve`,
       data,
     );
     return response.data;
@@ -243,7 +240,7 @@ export const authApi = {
     reason: string,
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/admin/staff-requests/${requestId}/reject`,
+      `/StaffRegistration/requests/${requestId}/reject`,
       { reason },
     );
     return response.data;
@@ -253,7 +250,7 @@ export const authApi = {
     requestId: number,
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/admin/staff-requests/${requestId}/retry-email`,
+      `/StaffRegistration/requests/${requestId}/retry-email`,
     );
     return response.data;
   },
@@ -261,7 +258,7 @@ export const authApi = {
   getRegistrationStatus: async (
     email: string,
   ): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.get("/auth/registration-status", {
+    const response = await apiClient.get("/StaffRegistration/status", {
       params: { email },
     });
     return response.data;

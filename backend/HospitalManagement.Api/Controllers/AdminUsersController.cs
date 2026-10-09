@@ -1,6 +1,6 @@
 using System.Security.Claims;
+using HospitalManagement.Application.Admin.Services;
 using HospitalManagement.Application.Auth.DTOs;
-using HospitalManagement.Application.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +12,12 @@ namespace HospitalManagement.Api.Controllers;
 [Route("api/v1/Admin/users")]
 public class AdminUsersController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IAdminUserService _adminUserService;
     private readonly ILogger<AdminUsersController> _logger;
 
-    public AdminUsersController(IAuthService authService, ILogger<AdminUsersController> logger)
+    public AdminUsersController(IAdminUserService adminUserService, ILogger<AdminUsersController> logger)
     {
-        _authService = authService;
+        _adminUserService = adminUserService;
         _logger = logger;
     }
 
@@ -28,7 +28,7 @@ public class AdminUsersController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<AdminUserDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers([FromQuery] string? search, [FromQuery] int? roleId, [FromQuery] bool? isActive, CancellationToken cancellationToken)
     {
-        var users = await _authService.GetAllUsersForAdminAsync(search, roleId, isActive, cancellationToken);
+        var users = await _adminUserService.GetAllUsersForAdminAsync(search, roleId, isActive, cancellationToken);
         return Ok(users);
     }
 
@@ -42,7 +42,7 @@ public class AdminUsersController : ControllerBase
     {
         try
         {
-            var user = await _authService.CreateUserByAdminAsync(request, cancellationToken);
+            var user = await _adminUserService.CreateUserByAdminAsync(request, cancellationToken);
             return CreatedAtAction(nameof(GetAllUsers), new { id = user.UserId }, user);
         }
         catch (Exception ex)
@@ -62,7 +62,7 @@ public class AdminUsersController : ControllerBase
     {
         try
         {
-            var updated = await _authService.UpdateUserByAdminAsync(id, request, cancellationToken);
+            var updated = await _adminUserService.UpdateUserByAdminAsync(id, request, cancellationToken);
             return Ok(updated);
         }
         catch (KeyNotFoundException ex)
@@ -86,7 +86,7 @@ public class AdminUsersController : ControllerBase
     {
         try
         {
-            var updated = await _authService.UpdateUserRoleByAdminAsync(id, request.RoleId, cancellationToken);
+            var updated = await _adminUserService.UpdateUserRoleByAdminAsync(id, request.RoleId, cancellationToken);
             return Ok(updated);
         }
         catch (KeyNotFoundException ex)
@@ -116,7 +116,7 @@ public class AdminUsersController : ControllerBase
 
         try
         {
-            var updated = await _authService.ToggleUserStatusByAdminAsync(id, adminUserId, request.IsActive, cancellationToken);
+            var updated = await _adminUserService.ToggleUserStatusByAdminAsync(id, adminUserId, request.IsActive, cancellationToken);
             return Ok(updated);
         }
         catch (KeyNotFoundException ex)
@@ -146,7 +146,7 @@ public class AdminUsersController : ControllerBase
 
         try
         {
-            await _authService.DeleteUserByAdminAsync(id, adminUserId, cancellationToken);
+            await _adminUserService.DeleteUserByAdminAsync(id, adminUserId, cancellationToken);
             return Ok(new { message = "User account deactivated and archived successfully. Medical records preserved." });
         }
         catch (KeyNotFoundException ex)

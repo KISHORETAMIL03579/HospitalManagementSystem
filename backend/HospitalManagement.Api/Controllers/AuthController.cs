@@ -222,41 +222,4 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
-
-    /// <summary>
-    /// Submit staff onboarding registration request for administrative review
-    /// </summary>
-    [HttpPost("staff-registration-requests")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SubmitStaffRegistrationRequest([FromBody] SubmitStaffRegistrationRequest request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var created = await _authService.SubmitStaffRegistrationRequestAsync(request, cancellationToken);
-            return CreatedAtAction(nameof(GetRegistrationStatus), new { email = created.Email }, created);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// Check registration status for a staff onboarding request
-    /// </summary>
-    [HttpGet("registration-status")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRegistrationStatus([FromQuery] string email, CancellationToken cancellationToken)
-    {
-        var status = await _authService.GetStaffRegistrationStatusAsync(email, cancellationToken);
-        if (status is null)
-        {
-            return NotFound(new { message = $"No registration record found for email '{email}'." });
-        }
-        return Ok(status);
-    }
 }
