@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "../schemas/loginSchema";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../api/authApi";
-import { RoleDto, UserRole } from "../types/auth.types";
+import { UserRole } from "../types/auth.types";
 import {
   Activity,
   Lock,

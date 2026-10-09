@@ -5,6 +5,7 @@
     "start": "npm --prefix frontend start",
     "start:backend": "dotnet run --project backend/HospitalManagement.Api/HospitalManagement.Api.csproj",
     "dev": "npm --prefix frontend run dev",
+    "clean": "dotnet clean backend/HospitalManagement.slnx",
     "build": "npm --prefix frontend run build && dotnet build backend/HospitalManagement.slnx",
     "format": "npm --prefix frontend run format && dotnet format backend/HospitalManagement.slnx",
     "format:frontend": "npm --prefix frontend run format",
