@@ -14,6 +14,8 @@ import {
   XCircle,
   UserCog,
   Clock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   authApi,

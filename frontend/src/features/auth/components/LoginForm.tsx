@@ -148,9 +148,9 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[640px]">
+    <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
       {/* LEFT PANEL: Healthcare Branding & Security Showcase */}
-      <div className="md:col-span-5 bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 p-8 text-white flex flex-col justify-between relative overflow-hidden">
+      <div className="md:col-span-5 bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden min-h-[480px]">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-0 bottom-0 -translate-x-12 translate-y-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -198,7 +198,7 @@ export const LoginForm: React.FC = () => {
       </div>
 
       {/* RIGHT PANEL: Sign In / Staff Onboarding Form Container */}
-      <div className="md:col-span-7 p-8 space-y-6 flex flex-col justify-between">
+      <div className="md:col-span-7 p-8 sm:p-10 space-y-6 flex flex-col justify-center">
         <div className="space-y-5">
           {/* Header & Mode Switcher */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
