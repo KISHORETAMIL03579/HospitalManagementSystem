@@ -128,6 +128,35 @@ app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "CareFlow HMS API v1");
     options.RoutePrefix = "swagger";
+    options.EnablePersistAuthorization();
+    options.HeadContent = @"
+        <script>
+        window.addEventListener('load', function () {
+            var checkUi = setInterval(function () {
+                if (window.ui) {
+                    clearInterval(checkUi);
+                    var origInterceptor = window.ui.getConfigs().responseInterceptor;
+                    window.ui.getConfigs().responseInterceptor = function (response) {
+                        if (origInterceptor) {
+                            response = origInterceptor(response);
+                        }
+                        try {
+                            if (response && response.status === 200 && response.text) {
+                                var data = JSON.parse(response.text);
+                                if (data && data.token) {
+                                    window.ui.preauthorizeApiKey('Bearer', data.token);
+                                    console.log('CareFlow HMS: Swagger UI automatically authorized Bearer token!');
+                                }
+                            }
+                        } catch (e) {
+                            console.error('CareFlow HMS Auto-Auth Error:', e);
+                        }
+                        return response;
+                    };
+                }
+            }, 200);
+        });
+        </script>";
 });
 
 app.UseCors("AllowFrontend");
