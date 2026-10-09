@@ -674,7 +674,7 @@ public class AuthService : IAuthService
 
     public async Task<AdminUserDto> UpdateUserByAdminAsync(int userId, UpdateUserByAdminRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        var user = await _userRepository.GetTrackedByIdAsync(userId, cancellationToken);
         if (user is null)
         {
             throw new KeyNotFoundException($"User account #{userId} not found.");
@@ -697,7 +697,6 @@ public class AuthService : IAuthService
             var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
             if (role is null) throw new InvalidOperationException("Selected role is invalid.");
             user.RoleId = role.RoleId;
-            user.Role = role;
         }
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
@@ -711,7 +710,7 @@ public class AuthService : IAuthService
 
     public async Task<AdminUserDto> UpdateUserRoleByAdminAsync(int userId, int roleId, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        var user = await _userRepository.GetTrackedByIdAsync(userId, cancellationToken);
         if (user is null)
         {
             throw new KeyNotFoundException($"User account #{userId} not found.");
@@ -724,7 +723,6 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = role.RoleId;
-        user.Role = role;
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin changed role for user #{UserId} to '{Role}'.", user.UserId, role.Name);

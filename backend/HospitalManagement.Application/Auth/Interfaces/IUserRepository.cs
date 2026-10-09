@@ -5,6 +5,7 @@ namespace HospitalManagement.Application.Auth.Interfaces;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int userId, CancellationToken cancellationToken = default);
+    Task<User?> GetTrackedByIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<User?> GetByEmailOrUsernameAsync(string identifier, CancellationToken cancellationToken = default);
     Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);

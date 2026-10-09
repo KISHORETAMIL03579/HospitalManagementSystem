@@ -24,6 +24,12 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive, cancellationToken);
     }
 
+    public async Task<User?> GetTrackedByIdAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive, cancellationToken);
+    }
+
     public async Task<User?> GetByEmailOrUsernameAsync(string identifier, CancellationToken cancellationToken = default)
     {
         var normalized = identifier.Trim().ToLower();
