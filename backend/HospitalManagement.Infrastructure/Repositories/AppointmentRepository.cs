@@ -54,6 +54,25 @@ public class AppointmentRepository : IAppointmentRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Appointment>> GetForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
+        if (user is null) return Enumerable.Empty<Appointment>();
+
+        var patient = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Email == user.Email, cancellationToken);
+        if (patient is null) return Enumerable.Empty<Appointment>();
+
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Doctor)
+                .ThenInclude(d => d.Department)
+            .AsNoTracking()
+            .Where(a => a.IsActive && a.PatientId == patient.PatientId)
+            .OrderByDescending(a => a.AppointmentDate)
+            .ThenBy(a => a.TimeSlot)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> IsSlotBookedAsync(int doctorId, DateTime date, TimeSpan timeSlot, CancellationToken cancellationToken = default)
     {
         return await _context.Appointments

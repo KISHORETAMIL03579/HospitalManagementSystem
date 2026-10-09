@@ -37,6 +37,24 @@ public class AppointmentsController : ControllerBase
     }
 
     /// <summary>
+    /// Get appointments scoped to the authenticated patient/user (record-level security)
+    /// </summary>
+    [HttpGet("my-appointments")]
+    [ProducesResponseType(typeof(IEnumerable<AppointmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetMyAppointments(CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Authentication token is missing user identifier claim." });
+        }
+
+        var appointments = await _appointmentService.GetAppointmentsForUserAsync(userId, cancellationToken);
+        return Ok(appointments);
+    }
+
+    /// <summary>
     /// Get appointment details by ID
     /// </summary>
     [HttpGet("{id:int}")]

@@ -23,6 +23,12 @@ public class AppointmentService : IAppointmentService
         return appointments.Select(MapToDto);
     }
 
+    public async Task<IEnumerable<AppointmentDto>> GetAppointmentsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var appointments = await _appointmentRepository.GetForUserAsync(userId, cancellationToken);
+        return appointments.Select(MapToDto);
+    }
+
     public async Task<AppointmentDto?> GetAppointmentByIdAsync(int appointmentId, CancellationToken cancellationToken = default)
     {
         var appointment = await _appointmentRepository.GetByIdAsync(appointmentId, cancellationToken);
