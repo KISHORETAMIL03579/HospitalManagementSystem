@@ -148,11 +148,66 @@ app.UseSwaggerUI(options =>
                                     console.log('CareFlow HMS: Swagger UI automatically authorized Bearer token!');
                                 }
                             }
-                        } catch (e) {
-                            console.error('CareFlow HMS Auto-Auth Error:', e);
-                        }
+                        } catch (e) {}
                         return response;
                     };
+
+                    var observer = new MutationObserver(function () {
+                        var modal = document.querySelector('.swagger-ui .dialog-ux .modal-ux-content');
+                        if (modal && !document.getElementById('careflow-modal-login')) {
+                            var container = document.createElement('div');
+                            container.id = 'careflow-modal-login';
+                            container.style.cssText = 'margin-bottom: 20px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-family: sans-serif;';
+                            container.innerHTML = `
+                                <div style=""margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;"">
+                                    <h4 style=""margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;"">🔑 Option 1: Login with Username & Password</h4>
+                                    <p style=""margin: 4px 0 0 0; font-size: 11px; color: #64748b;"">Enter hospital credentials to automatically fetch & authorize JWT token.</p>
+                                </div>
+                                <div style=""display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;"">
+                                    <input id=""swag-user"" type=""text"" placeholder=""Username or Email"" value=""admin@careflow.com"" style=""flex: 1; min-width: 140px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;"" />
+                                    <input id=""swag-pass"" type=""password"" placeholder=""Password"" value=""Admin123!"" style=""flex: 1; min-width: 140px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none;"" />
+                                </div>
+                                <div style=""display: flex; align-items: center; justify-content: space-between;"">
+                                    <button id=""swag-login-btn"" type=""button"" style=""background: #2563eb; color: #ffffff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s;"">
+                                        Login & Authorize Now
+                                    </button>
+                                    <span id=""swag-msg"" style=""font-size: 12px; font-weight: 600;""></span>
+                                </div>
+                                <div style=""margin-top: 16px; border-top: 1px dashed #cbd5e1; padding-top: 12px; font-weight: 700; color: #0f172a; font-size: 13px;"">
+                                    🔒 Option 2: Direct Bearer Token Input (Manual)
+                                </div>
+                            `;
+                            modal.insertBefore(container, modal.firstChild);
+
+                            document.getElementById('swag-login-btn').addEventListener('click', async function () {
+                                var u = document.getElementById('swag-user').value;
+                                var p = document.getElementById('swag-pass').value;
+                                var msg = document.getElementById('swag-msg');
+                                msg.style.color = '#64748b';
+                                msg.innerText = 'Authenticating...';
+                                try {
+                                    var res = await fetch('/api/v1/Auth/login', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ usernameOrEmail: u, password: p })
+                                    });
+                                    var data = await res.json();
+                                    if (res.ok && data.token) {
+                                        window.ui.preauthorizeApiKey('Bearer', data.token);
+                                        msg.style.color = '#16a34a';
+                                        msg.innerText = '✓ Authorized as ' + (data.user ? data.user.fullName : 'User') + '!';
+                                    } else {
+                                        msg.style.color = '#dc2626';
+                                        msg.innerText = '❌ ' + (data.message || 'Login failed.');
+                                    }
+                                } catch (e) {
+                                    msg.style.color = '#dc2626';
+                                    msg.innerText = '❌ Request failed.';
+                                }
+                            });
+                        }
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
                 }
             }, 200);
         });
