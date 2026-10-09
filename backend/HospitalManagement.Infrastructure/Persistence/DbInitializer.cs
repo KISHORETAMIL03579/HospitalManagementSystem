@@ -27,6 +27,8 @@ public static class DbInitializer
                     ALTER TABLE Users ADD ResetToken NVARCHAR(256) NULL;
                 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'ResetTokenExpiry')
                     ALTER TABLE Users ADD ResetTokenExpiry DATETIME2 NULL;
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Phone')
+                    ALTER TABLE Users ADD Phone NVARCHAR(MAX) NULL;
                 IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'EmployeeId')
                     ALTER TABLE Users ADD EmployeeId NVARCHAR(50) NULL;
 
