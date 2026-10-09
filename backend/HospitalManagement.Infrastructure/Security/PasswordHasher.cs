@@ -20,14 +20,23 @@ public class PasswordHasher : IPasswordHasher
 
     public bool VerifyPassword(string password, string passwordHash)
     {
-        var parts = passwordHash.Split('-');
-        if (parts.Length != 2) return false;
+        if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(passwordHash)) return false;
 
-        byte[] salt = Convert.FromHexString(parts[0]);
-        byte[] hash = Convert.FromHexString(parts[1]);
+        try
+        {
+            var parts = passwordHash.Split('-');
+            if (parts.Length != 2) return false;
 
-        byte[] inputHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, KeySize);
+            byte[] salt = Convert.FromHexString(parts[0]);
+            byte[] hash = Convert.FromHexString(parts[1]);
 
-        return CryptographicOperations.FixedTimeEquals(hash, inputHash);
+            byte[] inputHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, KeySize);
+
+            return CryptographicOperations.FixedTimeEquals(hash, inputHash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

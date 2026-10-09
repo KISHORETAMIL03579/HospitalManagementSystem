@@ -54,6 +54,11 @@ public class AuthController : ControllerBase
 
             return BadRequest(new { message = "Validation failed.", errors });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected exception during login execution for '{Identifier}'.", request?.UsernameOrEmail);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while processing login.", error = ex.Message });
+        }
     }
 
     /// <summary>
