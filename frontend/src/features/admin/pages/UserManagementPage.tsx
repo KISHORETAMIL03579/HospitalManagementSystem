@@ -19,6 +19,7 @@ import {
   authApi,
   AdminUserDto,
   StaffRegistrationRequest,
+  isPendingStatus,
 } from "../../auth/api/authApi";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
@@ -126,7 +127,7 @@ export const UserManagementPage: React.FC = () => {
     const total = users.length;
     const active = users.filter((u) => u.isActive).length;
     const inactive = users.filter((u) => !u.isActive).length;
-    const pending = requests.filter((r) => r.status === 0).length;
+    const pending = requests.filter((r) => isPendingStatus(r.status)).length;
     const clinical = users.filter(
       (u) =>
         u.roleName.toLowerCase().includes("doc") ||
@@ -167,7 +168,7 @@ export const UserManagementPage: React.FC = () => {
   // Filtered Pending Onboarding Requests
   const filteredRequests = useMemo(() => {
     return requests.filter((r) => {
-      if (r.status !== 0) return false;
+      if (!isPendingStatus(r.status)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const nameMatch = r.fullName.toLowerCase().includes(q);

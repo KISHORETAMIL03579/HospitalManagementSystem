@@ -23,6 +23,17 @@ export interface AdminUserDto {
   createdAt: string;
 }
 
+export type RegistrationStatusType =
+  | 0
+  | 1
+  | 2
+  | "Pending"
+  | "Approved"
+  | "Rejected"
+  | "pending"
+  | "approved"
+  | "rejected";
+
 export interface StaffRegistrationRequest {
   id: number;
   fullName: string;
@@ -34,18 +45,30 @@ export interface StaffRegistrationRequest {
   requestedRoleId: number;
   requestedRoleName: string;
   invitationCode: string;
-  status: 0 | 1 | 2; // 0=Pending, 1=Approved, 2=Rejected
+  status: RegistrationStatusType; // Supports both numeric (0=Pending, 1=Approved, 2=Rejected) and string enum names
   submittedAt: string;
   reviewedAt?: string;
   reviewedByName?: string;
   rejectionReason?: string;
 
   // Email Delivery Status
-  emailStatus: 0 | 1 | 2 | 3 | 4 | 5; // 0=Queued, 1=Sent, 2=Delivered, 3=Failed, 4=Bounced, 5=Retrying
+  emailStatus: 0 | 1 | 2 | 3 | 4 | 5 | string;
   lastEmailAttempt?: string;
   emailErrorMessage?: string;
   emailLogId?: number;
 }
+
+export const isPendingStatus = (
+  status: RegistrationStatusType | undefined | null,
+): boolean => status === 0 || String(status).toLowerCase() === "pending";
+
+export const isApprovedStatus = (
+  status: RegistrationStatusType | undefined | null,
+): boolean => status === 1 || String(status).toLowerCase() === "approved";
+
+export const isRejectedStatus = (
+  status: RegistrationStatusType | undefined | null,
+): boolean => status === 2 || String(status).toLowerCase() === "rejected";
 
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {

@@ -14,7 +14,13 @@ import {
   MailCheck,
   Send,
 } from "lucide-react";
-import { authApi, StaffRegistrationRequest } from "../../auth/api/authApi";
+import {
+  authApi,
+  StaffRegistrationRequest,
+  isPendingStatus,
+  isApprovedStatus,
+  isRejectedStatus,
+} from "../../auth/api/authApi";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 export const StaffApprovalPage: React.FC = () => {
@@ -79,10 +85,13 @@ export const StaffApprovalPage: React.FC = () => {
 
   // Summary Metrics
   const metrics = useMemo(() => {
-    const pending = requests.filter((r) => r.status === 0).length;
-    const approved = requests.filter((r) => r.status === 1).length;
-    const rejected = requests.filter((r) => r.status === 2).length;
-    const failedEmails = requests.filter((r) => r.emailStatus === 3).length;
+    const pending = requests.filter((r) => isPendingStatus(r.status)).length;
+    const approved = requests.filter((r) => isApprovedStatus(r.status)).length;
+    const rejected = requests.filter((r) => isRejectedStatus(r.status)).length;
+    const failedEmails = requests.filter(
+      (r) =>
+        r.emailStatus === 3 || String(r.emailStatus).toLowerCase() === "failed",
+    ).length;
     return {
       pending,
       approved,
@@ -96,9 +105,9 @@ export const StaffApprovalPage: React.FC = () => {
   const filteredRequests = useMemo(() => {
     return requests.filter((r) => {
       // Tab filter
-      if (activeTab === "pending" && r.status !== 0) return false;
-      if (activeTab === "approved" && r.status !== 1) return false;
-      if (activeTab === "rejected" && r.status !== 2) return false;
+      if (activeTab === "pending" && !isPendingStatus(r.status)) return false;
+      if (activeTab === "approved" && !isApprovedStatus(r.status)) return false;
+      if (activeTab === "rejected" && !isRejectedStatus(r.status)) return false;
 
       // Search query
       if (searchQuery.trim()) {
@@ -191,47 +200,60 @@ export const StaffApprovalPage: React.FC = () => {
     }
   };
 
-  const getEmailStatusBadge = (emailStatus: number, errorMessage?: string) => {
-    switch (emailStatus) {
-      case 1:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <MailCheck className="w-3.5 h-3.5 text-emerald-600" />
-            SENT
-          </span>
-        );
-      case 0:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <Send className="w-3.5 h-3.5 text-blue-500" />
-            QUEUED
-          </span>
-        );
-      case 3:
-        return (
-          <span
-            title={errorMessage || "Email delivery failed"}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 cursor-help"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-            FAILED
-          </span>
-        );
-      case 5:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <RefreshCw className="w-3.5 h-3.5 text-purple-600 animate-spin" />
-            RETRYING
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            <Mail className="w-3.5 h-3.5" />
-            PENDING
-          </span>
-        );
+  const getEmailStatusBadge = (
+    emailStatus: number | string,
+    errorMessage?: string,
+  ) => {
+    const statusStr = String(emailStatus).toLowerCase();
+    if (
+      emailStatus === 1 ||
+      statusStr === "sent" ||
+      statusStr === "delivered"
+    ) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <MailCheck className="w-3.5 h-3.5 text-emerald-600" />
+          SENT
+        </span>
+      );
     }
+    if (emailStatus === 0 || statusStr === "queued") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+          <Send className="w-3.5 h-3.5 text-blue-500" />
+          QUEUED
+        </span>
+      );
+    }
+    if (
+      emailStatus === 3 ||
+      statusStr === "failed" ||
+      statusStr === "bounced"
+    ) {
+      return (
+        <span
+          title={errorMessage || "Email delivery failed"}
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 cursor-help"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+          FAILED
+        </span>
+      );
+    }
+    if (emailStatus === 5 || statusStr === "retrying") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+          <RefreshCw className="w-3.5 h-3.5 text-purple-600 animate-spin" />
+          RETRYING
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+        <Mail className="w-3.5 h-3.5" />
+        PENDING
+      </span>
+    );
   };
 
   return (

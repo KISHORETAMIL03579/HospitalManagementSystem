@@ -11,7 +11,13 @@ import {
   Mail,
   ArrowRight,
 } from "lucide-react";
-import { authApi, StaffRegistrationRequest } from "../api/authApi";
+import {
+  authApi,
+  StaffRegistrationRequest,
+  isPendingStatus,
+  isApprovedStatus,
+  isRejectedStatus,
+} from "../api/authApi";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 interface RegistrationStatusModalProps {
@@ -127,19 +133,19 @@ export const RegistrationStatusModal: React.FC<
                 <span className="font-bold text-slate-900 text-sm">
                   {statusRecord.fullName}
                 </span>
-                {statusRecord.status === 0 && (
+                {isPendingStatus(statusRecord.status) && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                     <Clock className="w-3.5 h-3.5 text-amber-600" />
                     PENDING REVIEW
                   </span>
                 )}
-                {statusRecord.status === 1 && (
+                {isApprovedStatus(statusRecord.status) && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     APPROVED & ACTIVATED
                   </span>
                 )}
-                {statusRecord.status === 2 && (
+                {isRejectedStatus(statusRecord.status) && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300">
                     <XCircle className="w-3.5 h-3.5 text-rose-600" />
                     REJECTED
@@ -198,24 +204,24 @@ export const RegistrationStatusModal: React.FC<
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-6 h-6 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${
-                      statusRecord.status === 1
+                      isApprovedStatus(statusRecord.status)
                         ? "bg-emerald-500 text-white"
-                        : statusRecord.status === 2
+                        : isRejectedStatus(statusRecord.status)
                           ? "bg-rose-500 text-white"
                           : "bg-amber-500 text-white animate-pulse"
                     }`}
                   >
-                    {statusRecord.status === 1
+                    {isApprovedStatus(statusRecord.status)
                       ? "✓"
-                      : statusRecord.status === 2
+                      : isRejectedStatus(statusRecord.status)
                         ? "✕"
                         : "2"}
                   </div>
                   <div>
                     <div className="font-bold text-slate-800">
-                      {statusRecord.status === 1
+                      {isApprovedStatus(statusRecord.status)
                         ? "Administrator Approval Completed"
-                        : statusRecord.status === 2
+                        : isRejectedStatus(statusRecord.status)
                           ? "Administrator Review (Rejected)"
                           : "Awaiting Administrator Review"}
                     </div>
@@ -236,7 +242,7 @@ export const RegistrationStatusModal: React.FC<
             </div>
 
             {/* Status Specific Warning & Prompt */}
-            {statusRecord.status === 0 && (
+            {isPendingStatus(statusRecord.status) && (
               <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-amber-600" />
@@ -250,7 +256,7 @@ export const RegistrationStatusModal: React.FC<
               </div>
             )}
 
-            {statusRecord.status === 1 && (
+            {isApprovedStatus(statusRecord.status) && (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
                 <div>
                   <div className="font-bold text-emerald-900">
@@ -274,7 +280,7 @@ export const RegistrationStatusModal: React.FC<
               </div>
             )}
 
-            {statusRecord.status === 2 && (
+            {isRejectedStatus(statusRecord.status) && (
               <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 space-y-1">
                 <div className="font-bold flex items-center gap-1.5">
                   <XCircle className="w-4 h-4 text-rose-600" />
