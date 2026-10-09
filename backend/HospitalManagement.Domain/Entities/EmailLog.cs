@@ -16,3 +16,4 @@ public class EmailLog : BaseEntity
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
     public int Attempts { get; set; } = 1;
 }
+

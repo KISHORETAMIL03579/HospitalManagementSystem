@@ -13,14 +13,23 @@ import {
   LogOut,
   ShieldCheck,
   UserCheck,
+  UserCog,
   Settings,
 } from "lucide-react";
+
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ElementType;
+  badge?: string;
+  badgeColor?: string;
+}
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { label: "Dashboard", path: "/", icon: LayoutDashboard },
     { label: "Patients", path: "/patients", icon: Users },
     {
@@ -30,11 +39,9 @@ export const AppLayout: React.FC = () => {
     },
     { label: "Doctors", path: "/doctors", icon: Stethoscope },
     {
-      label: "Staff Approvals",
-      path: "/admin/approvals",
-      icon: UserCheck,
-      badge: "3 Pending",
-      badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+      label: "User Management",
+      path: "/admin/users",
+      icon: UserCog,
     },
     {
       label: "Prescriptions",
@@ -99,7 +106,8 @@ export const AppLayout: React.FC = () => {
                 {item.badge && (
                   <span
                     className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                      item.badgeColor || "bg-slate-800 text-slate-400 border-slate-700"
+                      item.badgeColor ||
+                      "bg-slate-800 text-slate-400 border-slate-700"
                     }`}
                   >
                     {item.badge}

@@ -9,6 +9,20 @@ import {
   ChangePasswordRequest,
 } from "../types/auth.types";
 
+export interface AdminUserDto {
+  userId: number;
+  fullName: string;
+  email: string;
+  username: string;
+  employeeId?: string;
+  roleId: number;
+  roleName: string;
+  roleEnum: number;
+  isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+}
+
 export interface StaffRegistrationRequest {
   id: number;
   fullName: string;
@@ -81,42 +95,114 @@ export const authApi = {
   },
 
   forgotPassword: async (email: string): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>("/auth/forgot-password", { email });
+    const response = await apiClient.post<{ message: string }>(
+      "/auth/forgot-password",
+      { email },
+    );
     return response.data;
   },
 
-  resetPassword: async (data: { email: string; token: string; newPassword: string; confirmPassword: string }): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>("/auth/reset-password", data);
+  resetPassword: async (data: {
+    email: string;
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(
+      "/auth/reset-password",
+      data,
+    );
     return response.data;
   },
 
-  submitStaffRegistration: async (data: any): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post("/auth/staff-registration-requests", data);
+  // Direct User Management API Endpoints
+  getAllAdminUsers: async (params?: { search?: string; roleId?: number; isActive?: boolean }): Promise<AdminUserDto[]> => {
+    const response = await apiClient.get<AdminUserDto[]>("/admin/users", { params });
     return response.data;
   },
 
-  getStaffRequests: async (status?: number): Promise<StaffRegistrationRequest[]> => {
-    const response = await apiClient.get("/admin/staff-requests", { params: { status } });
+  createAdminUser: async (data: { fullName: string; email: string; username: string; password: string; roleId: number; employeeId?: string }): Promise<AdminUserDto> => {
+    const response = await apiClient.post<AdminUserDto>("/admin/users", data);
     return response.data;
   },
 
-  approveStaffRequest: async (requestId: number, data: { authorizedRoleId?: number; notes?: string }): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post(`/admin/staff-requests/${requestId}/approve`, data);
+  updateAdminUser: async (id: number, data: { fullName: string; email: string; employeeId?: string; roleId: number }): Promise<AdminUserDto> => {
+    const response = await apiClient.put<AdminUserDto>(`/admin/users/${id}`, data);
     return response.data;
   },
 
-  rejectStaffRequest: async (requestId: number, reason: string): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post(`/admin/staff-requests/${requestId}/reject`, { reason });
+  updateAdminUserRole: async (id: number, roleId: number): Promise<AdminUserDto> => {
+    const response = await apiClient.put<AdminUserDto>(`/admin/users/${id}/role`, { roleId });
     return response.data;
   },
 
-  retryStaffEmail: async (requestId: number): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post(`/admin/staff-requests/${requestId}/retry-email`);
+  toggleAdminUserStatus: async (id: number, isActive: boolean): Promise<AdminUserDto> => {
+    const response = await apiClient.patch<AdminUserDto>(`/admin/users/${id}/status`, { isActive });
     return response.data;
   },
 
-  getRegistrationStatus: async (email: string): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.get("/auth/registration-status", { params: { email } });
+  deleteAdminUser: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete<{ message: string }>(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Legacy Approval Support
+  submitStaffRegistration: async (
+    data: any,
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.post(
+      "/auth/staff-registration-requests",
+      data,
+    );
+    return response.data;
+  },
+
+  getStaffRequests: async (
+    status?: number,
+  ): Promise<StaffRegistrationRequest[]> => {
+    const response = await apiClient.get("/admin/staff-requests", {
+      params: { status },
+    });
+    return response.data;
+  },
+
+  approveStaffRequest: async (
+    requestId: number,
+    data: { authorizedRoleId?: number; notes?: string },
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.post(
+      `/admin/staff-requests/${requestId}/approve`,
+      data,
+    );
+    return response.data;
+  },
+
+  rejectStaffRequest: async (
+    requestId: number,
+    reason: string,
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.post(
+      `/admin/staff-requests/${requestId}/reject`,
+      { reason },
+    );
+    return response.data;
+  },
+
+  retryStaffEmail: async (
+    requestId: number,
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.post(
+      `/admin/staff-requests/${requestId}/retry-email`,
+    );
+    return response.data;
+  },
+
+  getRegistrationStatus: async (
+    email: string,
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.get("/auth/registration-status", {
+      params: { email },
+    });
     return response.data;
   },
 };

@@ -9,3 +9,4 @@ public enum EmailDeliveryStatus
     Bounced = 4,
     Retrying = 5
 }
+

@@ -17,13 +17,19 @@ public interface IAuthService
     Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default);
     Task<bool> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default);
 
-    // Workflow 2: Staff Registration & Admin Approval
+    // Staff Registration Requests (Legacy support)
     Task<StaffRegistrationRequestDto> SubmitStaffRegistrationRequestAsync(SubmitStaffRegistrationRequest request, CancellationToken cancellationToken = default);
     Task<IEnumerable<StaffRegistrationRequestDto>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto> ApproveStaffRegistrationRequestAsync(int requestId, int adminUserId, ApproveStaffRequest request, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto> RejectStaffRegistrationRequestAsync(int requestId, int adminUserId, RejectStaffRequest request, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto?> GetStaffRegistrationStatusAsync(string email, CancellationToken cancellationToken = default);
-
-    // Email Retry
     Task<StaffRegistrationRequestDto> RetryStaffNotificationEmailAsync(int requestId, CancellationToken cancellationToken = default);
+
+    // Direct User Management (Admin Dashboard)
+    Task<IEnumerable<AdminUserDto>> GetAllUsersForAdminAsync(string? search = null, int? roleId = null, bool? isActive = null, CancellationToken cancellationToken = default);
+    Task<AdminUserDto> CreateUserByAdminAsync(CreateUserByAdminRequest request, CancellationToken cancellationToken = default);
+    Task<AdminUserDto> UpdateUserByAdminAsync(int userId, UpdateUserByAdminRequest request, CancellationToken cancellationToken = default);
+    Task<AdminUserDto> UpdateUserRoleByAdminAsync(int userId, int roleId, CancellationToken cancellationToken = default);
+    Task<AdminUserDto> ToggleUserStatusByAdminAsync(int targetUserId, int currentAdminId, bool isActive, CancellationToken cancellationToken = default);
+    Task<bool> DeleteUserByAdminAsync(int targetUserId, int currentAdminId, CancellationToken cancellationToken = default);
 }

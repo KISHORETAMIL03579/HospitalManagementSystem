@@ -134,7 +134,7 @@ public class AuthService : IAuthService
         }
 
         // 4. SERVER-ENFORCED ROLE ASSIGNMENT
-        var authorizedRole = invitation.TargetRole 
+        var authorizedRole = invitation.TargetRole
             ?? await _userRepository.GetRoleByIdOrNameAsync(invitation.TargetRoleId, null, cancellationToken);
 
         if (authorizedRole is null)
@@ -621,5 +621,210 @@ public class AuthService : IAuthService
         }
 
         return dto;
+    }
+
+    // Direct Admin User Management Implementations
+    public async Task<IEnumerable<AdminUserDto>> GetAllUsersForAdminAsync(string? search = null, int? roleId = null, bool? isActive = null, CancellationToken cancellationToken = default)
+    {
+        var users = await _userRepository.GetAllUsersAsync(search, roleId, isActive, cancellationToken);
+        return users.Select(MapToAdminUserDto);
+    }
+
+    public async Task<AdminUserDto> CreateUserByAdminAsync(CreateUserByAdminRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            throw new ArgumentException("Full Name, Email, Username, and Password are required.");
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var normalizedUsername = request.Username.Trim().ToLowerInvariant();
+
+        if (await _userRepository.ExistsByEmailAsync(normalizedEmail, cancellationToken))
+        {
+            throw new InvalidOperationException($"Email '{request.Email}' is already registered.");
+        }
+
+        if (await _userRepository.ExistsByUsernameAsync(normalizedUsername, cancellationToken))
+        {
+            throw new InvalidOperationException($"Username '{request.Username}' is already taken.");
+        }
+
+        var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
+        if (role is null)
+        {
+            throw new InvalidOperationException("Selected role could not be resolved.");
+        }
+
+        var newUser = new User
+        {
+            Username = normalizedUsername,
+            Email = normalizedEmail,
+            PasswordHash = _passwordHasher.HashPassword(request.Password),
+            FullName = request.FullName.Trim(),
+            EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
+            RoleId = role.RoleId,
+            Role = role,
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        await _userRepository.AddAsync(newUser, cancellationToken);
+        _logger?.LogInformation("ADMIN ACTION: Admin created user account '{Username}' with role '{Role}'.", newUser.Username, role.Name);
+
+        return MapToAdminUserDto(newUser);
+    }
+
+    public async Task<AdminUserDto> UpdateUserByAdminAsync(int userId, UpdateUserByAdminRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User account #{userId} not found.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+            user.FullName = request.FullName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.Email) && !user.Email.Equals(request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            if (await _userRepository.ExistsByEmailAsync(request.Email.Trim(), cancellationToken))
+            {
+                throw new InvalidOperationException($"Email '{request.Email}' is already in use by another user.");
+            }
+            user.Email = request.Email.Trim().ToLowerInvariant();
+        }
+
+        if (request.RoleId > 0 && user.RoleId != request.RoleId)
+        {
+            var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
+            if (role is null) throw new InvalidOperationException("Selected role is invalid.");
+            user.RoleId = role.RoleId;
+            user.Role = role;
+        }
+
+        user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        _logger?.LogInformation("ADMIN ACTION: Admin updated details for user #{UserId} ('{Email}').", user.UserId, user.Email);
+
+        return MapToAdminUserDto(user);
+    }
+
+    public async Task<AdminUserDto> UpdateUserRoleByAdminAsync(int userId, int roleId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User account #{userId} not found.");
+        }
+
+        var role = await _userRepository.GetRoleByIdOrNameAsync(roleId, null, cancellationToken);
+        if (role is null)
+        {
+            throw new InvalidOperationException("Target role not found.");
+        }
+
+        user.RoleId = role.RoleId;
+        user.Role = role;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        _logger?.LogInformation("ADMIN ACTION: Admin changed role for user #{UserId} to '{Role}'.", user.UserId, role.Name);
+
+        return MapToAdminUserDto(user);
+    }
+
+    public async Task<AdminUserDto> ToggleUserStatusByAdminAsync(int targetUserId, int currentAdminId, bool isActive, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User account #{targetUserId} not found.");
+        }
+
+        // Security check: Prevent self-deactivation
+        if (targetUserId == currentAdminId && !isActive)
+        {
+            throw new InvalidOperationException("Administrators are prohibited from deactivating their own account.");
+        }
+
+        // Security check: Prevent deactivating the last active administrator
+        if (!isActive && user.Role != null && user.Role.Name == "Admin")
+        {
+            var activeAdminCount = await _userRepository.GetActiveAdminCountAsync(cancellationToken);
+            if (activeAdminCount <= 1)
+            {
+                throw new InvalidOperationException("Cannot deactivate the last active administrator account in the system.");
+            }
+        }
+
+        user.IsActive = isActive;
+        if (!isActive)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+        }
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        _logger?.LogInformation("ADMIN ACTION: Admin #{AdminId} changed status of user #{TargetUserId} to IsActive={IsActive}.", currentAdminId, targetUserId, isActive);
+
+        return MapToAdminUserDto(user);
+    }
+
+    public async Task<bool> DeleteUserByAdminAsync(int targetUserId, int currentAdminId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User account #{targetUserId} not found.");
+        }
+
+        if (targetUserId == currentAdminId)
+        {
+            throw new InvalidOperationException("Administrators are prohibited from removing their own account.");
+        }
+
+        if (user.Role != null && user.Role.Name == "Admin")
+        {
+            var activeAdminCount = await _userRepository.GetActiveAdminCountAsync(cancellationToken);
+            if (activeAdminCount <= 1)
+            {
+                throw new InvalidOperationException("Cannot remove the last active administrator account in the system.");
+            }
+        }
+
+        // Soft deletion: Deactivate and revoke refresh tokens to preserve medical record foreign keys and audit history
+        user.IsActive = false;
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        _logger?.LogInformation("ADMIN ACTION: Admin #{AdminId} soft-deleted user #{TargetUserId} ('{Email}'). Medical history preserved.", currentAdminId, targetUserId, user.Email);
+
+        return true;
+    }
+
+    private static AdminUserDto MapToAdminUserDto(User u)
+    {
+        Enum.TryParse<UserRole>(u.Role?.Name, true, out var parsedRole);
+        if ((int)parsedRole == 0 && u.Role != null)
+        {
+            parsedRole = (UserRole)u.Role.Level;
+        }
+
+        return new AdminUserDto
+        {
+            UserId = u.UserId,
+            FullName = u.FullName,
+            Email = u.Email,
+            Username = u.Username,
+            EmployeeId = u.EmployeeId,
+            RoleId = u.RoleId,
+            RoleName = u.Role?.Name ?? "Staff",
+            RoleEnum = parsedRole,
+            IsActive = u.IsActive,
+            LastLoginAt = u.LastLoginAt,
+            CreatedAt = u.CreatedAt
+        };
     }
 }

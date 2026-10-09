@@ -20,21 +20,30 @@ import { formatDateByPattern } from "../../../utils/dateUtils";
 export const StaffApprovalPage: React.FC = () => {
   const [requests, setRequests] = useState<StaffRegistrationRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "approved" | "rejected" | "all"
+  >("pending");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   // Approval Modal State
-  const [selectedRequestForApprove, setSelectedRequestForApprove] = useState<StaffRegistrationRequest | null>(null);
+  const [selectedRequestForApprove, setSelectedRequestForApprove] =
+    useState<StaffRegistrationRequest | null>(null);
   const [roles, setRoles] = useState<{ roleId: number; name: string }[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState<number | undefined>(undefined);
+  const [selectedRoleId, setSelectedRoleId] = useState<number | undefined>(
+    undefined,
+  );
 
   // Rejection Modal State
-  const [selectedRequestForReject, setSelectedRequestForReject] = useState<StaffRegistrationRequest | null>(null);
+  const [selectedRequestForReject, setSelectedRequestForReject] =
+    useState<StaffRegistrationRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>("");
 
   // Feedback Notification
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -45,7 +54,9 @@ export const StaffApprovalPage: React.FC = () => {
       console.error("Failed to load staff registration requests:", err);
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to load staff requests from server.",
+        message:
+          err?.response?.data?.message ||
+          "Failed to load staff requests from server.",
       });
     } finally {
       setLoading(false);
@@ -72,7 +83,13 @@ export const StaffApprovalPage: React.FC = () => {
     const approved = requests.filter((r) => r.status === 1).length;
     const rejected = requests.filter((r) => r.status === 2).length;
     const failedEmails = requests.filter((r) => r.emailStatus === 3).length;
-    return { pending, approved, rejected, failedEmails, total: requests.length };
+    return {
+      pending,
+      approved,
+      rejected,
+      failedEmails,
+      total: requests.length,
+    };
   }, [requests]);
 
   // Filtered Requests
@@ -104,7 +121,8 @@ export const StaffApprovalPage: React.FC = () => {
     setActionLoadingId(selectedRequestForApprove.id);
     try {
       await authApi.approveStaffRequest(selectedRequestForApprove.id, {
-        authorizedRoleId: selectedRoleId || selectedRequestForApprove.requestedRoleId,
+        authorizedRoleId:
+          selectedRoleId || selectedRequestForApprove.requestedRoleId,
       });
       setFeedback({
         type: "success",
@@ -115,7 +133,8 @@ export const StaffApprovalPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to approve staff request.",
+        message:
+          err?.response?.data?.message || "Failed to approve staff request.",
       });
     } finally {
       setActionLoadingId(null);
@@ -127,7 +146,10 @@ export const StaffApprovalPage: React.FC = () => {
     if (!selectedRequestForReject) return;
     setActionLoadingId(selectedRequestForReject.id);
     try {
-      await authApi.rejectStaffRequest(selectedRequestForReject.id, rejectionReason);
+      await authApi.rejectStaffRequest(
+        selectedRequestForReject.id,
+        rejectionReason,
+      );
       setFeedback({
         type: "success",
         message: `Rejected request for ${selectedRequestForReject.fullName}.`,
@@ -138,7 +160,8 @@ export const StaffApprovalPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to reject staff request.",
+        message:
+          err?.response?.data?.message || "Failed to reject staff request.",
       });
     } finally {
       setActionLoadingId(null);
@@ -160,7 +183,8 @@ export const StaffApprovalPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to retry email delivery.",
+        message:
+          err?.response?.data?.message || "Failed to retry email delivery.",
       });
     } finally {
       setActionLoadingId(null);
@@ -224,7 +248,8 @@ export const StaffApprovalPage: React.FC = () => {
                 Staff Approval Requests
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Review staff onboarding applications, assign RBAC permissions, and track email delivery.
+                Review staff onboarding applications, assign RBAC permissions,
+                and track email delivery.
               </p>
             </div>
           </div>
@@ -235,7 +260,9 @@ export const StaffApprovalPage: React.FC = () => {
           disabled={loading}
           className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors self-start sm:self-auto"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+          />
           Refresh Requests
         </button>
       </div>
@@ -286,7 +313,9 @@ export const StaffApprovalPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.pending}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.pending}
+            </span>
             <span className="text-xs text-slate-500">awaiting decision</span>
           </div>
         </div>
@@ -309,7 +338,9 @@ export const StaffApprovalPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.approved}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.approved}
+            </span>
             <span className="text-xs text-slate-500">activated staff</span>
           </div>
         </div>
@@ -332,7 +363,9 @@ export const StaffApprovalPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.rejected}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.rejected}
+            </span>
             <span className="text-xs text-slate-500">access denied</span>
           </div>
         </div>
@@ -356,7 +389,9 @@ export const StaffApprovalPage: React.FC = () => {
                 ({metrics.failedEmails} failed retry)
               </span>
             ) : (
-              <span className="text-xs font-bold text-emerald-600">100% Healthy</span>
+              <span className="text-xs font-bold text-emerald-600">
+                100% Healthy
+              </span>
             )}
           </div>
         </div>
@@ -448,7 +483,10 @@ export const StaffApprovalPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr
+                    key={req.id}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
                     {/* Applicant & Details */}
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
@@ -461,7 +499,9 @@ export const StaffApprovalPage: React.FC = () => {
                             .toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 text-sm">{req.fullName}</div>
+                          <div className="font-bold text-slate-900 text-sm">
+                            {req.fullName}
+                          </div>
                           <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
                             <a
                               href={`mailto:${req.email}`}
@@ -504,7 +544,9 @@ export const StaffApprovalPage: React.FC = () => {
 
                     {/* Submitted At */}
                     <td className="py-4 px-4 text-slate-500 text-xs">
-                      <div>{formatDateByPattern(req.submittedAt, "MMM dd, yyyy")}</div>
+                      <div>
+                        {formatDateByPattern(req.submittedAt, "MMM dd, yyyy")}
+                      </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
                         {formatDateByPattern(req.submittedAt, "hh:mm a")}
                       </div>
@@ -552,10 +594,16 @@ export const StaffApprovalPage: React.FC = () => {
                     {/* Email Status */}
                     <td className="py-4 px-4">
                       <div className="space-y-1">
-                        {getEmailStatusBadge(req.emailStatus, req.emailErrorMessage)}
+                        {getEmailStatusBadge(
+                          req.emailStatus,
+                          req.emailErrorMessage,
+                        )}
                         {req.lastEmailAttempt && (
                           <div className="text-[10px] text-slate-400">
-                            {formatDateByPattern(req.lastEmailAttempt, "hh:mm a")}
+                            {formatDateByPattern(
+                              req.lastEmailAttempt,
+                              "hh:mm a",
+                            )}
                           </div>
                         )}
                       </div>
@@ -589,13 +637,17 @@ export const StaffApprovalPage: React.FC = () => {
                             </button>
                           </>
                         ) : (
-                          <span className="text-[11px] text-slate-400 italic">Decision Recorded</span>
+                          <span className="text-[11px] text-slate-400 italic">
+                            Decision Recorded
+                          </span>
                         )}
 
                         {/* Retry Email Button if email failed */}
                         {req.emailStatus === 3 && (
                           <button
-                            onClick={() => handleRetryEmail(req.id, req.fullName)}
+                            onClick={() =>
+                              handleRetryEmail(req.id, req.fullName)
+                            }
                             disabled={actionLoadingId === req.id}
                             title="Re-send notification email"
                             className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold text-xs flex items-center gap-1 transition-colors"
@@ -627,27 +679,39 @@ export const StaffApprovalPage: React.FC = () => {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Approve Staff Registration</h3>
-                <p className="text-xs text-slate-500">Authorize and provision active user account.</p>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Approve Staff Registration
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Authorize and provision active user account.
+                </p>
               </div>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-500">Applicant:</span>
-                <span className="font-bold text-slate-900">{selectedRequestForApprove.fullName}</span>
+                <span className="font-bold text-slate-900">
+                  {selectedRequestForApprove.fullName}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Work Email:</span>
-                <span className="font-medium text-slate-800">{selectedRequestForApprove.email}</span>
+                <span className="font-medium text-slate-800">
+                  {selectedRequestForApprove.email}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Employee ID:</span>
-                <span className="font-mono text-slate-800">{selectedRequestForApprove.employeeId || "N/A"}</span>
+                <span className="font-mono text-slate-800">
+                  {selectedRequestForApprove.employeeId || "N/A"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Requested Role:</span>
-                <span className="font-bold text-blue-600">{selectedRequestForApprove.requestedRoleName}</span>
+                <span className="font-bold text-blue-600">
+                  {selectedRequestForApprove.requestedRoleName}
+                </span>
               </div>
             </div>
 
@@ -668,7 +732,8 @@ export const StaffApprovalPage: React.FC = () => {
                 ))}
               </select>
               <p className="text-[10px] text-slate-500 italic">
-                Role will be assigned in database transaction. Access token will reflect this role.
+                Role will be assigned in database transaction. Access token will
+                reflect this role.
               </p>
             </div>
 
@@ -686,7 +751,9 @@ export const StaffApprovalPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
               >
-                {actionLoadingId !== null && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId !== null && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Confirm Approval & Activate
               </button>
             </div>
@@ -703,19 +770,27 @@ export const StaffApprovalPage: React.FC = () => {
                 <XCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Reject Staff Registration</h3>
-                <p className="text-xs text-slate-500">Deny access request for this applicant.</p>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Reject Staff Registration
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Deny access request for this applicant.
+                </p>
               </div>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-500">Applicant:</span>
-                <span className="font-bold text-slate-900">{selectedRequestForReject.fullName}</span>
+                <span className="font-bold text-slate-900">
+                  {selectedRequestForReject.fullName}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Email:</span>
-                <span className="font-medium text-slate-800">{selectedRequestForReject.email}</span>
+                <span className="font-medium text-slate-800">
+                  {selectedRequestForReject.email}
+                </span>
               </div>
             </div>
 
@@ -747,7 +822,9 @@ export const StaffApprovalPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
               >
-                {actionLoadingId !== null && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId !== null && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Confirm Rejection
               </button>
             </div>

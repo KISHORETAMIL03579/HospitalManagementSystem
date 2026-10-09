@@ -113,5 +113,143 @@ public class AdminController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Retrieve all registered user accounts for direct administration
+    /// </summary>
+    [HttpGet("users")]
+    [ProducesResponseType(typeof(IEnumerable<AdminUserDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllUsers([FromQuery] string? search, [FromQuery] int? roleId, [FromQuery] bool? isActive, CancellationToken cancellationToken)
+    {
+        var users = await _authService.GetAllUsersForAdminAsync(search, roleId, isActive, cancellationToken);
+        return Ok(users);
+    }
+
+    /// <summary>
+    /// Admin directly creates a new user account
+    /// </summary>
+    [HttpPost("users")]
+    [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserByAdminRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await _authService.CreateUserByAdminAsync(request, cancellationToken);
+            return CreatedAtAction(nameof(GetAllUsers), new { id = user.UserId }, user);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Edit user account details
+    /// </summary>
+    [HttpPut("users/{id:int}")]
+    [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserByAdminRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _authService.UpdateUserByAdminAsync(id, request, cancellationToken);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Change assigned user role directly
+    /// </summary>
+    [HttpPut("users/{id:int}/role")]
+    [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await _authService.UpdateUserRoleByAdminAsync(id, request.RoleId, cancellationToken);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Toggle user account active status (Activate / Deactivate)
+    /// </summary>
+    [HttpPatch("users/{id:int}/status")]
+    [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ToggleUserStatus(int id, [FromBody] UpdateUserStatusRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!int.TryParse(userIdClaim, out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await _authService.ToggleUserStatusByAdminAsync(id, adminUserId, request.IsActive, cancellationToken);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Soft delete / remove user account
+    /// </summary>
+    [HttpDelete("users/{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!int.TryParse(userIdClaim, out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _authService.DeleteUserByAdminAsync(id, adminUserId, cancellationToken);
+            return Ok(new { message = "User account deactivated and archived successfully. Medical records preserved." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 

@@ -21,14 +21,13 @@ interface RegistrationStatusModalProps {
   onNavigateToLogin?: () => void;
 }
 
-export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = ({
-  isOpen,
-  onClose,
-  onNavigateToLogin,
-}) => {
+export const RegistrationStatusModal: React.FC<
+  RegistrationStatusModalProps
+> = ({ isOpen, onClose, onNavigateToLogin }) => {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [statusRecord, setStatusRecord] = useState<StaffRegistrationRequest | null>(null);
+  const [statusRecord, setStatusRecord] =
+    useState<StaffRegistrationRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -47,7 +46,7 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          `No registration application found matching email '${email}'. Please verify your email or submit a new staff registration request.`
+          `No registration application found matching email '${email}'. Please verify your email or submit a new staff registration request.`,
       );
     } finally {
       setLoading(false);
@@ -64,8 +63,12 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-base">Check Onboarding Status</h3>
-              <p className="text-xs text-slate-500">Track your staff registration approval status in CareFlow.</p>
+              <h3 className="font-bold text-slate-900 text-base">
+                Check Onboarding Status
+              </h3>
+              <p className="text-xs text-slate-500">
+                Track your staff registration approval status in CareFlow.
+              </p>
             </div>
           </div>
           <button
@@ -98,7 +101,11 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
               disabled={loading}
               className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 shrink-0"
             >
-              {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+              {loading ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Search className="w-3.5 h-3.5" />
+              )}
               Check Status
             </button>
           </div>
@@ -118,7 +125,9 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
             {/* Applicant Summary Header */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900 text-sm">{statusRecord.fullName}</span>
+                <span className="font-bold text-slate-900 text-sm">
+                  {statusRecord.fullName}
+                </span>
                 {statusRecord.status === 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                     <Clock className="w-3.5 h-3.5 text-amber-600" />
@@ -141,14 +150,18 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
 
               <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
                 <div>
-                  <span className="text-slate-400 block text-[10px]">Requested Role</span>
+                  <span className="text-slate-400 block text-[10px]">
+                    Requested Role
+                  </span>
                   <span className="font-semibold text-slate-800 flex items-center gap-1 mt-0.5">
                     <User className="w-3 h-3 text-blue-500" />
                     {statusRecord.requestedRoleName}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px]">Employee ID</span>
+                  <span className="text-slate-400 block text-[10px]">
+                    Employee ID
+                  </span>
                   <span className="font-mono font-semibold text-slate-800 mt-0.5 block">
                     {statusRecord.employeeId || "N/A"}
                   </span>
@@ -169,9 +182,15 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
                     ✓
                   </div>
                   <div>
-                    <div className="font-bold text-slate-800">Registration Submitted</div>
+                    <div className="font-bold text-slate-800">
+                      Registration Submitted
+                    </div>
                     <div className="text-[10px] text-slate-400">
-                      Submitted on {formatDateByPattern(statusRecord.submittedAt, "MMM dd, yyyy - hh:mm a")}
+                      Submitted on{" "}
+                      {formatDateByPattern(
+                        statusRecord.submittedAt,
+                        "MMM dd, yyyy - hh:mm a",
+                      )}
                     </div>
                   </div>
                 </div>
@@ -183,24 +202,33 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
                       statusRecord.status === 1
                         ? "bg-emerald-500 text-white"
                         : statusRecord.status === 2
-                        ? "bg-rose-500 text-white"
-                        : "bg-amber-500 text-white animate-pulse"
+                          ? "bg-rose-500 text-white"
+                          : "bg-amber-500 text-white animate-pulse"
                     }`}
                   >
-                    {statusRecord.status === 1 ? "✓" : statusRecord.status === 2 ? "✕" : "2"}
+                    {statusRecord.status === 1
+                      ? "✓"
+                      : statusRecord.status === 2
+                        ? "✕"
+                        : "2"}
                   </div>
                   <div>
                     <div className="font-bold text-slate-800">
                       {statusRecord.status === 1
                         ? "Administrator Approval Completed"
                         : statusRecord.status === 2
-                        ? "Administrator Review (Rejected)"
-                        : "Awaiting Administrator Review"}
+                          ? "Administrator Review (Rejected)"
+                          : "Awaiting Administrator Review"}
                     </div>
                     {statusRecord.reviewedAt && (
                       <div className="text-[10px] text-slate-400">
-                        Reviewed on {formatDateByPattern(statusRecord.reviewedAt, "MMM dd, yyyy - hh:mm a")}
-                        {statusRecord.reviewedByName && ` by ${statusRecord.reviewedByName}`}
+                        Reviewed on{" "}
+                        {formatDateByPattern(
+                          statusRecord.reviewedAt,
+                          "MMM dd, yyyy - hh:mm a",
+                        )}
+                        {statusRecord.reviewedByName &&
+                          ` by ${statusRecord.reviewedByName}`}
                       </div>
                     )}
                   </div>
@@ -216,7 +244,9 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
                   Account Access Disabled During Review
                 </div>
                 <p className="text-[11px] text-amber-700 leading-relaxed">
-                  In compliance with hospital dynamic RBAC compliance, staff accounts pending review have zero access to patient records, clinical notes, billing, or pharmacy modules.
+                  In compliance with hospital dynamic RBAC compliance, staff
+                  accounts pending review have zero access to patient records,
+                  clinical notes, billing, or pharmacy modules.
                 </p>
               </div>
             )}
@@ -224,7 +254,9 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
             {statusRecord.status === 1 && (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
                 <div>
-                  <div className="font-bold text-emerald-900">Your account is ready for sign in!</div>
+                  <div className="font-bold text-emerald-900">
+                    Your account is ready for sign in!
+                  </div>
                   <div className="text-[11px] text-emerald-700 mt-0.5">
                     Authorized Role: {statusRecord.requestedRoleName}
                   </div>
@@ -250,7 +282,13 @@ export const RegistrationStatusModal: React.FC<RegistrationStatusModalProps> = (
                   Registration Request Rejected
                 </div>
                 <p className="text-[11px] text-rose-700">
-                  Reason provided: <em>"{statusRecord.rejectionReason || "HR credentials verification failed."}"</em>
+                  Reason provided:{" "}
+                  <em>
+                    "
+                    {statusRecord.rejectionReason ||
+                      "HR credentials verification failed."}
+                    "
+                  </em>
                 </p>
               </div>
             )}

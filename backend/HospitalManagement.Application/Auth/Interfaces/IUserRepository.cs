@@ -34,4 +34,8 @@ public interface IUserRepository
     Task<EmailLog> SaveEmailLogAsync(EmailLog emailLog, CancellationToken cancellationToken = default);
     Task<EmailLog?> GetLatestEmailLogForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default);
     Task<IEnumerable<EmailLog>> GetEmailLogsForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default);
+
+    // Admin User Management
+    Task<IEnumerable<User>> GetAllUsersAsync(string? search = null, int? roleId = null, bool? isActive = null, CancellationToken cancellationToken = default);
+    Task<int> GetActiveAdminCountAsync(CancellationToken cancellationToken = default);
 }

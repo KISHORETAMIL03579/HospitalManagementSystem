@@ -161,7 +161,7 @@ export const LoginForm: React.FC = () => {
       });
 
       setRegSuccess(
-        "Staff registration request submitted successfully! Your application is now PENDING administrator review."
+        "Staff registration request submitted successfully! Your application is now PENDING administrator review.",
       );
     } catch (err: any) {
       const msg =
@@ -236,7 +236,9 @@ export const LoginForm: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900">
-                {activeTab === "login" ? "Staff Sign In" : "Create Staff Account"}
+                {activeTab === "login"
+                  ? "Staff Sign In"
+                  : "Create Staff Account"}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 {activeTab === "login"
@@ -284,7 +286,8 @@ export const LoginForm: React.FC = () => {
                     <span>{notRegisteredMessage}</span>
                   </div>
                   <p className="text-[11px] text-amber-700">
-                    This account identity is not registered. Would you like to create a new staff account now?
+                    This account identity is not registered. Would you like to
+                    create a new staff account now?
                   </p>
                   <button
                     type="button"
@@ -298,7 +301,9 @@ export const LoginForm: React.FC = () => {
               ) : loginError ? (
                 <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-800 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>Invalid password or username. Please check your credentials.</span>
+                  <span>
+                    Invalid password or username. Please check your credentials.
+                  </span>
                 </div>
               ) : null}
 
@@ -496,7 +501,8 @@ export const LoginForm: React.FC = () => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:outline-indigo-600 bg-white font-mono"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Use the invitation code provided by your hospital administrator for role verification.
+                  Use the invitation code provided by your hospital
+                  administrator for role verification.
                 </p>
               </div>
 
@@ -599,7 +605,9 @@ export const LoginForm: React.FC = () => {
                 className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <UserPlus className="w-4 h-4" />
-                {isRegistering ? "Registering Staff Account..." : "Create Account"}
+                {isRegistering
+                  ? "Registering Staff Account..."
+                  : "Create Account"}
               </button>
             </form>
           )}
@@ -627,21 +635,27 @@ export const LoginForm: React.FC = () => {
             <div className="grid grid-cols-3 gap-1.5 text-[11px] pt-2 animate-in fade-in duration-200">
               <button
                 type="button"
-                onClick={() => handleDemoFill("admin@careflow.com", "Admin123!")}
+                onClick={() =>
+                  handleDemoFill("admin@careflow.com", "Admin123!")
+                }
                 className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
               >
                 Admin
               </button>
               <button
                 type="button"
-                onClick={() => handleDemoFill("doctor@careflow.com", "Doctor123!")}
+                onClick={() =>
+                  handleDemoFill("doctor@careflow.com", "Doctor123!")
+                }
                 className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
               >
                 Doctor
               </button>
               <button
                 type="button"
-                onClick={() => handleDemoFill("nurse@careflow.com", "Nurse123!")}
+                onClick={() =>
+                  handleDemoFill("nurse@careflow.com", "Nurse123!")
+                }
                 className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
               >
                 Nurse
@@ -688,7 +702,8 @@ export const LoginForm: React.FC = () => {
                   Account Recovery Workflow
                 </span>
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mt-0.5">
-                  <KeyRound className="w-5 h-5 text-indigo-600" /> Reset Staff Password
+                  <KeyRound className="w-5 h-5 text-indigo-600" /> Reset Staff
+                  Password
                 </h2>
               </div>
               <button
@@ -734,7 +749,9 @@ export const LoginForm: React.FC = () => {
                 className="space-y-4"
               >
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Enter your registered hospital work email address below. We will send a secure password reset link to your verified account.
+                  Enter your registered hospital work email address below. We
+                  will send a secure password reset link to your verified
+                  account.
                 </p>
 
                 <div>

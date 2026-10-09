@@ -242,4 +242,40 @@ public class UserRepository : IUserRepository
             .OrderByDescending(e => e.SentAt)
             .ToListAsync(cancellationToken);
     }
+
+    // Admin User Management Methods
+    public async Task<IEnumerable<User>> GetAllUsersAsync(string? search = null, int? roleId = null, bool? isActive = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Users
+            .Include(u => u.Role)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalized = search.Trim().ToLower();
+            query = query.Where(u => u.FullName.ToLower().Contains(normalized) ||
+                                     u.Email.ToLower().Contains(normalized) ||
+                                     u.Username.ToLower().Contains(normalized) ||
+                                     (u.EmployeeId != null && u.EmployeeId.ToLower().Contains(normalized)));
+        }
+
+        if (roleId.HasValue && roleId.Value > 0)
+        {
+            query = query.Where(u => u.RoleId == roleId.Value);
+        }
+
+        if (isActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == isActive.Value);
+        }
+
+        return await query.OrderByDescending(u => u.CreatedAt).ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetActiveAdminCountAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .CountAsync(u => u.IsActive && u.Role != null && u.Role.Name == "Admin", cancellationToken);
+    }
 }

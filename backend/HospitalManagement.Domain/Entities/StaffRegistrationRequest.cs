@@ -17,7 +17,7 @@ public class StaffRegistrationRequest : BaseEntity
     public string Username { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string? EmployeeId { get; set; }
-    
+
     public int? DepartmentId { get; set; }
     public Department? Department { get; set; }
 

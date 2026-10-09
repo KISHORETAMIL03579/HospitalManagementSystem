@@ -514,7 +514,9 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-500 italic">
-                  Note: These attributes are managed through authorized administration. Users cannot self-modify assigned clinical roles or permission levels.
+                  Note: These attributes are managed through authorized
+                  administration. Users cannot self-modify assigned clinical
+                  roles or permission levels.
                 </p>
               </div>
 
