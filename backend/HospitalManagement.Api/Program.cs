@@ -166,12 +166,12 @@ app.UseSwaggerUI(options =>
                                 <div style=""display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;"">
                                     <div style=""flex: 1; min-width: 180px;"">
                                         <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Username or Work Email</label>
-                                        <input id=""swag-user"" type=""text"" placeholder=""admin@careflow.com"" value=""admin@careflow.com"" style=""width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
+                                        <input id=""swag-user"" type=""text"" placeholder=""Enter username or work email"" value="""" style=""width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
                                     </div>
                                     <div style=""flex: 1; min-width: 180px;"">
                                         <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Password</label>
                                         <div style=""position: relative; width: 100%; box-sizing: border-box;"">
-                                            <input id=""swag-pass"" type=""password"" placeholder=""••••••••"" value=""Admin123!"" style=""width: 100%; box-sizing: border-box; padding: 8px 36px 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
+                                            <input id=""swag-pass"" type=""password"" placeholder=""Enter password"" value="""" style=""width: 100%; box-sizing: border-box; padding: 8px 36px 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
                                             <button id=""swag-toggle-pass"" type=""button"" title=""Toggle password visibility"" style=""position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; cursor: pointer; padding: 2px 4px; opacity: 0.7;"">👁️</button>
                                         </div>
                                     </div>

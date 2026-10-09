@@ -297,7 +297,7 @@ export const LoginForm: React.FC = () => {
                       type="text"
                       {...register("usernameOrEmail")}
                       className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      placeholder="e.g. doctor@careflow.com or sjenkins"
+                      placeholder="Enter username or work email"
                     />
                   </div>
                   {errors.usernameOrEmail && (
@@ -589,84 +589,6 @@ export const LoginForm: React.FC = () => {
                   : "Create Account"}
               </button>
             </form>
-          )}
-        </div>
-
-        {/* DEMO ONBOARDING CREDENTIALS ACCORDION (COLLAPSIBLE FOR PRODUCTION UI) */}
-        <div className="border-t border-slate-100 pt-3">
-          <button
-            type="button"
-            onClick={() => setShowDemoCredentials(!showDemoCredentials)}
-            className="w-full text-xs text-slate-500 hover:text-indigo-600 font-medium flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-50 transition select-none"
-          >
-            <span className="flex items-center gap-1.5 font-semibold text-[11px] uppercase tracking-wider text-slate-400">
-              <KeyRound className="w-3.5 h-3.5 text-indigo-500" />
-              Development & Demo Credentials
-            </span>
-            {showDemoCredentials ? (
-              <ChevronUp className="w-4 h-4 text-slate-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-slate-400" />
-            )}
-          </button>
-
-          {showDemoCredentials && (
-            <div className="grid grid-cols-3 gap-1.5 text-[11px] pt-2 animate-in fade-in duration-200">
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("admin@careflow.com", "Admin123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("doctor@careflow.com", "Doctor123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Doctor
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("nurse@careflow.com", "Nurse123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Nurse
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("reception@careflow.com", "Reception123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Receptionist
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("patient@careflow.com", "Patient123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Patient
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleDemoFill("pharmacist@careflow.com", "Pharma123!")
-                }
-                className="py-1 px-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded font-medium border border-slate-200 transition"
-              >
-                Pharmacist
-              </button>
-            </div>
           )}
         </div>
       </div>
