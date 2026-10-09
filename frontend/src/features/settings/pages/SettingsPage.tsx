@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { authApi } from "../../auth/api/authApi";
+import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import {
   applyThemeMode,
   applyFontSize,
@@ -453,14 +454,11 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
+                  <PhoneNumberInput
+                    id="settings-phone"
+                    label="Phone Number"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    onChange={(val) => setPhone(val)}
                   />
                 </div>
 

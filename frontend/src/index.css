@@ -1,9 +1,48 @@
 @import "tailwindcss";
+@import "react-international-phone/style.css";
 
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 antialiased font-sans min-h-screen transition-colors duration-200;
   }
+}
+
+/* React International Phone Styling Fixes */
+.react-international-phone-country-selector-button {
+  height: 40px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  border-top-left-radius: 0.5rem !important;
+  border-bottom-left-radius: 0.5rem !important;
+  border-color: #cbd5e1 !important;
+}
+
+.react-international-phone-input {
+  height: 40px !important;
+  border-top-right-radius: 0.5rem !important;
+  border-bottom-right-radius: 0.5rem !important;
+  border-color: #cbd5e1 !important;
+  font-size: 0.875rem !important;
+}
+
+html.dark .react-international-phone-country-selector-button {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .react-international-phone-country-selector-dropdown {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+html.dark .react-international-phone-country-selector-dropdown-item {
+  color: #f8fafc !important;
+}
+
+html.dark .react-international-phone-country-selector-dropdown-item:hover {
+  background-color: #334155 !important;
 }
 
 /* Global Dark Mode Styling Rules */
