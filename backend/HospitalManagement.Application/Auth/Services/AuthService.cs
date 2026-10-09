@@ -733,7 +733,7 @@ public class AuthService : IAuthService
 
     public async Task<AdminUserDto> ToggleUserStatusByAdminAsync(int targetUserId, int currentAdminId, bool isActive, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        var user = await _userRepository.GetTrackedByIdAsync(targetUserId, cancellationToken);
         if (user is null)
         {
             throw new KeyNotFoundException($"User account #{targetUserId} not found.");
@@ -746,12 +746,16 @@ public class AuthService : IAuthService
         }
 
         // Security check: Prevent deactivating the last active administrator
-        if (!isActive && user.Role != null && user.Role.Name == "Admin")
+        if (!isActive)
         {
-            var activeAdminCount = await _userRepository.GetActiveAdminCountAsync(cancellationToken);
-            if (activeAdminCount <= 1)
+            var targetUserProjected = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+            if (targetUserProjected?.Role != null && targetUserProjected.Role.Name == "Admin")
             {
-                throw new InvalidOperationException("Cannot deactivate the last active administrator account in the system.");
+                var activeAdminCount = await _userRepository.GetActiveAdminCountAsync(cancellationToken);
+                if (activeAdminCount <= 1)
+                {
+                    throw new InvalidOperationException("Cannot deactivate the last active administrator account in the system.");
+                }
             }
         }
 
@@ -771,7 +775,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> DeleteUserByAdminAsync(int targetUserId, int currentAdminId, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        var user = await _userRepository.GetTrackedByIdAsync(targetUserId, cancellationToken);
         if (user is null)
         {
             throw new KeyNotFoundException($"User account #{targetUserId} not found.");
@@ -782,7 +786,8 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Administrators are prohibited from removing their own account.");
         }
 
-        if (user.Role != null && user.Role.Name == "Admin")
+        var targetUserProjected = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        if (targetUserProjected?.Role != null && targetUserProjected.Role.Name == "Admin")
         {
             var activeAdminCount = await _userRepository.GetActiveAdminCountAsync(cancellationToken);
             if (activeAdminCount <= 1)
