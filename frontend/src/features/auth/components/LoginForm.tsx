@@ -29,6 +29,8 @@ import {
   Send,
 } from "lucide-react";
 
+import { RegistrationStatusModal } from "./RegistrationStatusModal";
+
 export const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const { login, isLoggingIn, loginError } = useAuth();
@@ -39,9 +41,10 @@ export const LoginForm: React.FC = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
-  // Remember Me & Forgot Password state
+  // Remember Me, Forgot Password & Registration Status Modal state
   const [rememberMe, setRememberMe] = useState(true);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
 
@@ -147,22 +150,19 @@ export const LoginForm: React.FC = () => {
 
     setIsRegistering(true);
     try {
-      await authApi.register({
+      await authApi.submitStaffRegistration({
+        fullName: regData.fullName.trim(),
         username: regData.username.trim(),
         email: regData.email.trim(),
         password: regData.password,
-        fullName: regData.fullName.trim(),
-        role: assignedRole,
+        confirmPassword: regData.confirmPassword,
+        employeeId: regData.employeeId?.trim(),
+        invitationCode: regData.invitationCode?.trim() || "RECEPT-MAIN",
       });
 
-      setRegSuccess("Account registered successfully! Signing you in...");
-      setTimeout(async () => {
-        await login({
-          usernameOrEmail: regData.email,
-          password: regData.password,
-        });
-        navigate("/");
-      }, 1000);
+      setRegSuccess(
+        "Staff registration request submitted successfully! Your application is now PENDING administrator review."
+      );
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
@@ -354,7 +354,7 @@ export const LoginForm: React.FC = () => {
                   )}
                 </div>
 
-                {/* Remember Me & Forgot Password Row */}
+                {/* Remember Me, Status Checker & Forgot Password Row */}
                 <div className="flex items-center justify-between text-xs">
                   <label className="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
                     <input
@@ -363,16 +363,27 @@ export const LoginForm: React.FC = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span>Remember me on this device</span>
+                    <span>Remember me</span>
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsForgotModalOpen(true)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
-                  >
-                    Forgot password?
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsStatusModalOpen(true)}
+                      className="text-xs font-semibold text-slate-600 hover:text-indigo-600 transition flex items-center gap-1"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                      Check Request Status
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotModalOpen(true)}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                 </div>
 
                 <button
@@ -763,6 +774,12 @@ export const LoginForm: React.FC = () => {
           </div>
         </div>
       )}
+      {/* REGISTRATION STATUS CHECKER MODAL */}
+      <RegistrationStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onNavigateToLogin={() => setActiveTab("login")}
+      />
     </div>
   );
 };

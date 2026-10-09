@@ -9,6 +9,30 @@ import {
   ChangePasswordRequest,
 } from "../types/auth.types";
 
+export interface StaffRegistrationRequest {
+  id: number;
+  fullName: string;
+  email: string;
+  username: string;
+  employeeId?: string;
+  departmentId?: number;
+  departmentName?: string;
+  requestedRoleId: number;
+  requestedRoleName: string;
+  invitationCode: string;
+  status: 0 | 1 | 2; // 0=Pending, 1=Approved, 2=Rejected
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedByName?: string;
+  rejectionReason?: string;
+
+  // Email Delivery Status
+  emailStatus: 0 | 1 | 2 | 3 | 4 | 5; // 0=Queued, 1=Sent, 2=Delivered, 3=Failed, 4=Bounced, 5=Retrying
+  lastEmailAttempt?: string;
+  emailErrorMessage?: string;
+  emailLogId?: number;
+}
+
 export const authApi = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>(
@@ -66,23 +90,33 @@ export const authApi = {
     return response.data;
   },
 
-  submitStaffRegistration: async (data: any): Promise<any> => {
+  submitStaffRegistration: async (data: any): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post("/auth/staff-registration-requests", data);
     return response.data;
   },
 
-  getStaffRequests: async (status?: string): Promise<any[]> => {
+  getStaffRequests: async (status?: number): Promise<StaffRegistrationRequest[]> => {
     const response = await apiClient.get("/admin/staff-requests", { params: { status } });
     return response.data;
   },
 
-  approveStaffRequest: async (requestId: number, data: { authorizedRoleId?: number; notes?: string }): Promise<any> => {
+  approveStaffRequest: async (requestId: number, data: { authorizedRoleId?: number; notes?: string }): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(`/admin/staff-requests/${requestId}/approve`, data);
     return response.data;
   },
 
-  rejectStaffRequest: async (requestId: number, reason: string): Promise<any> => {
+  rejectStaffRequest: async (requestId: number, reason: string): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(`/admin/staff-requests/${requestId}/reject`, { reason });
+    return response.data;
+  },
+
+  retryStaffEmail: async (requestId: number): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.post(`/admin/staff-requests/${requestId}/retry-email`);
+    return response.data;
+  },
+
+  getRegistrationStatus: async (email: string): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.get("/auth/registration-status", { params: { email } });
     return response.data;
   },
 };

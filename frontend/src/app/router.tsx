@@ -8,6 +8,7 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
+import { StaffApprovalPage } from "../features/admin/pages/StaffApprovalPage";
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
           {
             path: "appointments",
             element: <AppointmentListPage />,
+          },
+          {
+            path: "admin/approvals",
+            element: <StaffApprovalPage />,
           },
           {
             path: "settings",

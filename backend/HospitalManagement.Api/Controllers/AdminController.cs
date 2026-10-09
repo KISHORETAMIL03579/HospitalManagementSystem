@@ -93,5 +93,25 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Retry sending notification email for a staff registration request
+    /// </summary>
+    [HttpPost("staff-requests/{id:int}/retry-email")]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RetryStaffNotificationEmail(int id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var retried = await _authService.RetryStaffNotificationEmailAsync(id, cancellationToken);
+            _logger.LogInformation("Admin requested email retry for staff request #{RequestId}", id);
+            return Ok(retried);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }
 

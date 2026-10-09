@@ -1,4 +1,5 @@
 using HospitalManagement.Domain.Entities;
+using HospitalManagement.Domain.Enums;
 
 namespace HospitalManagement.Application.Auth.DTOs;
 
@@ -19,5 +20,10 @@ public class StaffRegistrationRequestDto
     public DateTime? ReviewedAt { get; set; }
     public string? ReviewedByName { get; set; }
     public string? RejectionReason { get; set; }
-}
 
+    // Email Delivery Tracking Fields
+    public EmailDeliveryStatus EmailStatus { get; set; } = EmailDeliveryStatus.Sent;
+    public DateTime? LastEmailAttempt { get; set; }
+    public string? EmailErrorMessage { get; set; }
+    public int? EmailLogId { get; set; }
+}

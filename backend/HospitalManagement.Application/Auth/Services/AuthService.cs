@@ -318,19 +318,26 @@ public class AuthService : IAuthService
 
         await _userRepository.AddStaffRegistrationRequestAsync(staffReq, cancellationToken);
 
-        // Send Email Notifications
-        await _emailService.SendRegistrationConfirmationEmailAsync(staffReq.Email, staffReq.FullName, cancellationToken);
-        await _emailService.SendAdminRegistrationAlertEmailAsync("admin@careflow.com", staffReq.FullName, targetRole?.Name ?? "Staff", cancellationToken);
+        // Send Email Notifications & Link to Request
+        var emailLog = await _emailService.SendRegistrationConfirmationEmailAsync(staffReq.Email, staffReq.FullName, staffReq.StaffRegistrationRequestId, cancellationToken);
+        await _emailService.SendAdminRegistrationAlertEmailAsync("admin@careflow.com", staffReq.FullName, targetRole?.Name ?? "Staff", staffReq.StaffRegistrationRequestId, cancellationToken);
 
-        _logger?.LogInformation("STAFF REGISTRATION: Pending request #{Id} created for '{Email}' with requested role '{Role}'.", staffReq.StaffRegistrationRequestId, staffReq.Email, targetRole?.Name);
+        _logger?.LogInformation("STAFF REGISTRATION: Pending request #{Id} created for '{Email}' with requested role '{Role}'. Email Status: {EmailStatus}", staffReq.StaffRegistrationRequestId, staffReq.Email, targetRole?.Name, emailLog.Status);
 
-        return MapToStaffRequestDto(staffReq);
+        return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
     }
 
     public async Task<IEnumerable<StaffRegistrationRequestDto>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default)
     {
         var requests = await _userRepository.GetStaffRegistrationRequestsAsync(status, cancellationToken);
-        return requests.Select(MapToStaffRequestDto);
+        var dtos = new List<StaffRegistrationRequestDto>();
+
+        foreach (var req in requests)
+        {
+            dtos.Add(await MapToStaffRequestDtoAsync(req, cancellationToken));
+        }
+
+        return dtos;
     }
 
     public async Task<StaffRegistrationRequestDto> ApproveStaffRegistrationRequestAsync(int requestId, int adminUserId, ApproveStaffRequest request, CancellationToken cancellationToken = default)
@@ -391,12 +398,12 @@ public class AuthService : IAuthService
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
 
         // Send Approval Email
-        await _emailService.SendStaffApprovalEmailAsync(staffReq.Email, staffReq.FullName, role.Name, cancellationToken);
+        var emailLog = await _emailService.SendStaffApprovalEmailAsync(staffReq.Email, staffReq.FullName, role.Name, staffReq.StaffRegistrationRequestId, cancellationToken);
 
-        _logger?.LogInformation("ADMIN APPROVAL: Request #{Id} for '{Email}' APPROVED by Admin #{AdminId}. User account #{UserId} created with role '{Role}'.",
-            requestId, staffReq.Email, adminUserId, newUser.UserId, role.Name);
+        _logger?.LogInformation("ADMIN APPROVAL: Request #{Id} for '{Email}' APPROVED by Admin #{AdminId}. User account #{UserId} created with role '{Role}'. Email Status: {EmailStatus}",
+            requestId, staffReq.Email, adminUserId, newUser.UserId, role.Name, emailLog.Status);
 
-        return MapToStaffRequestDto(staffReq);
+        return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
     }
 
     public async Task<StaffRegistrationRequestDto> RejectStaffRegistrationRequestAsync(int requestId, int adminUserId, RejectStaffRequest request, CancellationToken cancellationToken = default)
@@ -423,19 +430,47 @@ public class AuthService : IAuthService
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
 
         // Send Rejection Email
-        await _emailService.SendStaffRejectionEmailAsync(staffReq.Email, staffReq.FullName, staffReq.RejectionReason, cancellationToken);
+        var emailLog = await _emailService.SendStaffRejectionEmailAsync(staffReq.Email, staffReq.FullName, staffReq.RejectionReason, staffReq.StaffRegistrationRequestId, cancellationToken);
 
-        _logger?.LogInformation("ADMIN REJECTION: Request #{Id} for '{Email}' REJECTED by Admin #{AdminId}. Reason: {Reason}",
-            requestId, staffReq.Email, adminUserId, staffReq.RejectionReason);
+        _logger?.LogInformation("ADMIN REJECTION: Request #{Id} for '{Email}' REJECTED by Admin #{AdminId}. Reason: {Reason}. Email Status: {EmailStatus}",
+            requestId, staffReq.Email, adminUserId, staffReq.RejectionReason, emailLog.Status);
 
-        return MapToStaffRequestDto(staffReq);
+        return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
+    }
+
+    public async Task<StaffRegistrationRequestDto> RetryStaffNotificationEmailAsync(int requestId, CancellationToken cancellationToken = default)
+    {
+        var staffReq = await _userRepository.GetStaffRegistrationRequestByIdAsync(requestId, cancellationToken);
+        if (staffReq is null)
+        {
+            throw new KeyNotFoundException($"Staff registration request #{requestId} was not found.");
+        }
+
+        EmailLog emailLog;
+        if (staffReq.Status == RegistrationStatus.Approved)
+        {
+            var roleName = staffReq.RequestedRole?.Name ?? "Staff";
+            emailLog = await _emailService.SendStaffApprovalEmailAsync(staffReq.Email, staffReq.FullName, roleName, requestId, cancellationToken);
+        }
+        else if (staffReq.Status == RegistrationStatus.Rejected)
+        {
+            emailLog = await _emailService.SendStaffRejectionEmailAsync(staffReq.Email, staffReq.FullName, staffReq.RejectionReason ?? "Administrative review completed.", requestId, cancellationToken);
+        }
+        else
+        {
+            emailLog = await _emailService.SendRegistrationConfirmationEmailAsync(staffReq.Email, staffReq.FullName, requestId, cancellationToken);
+        }
+
+        _logger?.LogInformation("RETRY EMAIL: Dispatched notification retry for request #{Id} ({Email}). Outcome: {Status}", requestId, staffReq.Email, emailLog.Status);
+
+        return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
     }
 
     public async Task<StaffRegistrationRequestDto?> GetStaffRegistrationStatusAsync(string email, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email)) return null;
         var request = await _userRepository.GetStaffRegistrationRequestByEmailAsync(email, cancellationToken);
-        return request is null ? null : MapToStaffRequestDto(request);
+        return request is null ? null : await MapToStaffRequestDtoAsync(request, cancellationToken);
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
@@ -554,9 +589,9 @@ public class AuthService : IAuthService
         };
     }
 
-    private static StaffRegistrationRequestDto MapToStaffRequestDto(StaffRegistrationRequest s)
+    private async Task<StaffRegistrationRequestDto> MapToStaffRequestDtoAsync(StaffRegistrationRequest s, CancellationToken cancellationToken = default)
     {
-        return new StaffRegistrationRequestDto
+        var dto = new StaffRegistrationRequestDto
         {
             Id = s.StaffRegistrationRequestId,
             FullName = s.FullName,
@@ -572,7 +607,19 @@ public class AuthService : IAuthService
             SubmittedAt = s.CreatedAt,
             ReviewedAt = s.ReviewedAt,
             ReviewedByName = s.ReviewedByUser?.FullName,
-            RejectionReason = s.RejectionReason
+            RejectionReason = s.RejectionReason,
+            EmailStatus = EmailDeliveryStatus.Sent
         };
+
+        var emailLog = await _userRepository.GetLatestEmailLogForStaffRequestAsync(s.StaffRegistrationRequestId, cancellationToken);
+        if (emailLog != null)
+        {
+            dto.EmailStatus = emailLog.Status;
+            dto.LastEmailAttempt = emailLog.SentAt;
+            dto.EmailErrorMessage = emailLog.ErrorMessage;
+            dto.EmailLogId = emailLog.EmailLogId;
+        }
+
+        return dto;
     }
 }

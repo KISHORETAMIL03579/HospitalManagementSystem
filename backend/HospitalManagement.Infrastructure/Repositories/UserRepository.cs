@@ -209,4 +209,37 @@ public class UserRepository : IUserRepository
         return await _context.StaffRegistrationRequests
             .AnyAsync(s => s.Email.ToLower() == normalized && s.Status == RegistrationStatus.Pending, cancellationToken);
     }
+
+    // Email Logs & Delivery Tracking Methods
+    public async Task<EmailLog> SaveEmailLogAsync(EmailLog emailLog, CancellationToken cancellationToken = default)
+    {
+        if (emailLog.EmailLogId == 0)
+        {
+            await _context.EmailLogs.AddAsync(emailLog, cancellationToken);
+        }
+        else
+        {
+            _context.EmailLogs.Update(emailLog);
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+        return emailLog;
+    }
+
+    public async Task<EmailLog?> GetLatestEmailLogForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default)
+    {
+        return await _context.EmailLogs
+            .AsNoTracking()
+            .Where(e => e.StaffRegistrationRequestId == requestId)
+            .OrderByDescending(e => e.SentAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<EmailLog>> GetEmailLogsForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default)
+    {
+        return await _context.EmailLogs
+            .AsNoTracking()
+            .Where(e => e.StaffRegistrationRequestId == requestId)
+            .OrderByDescending(e => e.SentAt)
+            .ToListAsync(cancellationToken);
+    }
 }

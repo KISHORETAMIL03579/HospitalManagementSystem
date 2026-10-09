@@ -12,6 +12,7 @@ import {
   Activity,
   LogOut,
   ShieldCheck,
+  UserCheck,
   Settings,
 } from "lucide-react";
 
@@ -28,6 +29,13 @@ export const AppLayout: React.FC = () => {
       icon: Calendar,
     },
     { label: "Doctors", path: "/doctors", icon: Stethoscope },
+    {
+      label: "Staff Approvals",
+      path: "/admin/approvals",
+      icon: UserCheck,
+      badge: "3 Pending",
+      badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    },
     {
       label: "Prescriptions",
       path: "/prescriptions",
@@ -89,7 +97,11 @@ export const AppLayout: React.FC = () => {
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                      item.badgeColor || "bg-slate-800 text-slate-400 border-slate-700"
+                    }`}
+                  >
                     {item.badge}
                   </span>
                 )}

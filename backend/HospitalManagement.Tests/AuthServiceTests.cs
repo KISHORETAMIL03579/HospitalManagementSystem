@@ -345,7 +345,7 @@ public class AuthServiceTests
         Assert.NotNull(capturedReq);
         Assert.Equal(RegistrationStatus.Pending, capturedReq.Status);
         Assert.Equal("sarah.jenkins@hospital.com", capturedReq.Email);
-        _emailServiceMock.Verify(e => e.SendRegistrationConfirmationEmailAsync("sarah.jenkins@hospital.com", "Dr. Sarah Jenkins", It.IsAny<CancellationToken>()), Times.Once);
+        _emailServiceMock.Verify(e => e.SendRegistrationConfirmationEmailAsync("sarah.jenkins@hospital.com", "Dr. Sarah Jenkins", It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

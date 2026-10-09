@@ -29,4 +29,9 @@ public interface IUserRepository
     Task<IEnumerable<StaffRegistrationRequest>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status, CancellationToken cancellationToken = default);
     Task UpdateStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default);
     Task<bool> ExistsPendingStaffRequestByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    // Email Logs & Delivery Tracking
+    Task<EmailLog> SaveEmailLogAsync(EmailLog emailLog, CancellationToken cancellationToken = default);
+    Task<EmailLog?> GetLatestEmailLogForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<EmailLog>> GetEmailLogsForStaffRequestAsync(int requestId, CancellationToken cancellationToken = default);
 }

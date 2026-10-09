@@ -104,6 +104,28 @@ public static class DbInitializer
                         CONSTRAINT FK_StaffReq_Users FOREIGN KEY (ReviewedByUserId) REFERENCES Users(UserId)
                     );
                 END
+
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EmailLogs')
+                BEGIN
+                    CREATE TABLE EmailLogs (
+                        EmailLogId INT IDENTITY(1,1) PRIMARY KEY,
+                        StaffRegistrationRequestId INT NULL,
+                        RecipientEmail NVARCHAR(256) NOT NULL,
+                        Subject NVARCHAR(256) NOT NULL,
+                        TemplateName NVARCHAR(100) NOT NULL,
+                        Status INT NOT NULL DEFAULT 0,
+                        ErrorMessage NVARCHAR(MAX) NULL,
+                        SentAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                        Attempts INT NOT NULL DEFAULT 1,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                        CreatedBy NVARCHAR(100) NULL,
+                        UpdatedAt DATETIME2 NULL,
+                        UpdatedBy NVARCHAR(100) NULL,
+                        IsActive BIT NOT NULL DEFAULT 1,
+                        RowVersion VARBINARY(MAX) NULL,
+                        CONSTRAINT FK_EmailLogs_StaffReq FOREIGN KEY (StaffRegistrationRequestId) REFERENCES StaffRegistrationRequests(StaffRegistrationRequestId) ON DELETE SET NULL
+                    );
+                END
             ");
         }
         catch (Exception ex)
@@ -687,6 +709,107 @@ public static class DbInitializer
             await context.InvitationCodes.AddRangeAsync(invitations);
             await context.SaveChangesAsync();
             logger.LogInformation("Invitation Codes seeded successfully.");
+        }
+
+        // 8. Seed Sample Staff Registration Requests & Email Logs if empty
+        if (!await context.StaffRegistrationRequests.AnyAsync())
+        {
+            logger.LogInformation("Seeding sample Staff Registration Requests & Email Logs...");
+            var roles = await context.Roles.ToDictionaryAsync(r => r.Name);
+            var depts = await context.Departments.ToDictionaryAsync(d => d.Name);
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "admin");
+
+            var req1 = new StaffRegistrationRequest
+            {
+                FullName = "Dr. Sarah Jenkins",
+                Email = "sarah@example.com",
+                Username = "sjenkins",
+                PasswordHash = passwordHasher.HashPassword("Sarah123!"),
+                EmployeeId = "EMP-00125",
+                DepartmentId = depts.ContainsKey("Cardiology") ? depts["Cardiology"].DepartmentId : null,
+                RequestedRoleId = roles["Doctor"].RoleId,
+                InvitationCode = "DOC-CARDIO",
+                Status = RegistrationStatus.Pending,
+                CreatedAt = DateTime.UtcNow.AddHours(-3)
+            };
+
+            var req2 = new StaffRegistrationRequest
+            {
+                FullName = "Michael Thomas",
+                Email = "michael@example.com",
+                Username = "mthomas",
+                PasswordHash = passwordHasher.HashPassword("Michael123!"),
+                EmployeeId = "EMP-00126",
+                DepartmentId = depts.ContainsKey("Neurology") ? depts["Neurology"].DepartmentId : null,
+                RequestedRoleId = roles["Nurse"].RoleId,
+                InvitationCode = "NURSE-ICU",
+                Status = RegistrationStatus.Pending,
+                CreatedAt = DateTime.UtcNow.AddHours(-2)
+            };
+
+            var req3 = new StaffRegistrationRequest
+            {
+                FullName = "Priya Sharma",
+                Email = "priya@example.com",
+                Username = "psharma",
+                PasswordHash = passwordHasher.HashPassword("Priya123!"),
+                EmployeeId = "EMP-00127",
+                DepartmentId = depts.ContainsKey("Pediatrics") ? depts["Pediatrics"].DepartmentId : null,
+                RequestedRoleId = roles["Receptionist"].RoleId,
+                InvitationCode = "RECEPT-MAIN",
+                Status = RegistrationStatus.Pending,
+                CreatedAt = DateTime.UtcNow.AddHours(-1)
+            };
+
+            var req4 = new StaffRegistrationRequest
+            {
+                FullName = "Dr. David Kim",
+                Email = "david.kim@example.com",
+                Username = "dkim",
+                PasswordHash = passwordHasher.HashPassword("David123!"),
+                EmployeeId = "EMP-00120",
+                DepartmentId = depts.ContainsKey("Cardiology") ? depts["Cardiology"].DepartmentId : null,
+                RequestedRoleId = roles["Doctor"].RoleId,
+                InvitationCode = "DOC-CARDIO",
+                Status = RegistrationStatus.Approved,
+                ReviewedByUserId = adminUser?.UserId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-1),
+                CreatedAt = DateTime.UtcNow.AddDays(-2)
+            };
+
+            var req5 = new StaffRegistrationRequest
+            {
+                FullName = "Alex Carter",
+                Email = "alex.carter@example.com",
+                Username = "acarter",
+                PasswordHash = passwordHasher.HashPassword("Alex123!"),
+                EmployeeId = "EMP-00118",
+                DepartmentId = depts.ContainsKey("Orthopedics") ? depts["Orthopedics"].DepartmentId : null,
+                RequestedRoleId = roles["Receptionist"].RoleId,
+                InvitationCode = "RECEPT-MAIN",
+                Status = RegistrationStatus.Rejected,
+                ReviewedByUserId = adminUser?.UserId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-1),
+                RejectionReason = "Employee ID could not be verified with HR credentials database.",
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            };
+
+            await context.StaffRegistrationRequests.AddRangeAsync(req1, req2, req3, req4, req5);
+            await context.SaveChangesAsync();
+
+            // Seed initial Email Delivery Logs for requests
+            var logs = new[]
+            {
+                new EmailLog { StaffRegistrationRequestId = req1.StaffRegistrationRequestId, RecipientEmail = req1.Email, Subject = "CareFlow HMS - Staff Registration Request Received", TemplateName = "RegistrationConfirmation", Status = EmailDeliveryStatus.Sent, SentAt = req1.CreatedAt },
+                new EmailLog { StaffRegistrationRequestId = req2.StaffRegistrationRequestId, RecipientEmail = req2.Email, Subject = "CareFlow HMS - Staff Registration Request Received", TemplateName = "RegistrationConfirmation", Status = EmailDeliveryStatus.Sent, SentAt = req2.CreatedAt },
+                new EmailLog { StaffRegistrationRequestId = req3.StaffRegistrationRequestId, RecipientEmail = req3.Email, Subject = "CareFlow HMS - Staff Registration Request Received", TemplateName = "RegistrationConfirmation", Status = EmailDeliveryStatus.Failed, ErrorMessage = "SMTP connection timeout to local server port 1025.", SentAt = req3.CreatedAt },
+                new EmailLog { StaffRegistrationRequestId = req4.StaffRegistrationRequestId, RecipientEmail = req4.Email, Subject = "CareFlow HMS - Staff Account Approved & Activated", TemplateName = "StaffApproval", Status = EmailDeliveryStatus.Sent, SentAt = req4.ReviewedAt ?? DateTime.UtcNow },
+                new EmailLog { StaffRegistrationRequestId = req5.StaffRegistrationRequestId, RecipientEmail = req5.Email, Subject = "CareFlow HMS - Staff Registration Request Update", TemplateName = "StaffRejection", Status = EmailDeliveryStatus.Sent, SentAt = req5.ReviewedAt ?? DateTime.UtcNow }
+            };
+
+            await context.EmailLogs.AddRangeAsync(logs);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Sample Staff Registration Requests & Email Logs seeded successfully.");
         }
     }
 }
