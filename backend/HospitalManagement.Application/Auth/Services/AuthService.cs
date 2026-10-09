@@ -697,7 +697,7 @@ public class AuthService : IAuthService
             var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
             if (role is null) throw new InvalidOperationException("Selected role is invalid.");
             user.RoleId = role.RoleId;
-            user.Role = null; // Detach stale navigation property so EF Core updates RoleId in SQL
+            user.Role = role;
         }
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
@@ -724,7 +724,7 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = role.RoleId;
-        user.Role = null; // Detach stale navigation property so EF Core updates RoleId in SQL
+        user.Role = role;
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin changed role for user #{UserId} to '{Role}'.", user.UserId, role.Name);
