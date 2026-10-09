@@ -22,6 +22,7 @@ import {
   X,
   Calendar,
 } from "lucide-react";
+import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 
 export const DoctorListPage: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<
@@ -447,17 +448,12 @@ export const DoctorListPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Phone
-                  </label>
-                  <input
-                    type="text"
+                  <PhoneNumberInput
+                    id="doctor-phone"
+                    label="Phone"
                     required
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    onChange={(phone) => setFormData({ ...formData, phone })}
                   />
                 </div>
                 <div>

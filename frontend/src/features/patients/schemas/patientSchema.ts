@@ -24,7 +24,7 @@ export const createPatientSchema = z.object({
   phone: z
     .string()
     .min(1, "Phone number is required")
-    .max(20, "Phone number cannot exceed 20 characters"),
+    .max(30, "Phone number cannot exceed 30 characters"),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   address: z
     .string()
@@ -32,7 +32,7 @@ export const createPatientSchema = z.object({
     .optional()
     .or(z.literal("")),
   emergencyContactName: z.string().max(100).optional().or(z.literal("")),
-  emergencyContactPhone: z.string().max(20).optional().or(z.literal("")),
+  emergencyContactPhone: z.string().max(30).optional().or(z.literal("")),
 });
 
 export type CreatePatientFormValues = z.infer<typeof createPatientSchema>;

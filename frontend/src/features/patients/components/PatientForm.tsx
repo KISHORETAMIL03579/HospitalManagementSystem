@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createPatientSchema,
@@ -8,6 +8,7 @@ import {
 import { useCreatePatient } from "../hooks/useCreatePatient";
 import { Gender, BloodGroup } from "../types/patient.types";
 import { UserPlus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 
 interface PatientFormProps {
   onSuccess?: () => void;
@@ -18,6 +19,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -192,20 +194,20 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                {...register("phone")}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="+1 (555) 000-0000"
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneNumberInput
+                    id="phone"
+                    label="Phone Number"
+                    required
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.phone?.message}
+                  />
+                )}
               />
-              {errors.phone && (
-                <p className="text-xs text-rose-500 mt-1">
-                  {errors.phone.message}
-                </p>
-              )}
             </div>
 
             <div>
@@ -263,14 +265,18 @@ export const PatientForm: React.FC<PatientFormProps> = ({ onSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                {...register("emergencyContactPhone")}
-                className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="+1 (555) 999-8888"
+              <Controller
+                name="emergencyContactPhone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneNumberInput
+                    id="emergencyContactPhone"
+                    label="Contact Phone"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    error={errors.emergencyContactPhone?.message}
+                  />
+                )}
               />
             </div>
           </div>
