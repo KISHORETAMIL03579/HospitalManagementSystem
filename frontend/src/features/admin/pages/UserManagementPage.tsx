@@ -76,11 +76,13 @@ export const UserManagementPage: React.FC = () => {
   });
 
   // Edit Form State
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: "",
     email: "",
     phone: "",
     employeeId: "",
+    password: "",
     roleId: 0,
   });
 
@@ -892,11 +894,13 @@ export const UserManagementPage: React.FC = () => {
                         <button
                           onClick={() => {
                             setEditingUser(u);
+                            setShowEditPassword(false);
                             setEditForm({
                               fullName: u.fullName,
                               email: u.email,
                               phone: u.phone || "",
                               employeeId: u.employeeId || "",
+                              password: "",
                               roleId: u.roleId,
                             });
                           }}
@@ -1183,6 +1187,38 @@ export const UserManagementPage: React.FC = () => {
                   value={editForm.phone}
                   onChange={(phone) => setEditForm({ ...editForm, phone })}
                 />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  New Password (Optional Reset)
+                </label>
+                <div className="relative">
+                  <input
+                    type={showEditPassword ? "text" : "password"}
+                    placeholder="Leave blank to keep existing password"
+                    value={editForm.password || ""}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, password: e.target.value })
+                    }
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(!showEditPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showEditPassword ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Enter a new password only if you want to reset this user's
+                  password.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

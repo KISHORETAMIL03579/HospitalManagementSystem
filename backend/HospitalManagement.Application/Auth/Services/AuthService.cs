@@ -703,6 +703,11 @@ public class AuthService : IAuthService
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
 
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            user.PasswordHash = _passwordHasher.HashPassword(request.Password.Trim());
+        }
+
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin updated details for user #{UserId} ('{Email}').", user.UserId, user.Email);
 

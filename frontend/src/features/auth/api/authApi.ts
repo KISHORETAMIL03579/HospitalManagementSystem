@@ -171,6 +171,7 @@ export const authApi = {
       email: string;
       employeeId?: string;
       phone?: string;
+      password?: string;
       roleId: number;
     },
   ): Promise<AdminUserDto> => {

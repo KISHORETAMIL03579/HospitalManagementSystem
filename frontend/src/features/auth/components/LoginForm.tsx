@@ -20,8 +20,6 @@ import {
   ShieldCheck,
   Stethoscope,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Mail,
   X,
   Send,
@@ -44,9 +42,6 @@ export const LoginForm: React.FC = () => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
-
-  // Demo Credentials Accordion State (Collapsed by Default in Production UI)
-  const [showDemoCredentials, setShowDemoCredentials] = useState(false);
 
   // Registration state
   const [regData, setRegData] = useState({
@@ -150,12 +145,6 @@ export const LoginForm: React.FC = () => {
     } finally {
       setIsRegistering(false);
     }
-  };
-
-  const handleDemoFill = (username: string, pass: string) => {
-    setActiveTab("login");
-    setValue("usernameOrEmail", username);
-    setValue("password", pass);
   };
 
   return (
