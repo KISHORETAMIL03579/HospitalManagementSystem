@@ -1,0 +1,51 @@
+name: Code Quality & Build Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-quality:
+    name: Backend (.NET) Format & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore HospitalManagement.slnx
+
+      - name: Check code formatting
+        run: dotnet format HospitalManagement.slnx --verify-no-changes --no-restore
+
+      - name: Run unit tests
+        run: dotnet test HospitalManagement.slnx --no-restore --verbosity normal
+
+  frontend-quality:
+    name: Frontend (React / TS) Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend & TypeScript check
+        working-directory: ./frontend
+        run: npm run build

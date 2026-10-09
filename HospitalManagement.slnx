@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/HospitalManagement.Api/HospitalManagement.Api.csproj" />
+    <Project Path="backend/HospitalManagement.Application/HospitalManagement.Application.csproj" />
+    <Project Path="backend/HospitalManagement.Domain/HospitalManagement.Domain.csproj" />
+    <Project Path="backend/HospitalManagement.Infrastructure/HospitalManagement.Infrastructure.csproj" />
+    <Project Path="backend/HospitalManagement.Tests/HospitalManagement.Tests.csproj" />
+  </Folder>
+</Solution>

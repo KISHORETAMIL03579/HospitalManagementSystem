@@ -1,0 +1,41 @@
+#!/bin/sh
+
+echo "================================================="
+echo "  CareFlow HMS Pre-Push Verification Check"
+echo "================================================="
+
+echo ""
+echo "[1/3] Checking Backend (.NET) Formatting..."
+dotnet format HospitalManagement.slnx --verify-no-changes
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Push blocked: Backend C# code is not formatted according to style guidelines."
+    echo "💡 Run 'dotnet format HospitalManagement.slnx' to fix formatting."
+    exit 1
+fi
+
+echo ""
+echo "[2/3] Running Backend (.NET) Tests..."
+dotnet test HospitalManagement.slnx
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Push blocked: Backend tests failed."
+    exit 1
+fi
+
+echo ""
+echo "[3/3] Verifying Frontend (React/TypeScript) Build..."
+if [ -d "frontend" ]; then
+    cd frontend
+    npm run build
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "❌ Push blocked: Frontend build or TypeScript checks failed."
+        exit 1
+    fi
+    cd ..
+fi
+
+echo ""
+echo "✅ All code formatting, tests, and frontend build checks passed! Push permitted."
+exit 0
