@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePatients } from "../../patients/hooks/usePatients";
 import { useDoctors, useDepartments } from "../../doctors/hooks/useDoctors";
 import { useAppointments } from "../../appointments/hooks/useAppointments";
@@ -22,8 +22,6 @@ import {
   ShieldCheck,
   TrendingUp,
   Clock,
-  Building,
-  CheckCircle,
 } from "lucide-react";
 
 export const DashboardPage: React.FC = () => {
@@ -42,7 +40,7 @@ export const DashboardPage: React.FC = () => {
     useAppointments();
 
   // Real-time Live Clock state
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -51,13 +49,15 @@ export const DashboardPage: React.FC = () => {
 
   // Computed Real-time Metrics
   const totalPatientsCount = patientData?.totalCount ?? 0;
-  const totalDoctorsCount = doctors?.length ?? 0;
   const activeDoctorsCount = doctors?.filter((d) => d.isActive).length ?? 0;
   const totalDepartmentsCount = departments?.length ?? 0;
   const totalAppointmentsCount = appointments?.length ?? 0;
 
   // Filter today's appointments
-  const todayDateString = new Date().toISOString().split("T")[0];
+  const todayDateString = useMemo(
+    () => currentTime.toISOString().split("T")[0],
+    [currentTime],
+  );
   const todayAppointments =
     appointments?.filter((a) =>
       a.appointmentDate.startsWith(todayDateString),

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useDoctors } from "../../doctors/hooks/useDoctors";
 import { usePatients } from "../../patients/hooks/usePatients";
 import { useCreateAppointment } from "../hooks/useAppointments";
@@ -44,10 +44,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const { data: patientResponse } = usePatients("", 1, 100);
   const createAppointment = useCreateAppointment();
 
+  const minDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+
   const [patientId, setPatientId] = useState<number>(preselectedPatientId || 0);
   const [doctorId, setDoctorId] = useState<number>(preselectedDoctorId || 0);
   const [appointmentDate, setAppointmentDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    () => new Date().toISOString().split("T")[0],
   );
   const [timeSlot, setTimeSlot] = useState<string>("09:00");
   const [reason, setReason] = useState<string>("");
@@ -154,7 +156,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <input
                 type="date"
                 required
-                min={new Date().toISOString().split("T")[0]}
+                min={minDate}
                 value={appointmentDate}
                 onChange={(e) => setAppointmentDate(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"

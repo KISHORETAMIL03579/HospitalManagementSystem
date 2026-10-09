@@ -27,9 +27,6 @@ import {
   ChevronRight,
   Clock3,
   X,
-  FileText,
-  Phone,
-  ShieldCheck,
 } from "lucide-react";
 
 type SortField = "appointmentDate" | "patientName" | "doctorName" | "status";

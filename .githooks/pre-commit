@@ -22,3 +22,4 @@ git add -u
 
 echo "✅ Pre-commit formatting completed."
 exit 0
+

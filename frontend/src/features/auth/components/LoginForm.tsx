@@ -15,12 +15,10 @@ import {
   KeyRound,
   UserPlus,
   CheckCircle,
-  ShieldAlert,
   Eye,
   EyeOff,
   ShieldCheck,
   Stethoscope,
-  Building,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -36,7 +34,6 @@ export const LoginForm: React.FC = () => {
   const { login, isLoggingIn, loginError } = useAuth();
   const navigate = useNavigate();
 
-  const [availableRoles, setAvailableRoles] = useState<RoleDto[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
@@ -135,17 +132,6 @@ export const LoginForm: React.FC = () => {
     if (regData.password.length < 6) {
       setRegError("Password must be at least 6 characters long.");
       return;
-    }
-
-    // Role assignment logic based on invitation code
-    let assignedRole = UserRole.Receptionist;
-    const code = regData.invitationCode.trim().toUpperCase();
-    if (code.includes("ADMIN")) {
-      assignedRole = UserRole.Admin;
-    } else if (code.includes("DOC") || code.includes("DOCTOR")) {
-      assignedRole = UserRole.Doctor;
-    } else if (code.includes("NURSE")) {
-      assignedRole = UserRole.Nurse;
     }
 
     setIsRegistering(true);

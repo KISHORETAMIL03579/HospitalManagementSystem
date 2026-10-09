@@ -21,7 +21,6 @@ import {
   ChevronRight,
   X,
   Calendar,
-  ShieldCheck,
 } from "lucide-react";
 
 export const DoctorListPage: React.FC = () => {

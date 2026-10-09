@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   XCircle,
   ShieldCheck,
-  Building2,
   User,
   AlertTriangle,
   RefreshCw,

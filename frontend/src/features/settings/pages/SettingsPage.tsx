@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { authApi } from "../../auth/api/authApi";
@@ -12,7 +12,6 @@ import {
   User,
   Sun,
   Moon,
-  Globe,
   Bell,
   Shield,
   Sliders,
@@ -28,12 +27,9 @@ import {
   Building2,
   Hash,
   Activity,
-  LogOut,
   Laptop,
-  Smartphone,
   Eye,
   EyeOff,
-  Sparkles,
   ShieldCheck,
 } from "lucide-react";
 

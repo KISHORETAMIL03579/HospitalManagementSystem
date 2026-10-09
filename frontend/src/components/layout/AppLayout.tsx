@@ -12,7 +12,6 @@ import {
   Activity,
   LogOut,
   ShieldCheck,
-  UserCheck,
   UserCog,
   Settings,
 } from "lucide-react";

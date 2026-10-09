@@ -45,8 +45,8 @@ export const StaffApprovalPage: React.FC = () => {
     message: string;
   } | null>(null);
 
-  const fetchRequests = async () => {
-    setLoading(true);
+  const fetchRequests = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const data = await authApi.getStaffRequests();
       setRequests(data);

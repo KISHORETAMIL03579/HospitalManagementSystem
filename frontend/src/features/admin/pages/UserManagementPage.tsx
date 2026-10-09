@@ -9,15 +9,10 @@ import {
   RefreshCw,
   Edit,
   Trash2,
-  Lock,
   User,
-  Mail,
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Building2,
-  KeyRound,
-  ShieldAlert,
   UserCog,
 } from "lucide-react";
 import { authApi, AdminUserDto } from "../../auth/api/authApi";
@@ -75,8 +70,8 @@ export const UserManagementPage: React.FC = () => {
   // Target Role for Role Change Modal
   const [targetRoleId, setTargetRoleId] = useState<number>(0);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const data = await authApi.getAllAdminUsers();
       setUsers(data);

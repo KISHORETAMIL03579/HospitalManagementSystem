@@ -122,10 +122,11 @@ export const PatientTable: React.FC = () => {
     );
   };
 
+  const items = data?.items;
   const sortedItems = useMemo(() => {
-    if (!data?.items) return [];
+    if (!items) return [];
 
-    return [...data.items].sort((a, b) => {
+    return [...items].sort((a, b) => {
       let valA: any = a[sortField];
       let valB: any = b[sortField];
 
@@ -141,7 +142,7 @@ export const PatientTable: React.FC = () => {
       if (valA > valB) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
-  }, [data?.items, sortField, sortOrder]);
+  }, [items, sortField, sortOrder]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
