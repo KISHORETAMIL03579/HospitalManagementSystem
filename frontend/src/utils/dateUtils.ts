@@ -41,16 +41,44 @@ export function formatDateByPattern(
   const pattern =
     formatPref || localStorage.getItem("careflow_dateFormat") || "DD/MM/YYYY";
 
+  if (pattern === "hh:mm a" || pattern === "HH:mm" || pattern === "hh:mm") {
+    const hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, "0");
+    if (pattern === "HH:mm") {
+      return `${hours.toString().padStart(2, "0")}:${minutes}`;
+    }
+    const period = hours >= 12 ? "PM" : "AM";
+    const h12 = hours % 12 || 12;
+    return `${h12.toString().padStart(2, "0")}:${minutes} ${period}`;
+  }
+
+  const monthsShort = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const day = d.getDate().toString().padStart(2, "0");
-  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const monthNum = (d.getMonth() + 1).toString().padStart(2, "0");
+  const monthName = monthsShort[d.getMonth()];
   const year = d.getFullYear().toString();
 
-  if (pattern === "MM/DD/YYYY") {
-    return `${month}/${day}/${year}`;
+  if (pattern === "MMM dd, yyyy") {
+    return `${monthName} ${day}, ${year}`;
+  } else if (pattern === "MM/DD/YYYY") {
+    return `${monthNum}/${day}/${year}`;
   } else if (pattern === "YYYY-MM-DD") {
-    return `${year}-${month}-${day}`;
+    return `${year}-${monthNum}-${day}`;
   } else {
-    return `${day}/${month}/${year}`;
+    return `${day}/${monthNum}/${year}`;
   }
 }
 
