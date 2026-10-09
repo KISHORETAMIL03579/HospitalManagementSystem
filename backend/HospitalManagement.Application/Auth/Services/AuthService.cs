@@ -382,7 +382,6 @@ public class AuthService : IAuthService
             FullName = staffReq.FullName,
             EmployeeId = staffReq.EmployeeId,
             RoleId = role.RoleId,
-            Role = role,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
@@ -392,7 +391,6 @@ public class AuthService : IAuthService
         // Update Staff Request Status
         staffReq.Status = RegistrationStatus.Approved;
         staffReq.ReviewedByUserId = adminUserId;
-        staffReq.ReviewedByUser = adminUser;
         staffReq.ReviewedAt = DateTime.UtcNow;
 
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
@@ -424,7 +422,6 @@ public class AuthService : IAuthService
         staffReq.Status = RegistrationStatus.Rejected;
         staffReq.RejectionReason = string.IsNullOrWhiteSpace(request.Reason) ? "Administrative policy non-compliance." : request.Reason.Trim();
         staffReq.ReviewedByUserId = adminUserId;
-        staffReq.ReviewedByUser = adminUser;
         staffReq.ReviewedAt = DateTime.UtcNow;
 
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
@@ -700,7 +697,6 @@ public class AuthService : IAuthService
             var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
             if (role is null) throw new InvalidOperationException("Selected role is invalid.");
             user.RoleId = role.RoleId;
-            user.Role = role;
         }
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
@@ -726,7 +722,6 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = role.RoleId;
-        user.Role = role;
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin changed role for user #{UserId} to '{Role}'.", user.UserId, role.Name);
