@@ -8,4 +8,5 @@ public class CreateUserByAdminRequest
     public string Password { get; set; } = string.Empty;
     public int RoleId { get; set; }
     public string? EmployeeId { get; set; }
+    public string? Phone { get; set; }
 }

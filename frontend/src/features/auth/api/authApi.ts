@@ -15,6 +15,7 @@ export interface AdminUserDto {
   email: string;
   username: string;
   employeeId?: string;
+  phone?: string;
   roleId: number;
   roleName: string;
   roleEnum: number;
@@ -157,6 +158,7 @@ export const authApi = {
     password: string;
     roleId: number;
     employeeId?: string;
+    phone?: string;
   }): Promise<AdminUserDto> => {
     const response = await apiClient.post<AdminUserDto>("/admin/users", data);
     return response.data;
@@ -168,6 +170,7 @@ export const authApi = {
       fullName: string;
       email: string;
       employeeId?: string;
+      phone?: string;
       roleId: number;
     },
   ): Promise<AdminUserDto> => {

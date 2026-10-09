@@ -9,6 +9,7 @@ public class AdminUserDto
     public string Email { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string? EmployeeId { get; set; }
+    public string? Phone { get; set; }
     public int RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
     public UserRole RoleEnum { get; set; }

@@ -57,6 +57,7 @@ public class AdminUserService : IAdminUserService
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             FullName = request.FullName.Trim(),
             EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
+            Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
             RoleId = role.RoleId,
             Role = role,
             CreatedAt = DateTime.UtcNow,
@@ -97,6 +98,10 @@ public class AdminUserService : IAdminUserService
         }
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
+        if (request.Phone != null)
+        {
+            user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+        }
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin updated details for user #{UserId} ('{Email}').", user.UserId, user.Email);
@@ -233,6 +238,7 @@ public class AdminUserService : IAdminUserService
             Email = u.Email,
             Username = u.Username,
             EmployeeId = u.EmployeeId,
+            Phone = u.Phone,
             RoleId = u.RoleId,
             RoleName = u.Role?.Name ?? "Staff",
             RoleEnum = parsedRole,

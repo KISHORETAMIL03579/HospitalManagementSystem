@@ -11,6 +11,7 @@ public class User : BaseEntity
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string? EmployeeId { get; set; }
+    public string? Phone { get; set; }
 
     public int RoleId { get; set; }
     public Role Role { get; set; } = null!;

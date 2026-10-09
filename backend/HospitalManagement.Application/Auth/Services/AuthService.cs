@@ -522,6 +522,7 @@ public class AuthService : IAuthService
         user.TimeFormat = request.TimeFormat;
         if (!string.IsNullOrWhiteSpace(request.TimeZone)) user.TimeZone = request.TimeZone.Trim();
         if (!string.IsNullOrWhiteSpace(request.Language)) user.Language = request.Language.Trim();
+        if (request.Phone != null) user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         return MapToUserDto(user);
@@ -578,6 +579,7 @@ public class AuthService : IAuthService
             Username = u.Username,
             Email = u.Email,
             FullName = u.FullName,
+            Phone = u.Phone,
             Role = parsedRole,
             LastLoginAt = u.LastLoginAt,
             TimeFormat = u.TimeFormat,
@@ -822,6 +824,7 @@ public class AuthService : IAuthService
             Email = u.Email,
             Username = u.Username,
             EmployeeId = u.EmployeeId,
+            Phone = u.Phone,
             RoleId = u.RoleId,
             RoleName = u.Role?.Name ?? "Staff",
             RoleEnum = parsedRole,

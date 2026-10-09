@@ -21,6 +21,7 @@ import {
   StaffRegistrationRequest,
   isPendingStatus,
 } from "../../auth/api/authApi";
+import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 export const UserManagementPage: React.FC = () => {
@@ -68,6 +69,7 @@ export const UserManagementPage: React.FC = () => {
     fullName: "",
     email: "",
     username: "",
+    phone: "",
     password: "",
     roleId: 4, // Default Receptionist
     employeeId: "EMP-2026-101",
@@ -77,6 +79,7 @@ export const UserManagementPage: React.FC = () => {
   const [editForm, setEditForm] = useState({
     fullName: "",
     email: "",
+    phone: "",
     employeeId: "",
     roleId: 0,
   });
@@ -205,6 +208,7 @@ export const UserManagementPage: React.FC = () => {
         fullName: "",
         email: "",
         username: "",
+        phone: "",
         password: "",
         roleId: roles[0]?.roleId || 4,
         employeeId: `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -821,6 +825,11 @@ export const UserManagementPage: React.FC = () => {
                                 {u.employeeId}
                               </span>
                             )}
+                            {u.phone && (
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">
+                                📞 {u.phone}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -886,6 +895,7 @@ export const UserManagementPage: React.FC = () => {
                             setEditForm({
                               fullName: u.fullName,
                               email: u.email,
+                              phone: u.phone || "",
                               employeeId: u.employeeId || "",
                               roleId: u.roleId,
                             });
@@ -1044,6 +1054,15 @@ export const UserManagementPage: React.FC = () => {
               </div>
 
               <div>
+                <PhoneNumberInput
+                  id="create-user-phone"
+                  label="Phone Number (Optional)"
+                  value={createForm.phone}
+                  onChange={(phone) => setCreateForm({ ...createForm, phone })}
+                />
+              </div>
+
+              <div>
                 <label className="block font-semibold text-slate-700 mb-1">
                   Temporary Password *
                 </label>
@@ -1154,6 +1173,15 @@ export const UserManagementPage: React.FC = () => {
                     setEditForm({ ...editForm, email: e.target.value })
                   }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <PhoneNumberInput
+                  id="edit-user-phone"
+                  label="Phone Number (Optional)"
+                  value={editForm.phone}
+                  onChange={(phone) => setEditForm({ ...editForm, phone })}
                 />
               </div>
 
