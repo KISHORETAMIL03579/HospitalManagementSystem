@@ -30,19 +30,28 @@ export const UserManagementPage: React.FC = () => {
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<number | undefined>(undefined);
-  const [statusTab, setStatusTab] = useState<"all" | "active" | "inactive">("all");
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<
+    number | undefined
+  >(undefined);
+  const [statusTab, setStatusTab] = useState<"all" | "active" | "inactive">(
+    "all",
+  );
 
   // Loading indicator for specific actions
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
 
   // Notification Toast
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<AdminUserDto | null>(null);
-  const [roleChangeUser, setRoleChangeUser] = useState<AdminUserDto | null>(null);
+  const [roleChangeUser, setRoleChangeUser] = useState<AdminUserDto | null>(
+    null,
+  );
   const [deletingUser, setDeletingUser] = useState<AdminUserDto | null>(null);
 
   // Create Form State
@@ -74,7 +83,9 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to load user accounts from server.",
+        message:
+          err?.response?.data?.message ||
+          "Failed to load user accounts from server.",
       });
     } finally {
       setLoading(false);
@@ -108,7 +119,7 @@ export const UserManagementPage: React.FC = () => {
         u.roleName.toLowerCase().includes("doc") ||
         u.roleName.toLowerCase().includes("nurse") ||
         u.roleName.toLowerCase().includes("pharma") ||
-        u.roleName.toLowerCase().includes("lab")
+        u.roleName.toLowerCase().includes("lab"),
     ).length;
     return { total, active, inactive, clinical };
   }, [users]);
@@ -131,7 +142,9 @@ export const UserManagementPage: React.FC = () => {
         const usernameMatch = u.username.toLowerCase().includes(q);
         const empMatch = u.employeeId?.toLowerCase().includes(q) ?? false;
         const roleMatch = u.roleName.toLowerCase().includes(q);
-        return nameMatch || emailMatch || usernameMatch || empMatch || roleMatch;
+        return (
+          nameMatch || emailMatch || usernameMatch || empMatch || roleMatch
+        );
       }
 
       return true;
@@ -161,7 +174,8 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to create user account.",
+        message:
+          err?.response?.data?.message || "Failed to create user account.",
       });
     } finally {
       setActionLoadingId(null);
@@ -174,7 +188,10 @@ export const UserManagementPage: React.FC = () => {
     if (!editingUser) return;
     setActionLoadingId(editingUser.userId);
     try {
-      const updated = await authApi.updateAdminUser(editingUser.userId, editForm);
+      const updated = await authApi.updateAdminUser(
+        editingUser.userId,
+        editForm,
+      );
       setFeedback({
         type: "success",
         message: `Updated account details for ${updated.fullName}.`,
@@ -184,7 +201,8 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to update account details.",
+        message:
+          err?.response?.data?.message || "Failed to update account details.",
       });
     } finally {
       setActionLoadingId(null);
@@ -197,7 +215,10 @@ export const UserManagementPage: React.FC = () => {
     if (!roleChangeUser || !targetRoleId) return;
     setActionLoadingId(roleChangeUser.userId);
     try {
-      const updated = await authApi.updateAdminUserRole(roleChangeUser.userId, targetRoleId);
+      const updated = await authApi.updateAdminUserRole(
+        roleChangeUser.userId,
+        targetRoleId,
+      );
       setFeedback({
         type: "success",
         message: `Role for ${updated.fullName} changed to ${updated.roleName}.`,
@@ -219,7 +240,10 @@ export const UserManagementPage: React.FC = () => {
     setActionLoadingId(user.userId);
     const nextStatus = !user.isActive;
     try {
-      const updated = await authApi.toggleAdminUserStatus(user.userId, nextStatus);
+      const updated = await authApi.toggleAdminUserStatus(
+        user.userId,
+        nextStatus,
+      );
       setFeedback({
         type: "success",
         message: `Account for ${updated.fullName} has been ${
@@ -230,7 +254,8 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to update user status.",
+        message:
+          err?.response?.data?.message || "Failed to update user status.",
       });
     } finally {
       setActionLoadingId(null);
@@ -252,7 +277,8 @@ export const UserManagementPage: React.FC = () => {
     } catch (err: any) {
       setFeedback({
         type: "error",
-        message: err?.response?.data?.message || "Failed to remove user account.",
+        message:
+          err?.response?.data?.message || "Failed to remove user account.",
       });
     } finally {
       setActionLoadingId(null);
@@ -262,10 +288,13 @@ export const UserManagementPage: React.FC = () => {
   const getRoleBadgeColor = (roleName: string) => {
     const r = roleName.toLowerCase();
     if (r.includes("admin")) return "bg-rose-50 text-rose-700 border-rose-200";
-    if (r.includes("doc")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
+    if (r.includes("doc"))
+      return "bg-indigo-50 text-indigo-700 border-indigo-200";
     if (r.includes("nurse")) return "bg-cyan-50 text-cyan-700 border-cyan-200";
-    if (r.includes("recept")) return "bg-amber-50 text-amber-700 border-amber-200";
-    if (r.includes("pharma")) return "bg-purple-50 text-purple-700 border-purple-200";
+    if (r.includes("recept"))
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    if (r.includes("pharma"))
+      return "bg-purple-50 text-purple-700 border-purple-200";
     if (r.includes("lab")) return "bg-teal-50 text-teal-700 border-teal-200";
     return "bg-slate-100 text-slate-700 border-slate-200";
   };
@@ -280,9 +309,12 @@ export const UserManagementPage: React.FC = () => {
               <UserCog className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">User Management</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                User Management
+              </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Manage all hospital personnel accounts, assign dynamic RBAC roles, and control access in real time.
+                Manage all hospital personnel accounts, assign dynamic RBAC
+                roles, and control access in real time.
               </p>
             </div>
           </div>
@@ -294,7 +326,9 @@ export const UserManagementPage: React.FC = () => {
             disabled={loading}
             className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </button>
 
@@ -347,7 +381,9 @@ export const UserManagementPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.total}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.total}
+            </span>
             <span className="text-xs text-slate-500">registered users</span>
           </div>
         </div>
@@ -370,7 +406,9 @@ export const UserManagementPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.active}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.active}
+            </span>
             <span className="text-xs text-slate-500">authorized access</span>
           </div>
         </div>
@@ -393,7 +431,9 @@ export const UserManagementPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.inactive}</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.inactive}
+            </span>
             <span className="text-xs text-slate-500">deactivated</span>
           </div>
         </div>
@@ -409,8 +449,12 @@ export const UserManagementPage: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{metrics.clinical}</span>
-            <span className="text-xs text-slate-500">doctors & clinical staff</span>
+            <span className="text-2xl font-black text-slate-900">
+              {metrics.clinical}
+            </span>
+            <span className="text-xs text-slate-500">
+              doctors & clinical staff
+            </span>
           </div>
         </div>
       </div>
@@ -457,7 +501,9 @@ export const UserManagementPage: React.FC = () => {
           <select
             value={selectedRoleFilter || ""}
             onChange={(e) =>
-              setSelectedRoleFilter(e.target.value ? Number(e.target.value) : undefined)
+              setSelectedRoleFilter(
+                e.target.value ? Number(e.target.value) : undefined,
+              )
             }
             className="w-full sm:w-44 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
@@ -510,7 +556,10 @@ export const UserManagementPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredUsers.map((u) => (
-                  <tr key={u.userId} className="hover:bg-slate-50/80 transition-colors">
+                  <tr
+                    key={u.userId}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
                     {/* User Details */}
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
@@ -550,7 +599,7 @@ export const UserManagementPage: React.FC = () => {
                     <td className="py-4 px-4">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                          u.roleName
+                          u.roleName,
                         )}`}
                       >
                         <User className="w-3 h-3" />
@@ -577,13 +626,17 @@ export const UserManagementPage: React.FC = () => {
                     <td className="py-4 px-4 text-slate-500 text-xs">
                       {u.lastLoginAt ? (
                         <div>
-                          <div>{formatDateByPattern(u.lastLoginAt, "MMM dd, yyyy")}</div>
+                          <div>
+                            {formatDateByPattern(u.lastLoginAt, "MMM dd, yyyy")}
+                          </div>
                           <div className="text-[10px] text-slate-400">
                             {formatDateByPattern(u.lastLoginAt, "hh:mm a")}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-slate-400 italic">Never logged in</span>
+                        <span className="text-slate-400 italic">
+                          Never logged in
+                        </span>
                       )}
                     </td>
 
@@ -630,7 +683,11 @@ export const UserManagementPage: React.FC = () => {
                         <button
                           onClick={() => handleToggleStatus(u)}
                           disabled={actionLoadingId === u.userId}
-                          title={u.isActive ? "Deactivate Account" : "Activate Account"}
+                          title={
+                            u.isActive
+                              ? "Deactivate Account"
+                              : "Activate Account"
+                          }
                           className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
                             u.isActive
                               ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200"
@@ -678,77 +735,111 @@ export const UserManagementPage: React.FC = () => {
                 <UserPlus className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Create User Account</h3>
-                <p className="text-xs text-slate-500">Direct admin provisioning of staff user credentials.</p>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Create User Account
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Direct admin provisioning of staff user credentials.
+                </p>
               </div>
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Full Name *</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Full Name *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Dr. Arun Kumar"
                   value={createForm.fullName}
-                  onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, fullName: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Username *</label>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Username *
+                  </label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. akumar"
                     value={createForm.username}
-                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, username: e.target.value })
+                    }
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Employee ID</label>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Employee ID
+                  </label>
                   <input
                     type="text"
                     placeholder="EMP-001"
                     value={createForm.employeeId}
-                    onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        employeeId: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Work Email *</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Work Email *
+                </label>
                 <input
                   type="email"
                   required
                   placeholder="arun@hospital.com"
                   value={createForm.email}
-                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Temporary Password *</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Temporary Password *
+                </label>
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={createForm.password}
-                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, password: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Assigned Role *</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Assigned Role *
+                </label>
                 <select
                   value={createForm.roleId}
-                  onChange={(e) => setCreateForm({ ...createForm, roleId: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setCreateForm({
+                      ...createForm,
+                      roleId: Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 >
                   {roles.map((r) => (
@@ -773,7 +864,9 @@ export const UserManagementPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
-                {actionLoadingId === -1 && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId === -1 && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Create Account Now
               </button>
             </div>
@@ -793,49 +886,72 @@ export const UserManagementPage: React.FC = () => {
                 <Edit className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Edit Account Details</h3>
-                <p className="text-xs text-slate-500">Update permitted fields for user #{editingUser.userId}.</p>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Edit Account Details
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Update permitted fields for user #{editingUser.userId}.
+                </p>
               </div>
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   required
                   value={editForm.fullName}
-                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, fullName: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Work Email</label>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Work Email
+                </label>
                 <input
                   type="email"
                   required
                   value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Employee ID</label>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Employee ID
+                  </label>
                   <input
                     type="text"
                     value={editForm.employeeId}
-                    onChange={(e) => setEditForm({ ...editForm, employeeId: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, employeeId: e.target.value })
+                    }
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Assigned Role</label>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Assigned Role
+                  </label>
                   <select
                     value={editForm.roleId}
-                    onChange={(e) => setEditForm({ ...editForm, roleId: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        roleId: Number(e.target.value),
+                      })
+                    }
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
                   >
                     {roles.map((r) => (
@@ -861,7 +977,9 @@ export const UserManagementPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
-                {actionLoadingId === editingUser.userId && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId === editingUser.userId && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Save Changes
               </button>
             </div>
@@ -881,9 +999,12 @@ export const UserManagementPage: React.FC = () => {
                 <UserCog className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Change User Role</h3>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Change User Role
+                </h3>
                 <p className="text-xs text-slate-500">
-                  Update role and RBAC permission level for {roleChangeUser.fullName}.
+                  Update role and RBAC permission level for{" "}
+                  {roleChangeUser.fullName}.
                 </p>
               </div>
             </div>
@@ -891,16 +1012,22 @@ export const UserManagementPage: React.FC = () => {
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
               <div className="flex justify-between">
                 <span className="text-slate-500">Current Role:</span>
-                <span className="font-bold text-indigo-600">{roleChangeUser.roleName}</span>
+                <span className="font-bold text-indigo-600">
+                  {roleChangeUser.roleName}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">User Email:</span>
-                <span className="font-medium text-slate-800">{roleChangeUser.email}</span>
+                <span className="font-medium text-slate-800">
+                  {roleChangeUser.email}
+                </span>
               </div>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label className="block font-semibold text-slate-700">Select New Role</label>
+              <label className="block font-semibold text-slate-700">
+                Select New Role
+              </label>
               <select
                 value={targetRoleId}
                 onChange={(e) => setTargetRoleId(Number(e.target.value))}
@@ -913,7 +1040,8 @@ export const UserManagementPage: React.FC = () => {
                 ))}
               </select>
               <p className="text-[10px] text-slate-400 italic">
-                Changing role updates permissions immediately. Next API call from this user will evaluate against the new role.
+                Changing role updates permissions immediately. Next API call
+                from this user will evaluate against the new role.
               </p>
             </div>
 
@@ -930,7 +1058,9 @@ export const UserManagementPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
-                {actionLoadingId === roleChangeUser.userId && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId === roleChangeUser.userId && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Confirm Role Change
               </button>
             </div>
@@ -947,15 +1077,23 @@ export const UserManagementPage: React.FC = () => {
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Remove Account (Archive)</h3>
-                <p className="text-xs text-slate-500">Deactivate account while preserving medical records.</p>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Remove Account (Archive)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Deactivate account while preserving medical records.
+                </p>
               </div>
             </div>
 
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs space-y-1 text-rose-900">
-              <div className="font-bold">Are you sure you want to remove {deletingUser.fullName}?</div>
+              <div className="font-bold">
+                Are you sure you want to remove {deletingUser.fullName}?
+              </div>
               <p className="text-[11px] text-rose-700 leading-relaxed">
-                This action disables login access and revokes active refresh tokens. The account is archived to ensure patient EMR, encounters, prescriptions, and audit logs remain intact.
+                This action disables login access and revokes active refresh
+                tokens. The account is archived to ensure patient EMR,
+                encounters, prescriptions, and audit logs remain intact.
               </p>
             </div>
 
@@ -973,7 +1111,9 @@ export const UserManagementPage: React.FC = () => {
                 disabled={actionLoadingId !== null}
                 className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
-                {actionLoadingId === deletingUser.userId && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                {actionLoadingId === deletingUser.userId && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
                 Confirm Archive & Remove
               </button>
             </div>

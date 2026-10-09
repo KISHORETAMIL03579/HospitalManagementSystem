@@ -116,33 +116,71 @@ export const authApi = {
   },
 
   // Direct User Management API Endpoints
-  getAllAdminUsers: async (params?: { search?: string; roleId?: number; isActive?: boolean }): Promise<AdminUserDto[]> => {
-    const response = await apiClient.get<AdminUserDto[]>("/admin/users", { params });
+  getAllAdminUsers: async (params?: {
+    search?: string;
+    roleId?: number;
+    isActive?: boolean;
+  }): Promise<AdminUserDto[]> => {
+    const response = await apiClient.get<AdminUserDto[]>("/admin/users", {
+      params,
+    });
     return response.data;
   },
 
-  createAdminUser: async (data: { fullName: string; email: string; username: string; password: string; roleId: number; employeeId?: string }): Promise<AdminUserDto> => {
+  createAdminUser: async (data: {
+    fullName: string;
+    email: string;
+    username: string;
+    password: string;
+    roleId: number;
+    employeeId?: string;
+  }): Promise<AdminUserDto> => {
     const response = await apiClient.post<AdminUserDto>("/admin/users", data);
     return response.data;
   },
 
-  updateAdminUser: async (id: number, data: { fullName: string; email: string; employeeId?: string; roleId: number }): Promise<AdminUserDto> => {
-    const response = await apiClient.put<AdminUserDto>(`/admin/users/${id}`, data);
+  updateAdminUser: async (
+    id: number,
+    data: {
+      fullName: string;
+      email: string;
+      employeeId?: string;
+      roleId: number;
+    },
+  ): Promise<AdminUserDto> => {
+    const response = await apiClient.put<AdminUserDto>(
+      `/admin/users/${id}`,
+      data,
+    );
     return response.data;
   },
 
-  updateAdminUserRole: async (id: number, roleId: number): Promise<AdminUserDto> => {
-    const response = await apiClient.put<AdminUserDto>(`/admin/users/${id}/role`, { roleId });
+  updateAdminUserRole: async (
+    id: number,
+    roleId: number,
+  ): Promise<AdminUserDto> => {
+    const response = await apiClient.put<AdminUserDto>(
+      `/admin/users/${id}/role`,
+      { roleId },
+    );
     return response.data;
   },
 
-  toggleAdminUserStatus: async (id: number, isActive: boolean): Promise<AdminUserDto> => {
-    const response = await apiClient.patch<AdminUserDto>(`/admin/users/${id}/status`, { isActive });
+  toggleAdminUserStatus: async (
+    id: number,
+    isActive: boolean,
+  ): Promise<AdminUserDto> => {
+    const response = await apiClient.patch<AdminUserDto>(
+      `/admin/users/${id}/status`,
+      { isActive },
+    );
     return response.data;
   },
 
   deleteAdminUser: async (id: number): Promise<{ message: string }> => {
-    const response = await apiClient.delete<{ message: string }>(`/admin/users/${id}`);
+    const response = await apiClient.delete<{ message: string }>(
+      `/admin/users/${id}`,
+    );
     return response.data;
   },
 
