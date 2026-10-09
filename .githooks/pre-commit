@@ -1,25 +1,37 @@
 #!/bin/sh
 
 echo "================================================="
-echo "  CareFlow HMS Pre-Commit Formatter & Check"
+echo "  CareFlow HMS Pre-Commit Selective Formatter"
 echo "================================================="
 
-echo ""
-echo "[1/2] Auto-formatting Frontend (Prettier)..."
-if [ -d "frontend" ]; then
-    cd frontend
-    npm run format
-    cd ..
+# Check staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+FRONTEND_CHANGED=$(echo "$STAGED_FILES" | grep -E '^frontend/')
+BACKEND_CHANGED=$(echo "$STAGED_FILES" | grep -E '^(backend/|.*\.slnx?|.*\.cs$)')
+
+# 1. Format Frontend if frontend files were modified
+if [ -n "$FRONTEND_CHANGED" ]; then
+    echo "\n[Frontend] Auto-formatting changed React/TypeScript files (Prettier)..."
+    if [ -d "frontend" ]; then
+        cd frontend
+        npm run format
+        cd ..
+    fi
+else
+    echo "\n[Frontend] No frontend changes detected. Skipping Prettier auto-format."
 fi
 
-echo ""
-echo "[2/2] Auto-formatting Backend (.NET)..."
-dotnet format HospitalManagement.slnx
+# 2. Format Backend if backend files were modified
+if [ -n "$BACKEND_CHANGED" ]; then
+    echo "\n[Backend] Auto-formatting changed C# files (dotnet format)..."
+    dotnet format HospitalManagement.slnx
+else
+    echo "\n[Backend] No backend changes detected. Skipping dotnet format."
+fi
 
-echo ""
-echo "Adding updated formatted files to git commit..."
+# Stage any formatted changes
 git add -u
 
-echo "✅ Pre-commit formatting completed."
+echo "\n✅ Pre-commit formatting completed."
 exit 0
-

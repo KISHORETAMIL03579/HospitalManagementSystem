@@ -1,68 +1,78 @@
 #!/bin/sh
 
 echo "================================================="
-echo "  CareFlow HMS Pre-Push Quality & Build Check"
+echo "  CareFlow HMS Pre-Push Selective Quality Check"
 echo "================================================="
 
-echo ""
-echo "[1/5] Checking Frontend Formatting (Prettier)..."
-if [ -d "frontend" ]; then
-    cd frontend
-    npm run format:check
+# Determine changed files in pushed commits
+REMOTE_REF=$(git rev-parse --verify @{u} 2>/dev/null)
+if [ -z "$REMOTE_REF" ]; then
+    REMOTE_REF="origin/main"
+fi
+
+CHANGED_FILES=$(git diff --name-only "$REMOTE_REF"...HEAD 2>/dev/null || git diff --name-only HEAD~1...HEAD)
+
+# Fallback if no ref diff
+if [ -z "$CHANGED_FILES" ]; then
+    CHANGED_FILES=$(git status --porcelain | awk '{print $2}')
+fi
+
+FRONTEND_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^frontend/')
+BACKEND_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(backend/|.*\.slnx?|.*\.cs$)')
+
+# --- FRONTEND CHECKS ---
+if [ -n "$FRONTEND_CHANGED" ]; then
+    echo "\n[Frontend] Frontend changes detected. Running frontend quality suite..."
+    if [ -d "frontend" ]; then
+        cd frontend
+
+        echo "\n -> [1/3] Checking Prettier formatting..."
+        npm run format:check
+        if [ $? -ne 0 ]; then
+            echo "\n❌ Push blocked: Frontend formatting check failed. Run 'npm run format' inside frontend."
+            exit 1
+        fi
+
+        echo "\n -> [2/3] Running Oxlint code analysis..."
+        npm run lint
+        if [ $? -ne 0 ]; then
+            echo "\n❌ Push blocked: Frontend linting check failed."
+            exit 1
+        fi
+
+        echo "\n -> [3/3] Verifying TypeScript build..."
+        npm run build
+        if [ $? -ne 0 ]; then
+            echo "\n❌ Push blocked: Frontend build or TypeScript checks failed."
+            exit 1
+        fi
+
+        cd ..
+    fi
+else
+    echo "\n[Frontend] No frontend files modified. Skipping frontend checks."
+fi
+
+# --- BACKEND CHECKS ---
+if [ -n "$BACKEND_CHANGED" ]; then
+    echo "\n[Backend] Backend changes detected. Running backend quality suite..."
+
+    echo "\n -> [1/2] Checking C# code formatting..."
+    dotnet format HospitalManagement.slnx --verify-no-changes
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "❌ Push blocked: Frontend code is not properly formatted."
-        echo "💡 Run 'npm run format' inside frontend directory to fix."
+        echo "\n❌ Push blocked: Backend C# formatting check failed. Run 'dotnet format'."
         exit 1
     fi
-    cd ..
-fi
 
-echo ""
-echo "[2/5] Running Frontend Linting (oxlint)..."
-if [ -d "frontend" ]; then
-    cd frontend
-    npm run lint
+    echo "\n -> [2/2] Running Backend unit tests..."
+    dotnet test HospitalManagement.slnx
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "❌ Push blocked: Frontend linting check failed."
+        echo "\n❌ Push blocked: Backend unit tests failed."
         exit 1
     fi
-    cd ..
+else
+    echo "\n[Backend] No backend files modified. Skipping backend checks."
 fi
 
-echo ""
-echo "[3/5] Verifying Frontend Build & TypeScript..."
-if [ -d "frontend" ]; then
-    cd frontend
-    npm run build
-    if [ $? -ne 0 ]; then
-        echo ""
-        echo "❌ Push blocked: Frontend build or TypeScript checks failed."
-        exit 1
-    fi
-    cd ..
-fi
-
-echo ""
-echo "[4/5] Checking Backend (.NET) Formatting..."
-dotnet format HospitalManagement.slnx --verify-no-changes
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "❌ Push blocked: Backend C# code formatting check failed."
-    echo "💡 Run 'dotnet format HospitalManagement.slnx' to fix formatting."
-    exit 1
-fi
-
-echo ""
-echo "[5/5] Running Backend (.NET) Unit Tests..."
-dotnet test HospitalManagement.slnx
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "❌ Push blocked: Backend unit tests failed."
-    exit 1
-fi
-
-echo ""
-echo "✅ All frontend and backend formatting, linting, build, and unit tests passed! Push permitted."
+echo "\n✅ Selective quality checks passed! Push permitted."
 exit 0
