@@ -142,6 +142,44 @@ For the complete 12-Phase Implementation Roadmap and detailed architectural flow
 
 ---
 
+## 🔐 Role-Based Navigation and Invitation Management
+
+### Overview
+
+The application uses role-based navigation to display only the pages and actions relevant to the authenticated user's assigned role. Unnecessary user-restriction pages and redundant navigation options have been removed.
+
+### Key Features
+
+* **Role-Based Navigation:** Display relevant pages and actions according to the user's role.
+* **Admin Invitations:** Administrators can invite users by email and assign the appropriate role.
+* **Invitation Management:** Administrators can view pending invitations and accept or reject them.
+* **Account Activation:** Users receive access after their invitation is accepted and their account is enabled.
+* **User Management:** Administrators can view accounts, edit permitted details, change roles, deactivate accounts, and reactivate accounts.
+* **Real-Time UI Updates:** Refresh navigation and account status after invitation or account changes without requiring a manual page reload.
+* **Access Control:** The backend must validate authentication, account status, and permissions for protected APIs and data. Frontend navigation visibility is not a replacement for backend authorization.
+
+### Invitation Workflow
+
+1. The administrator creates an invitation and assigns a role.
+2. The invitation remains pending until it is processed.
+3. The administrator accepts or rejects the invitation.
+4. Once accepted, the invited user can access the pages permitted by their assigned role.
+5. If the account is deactivated, access to protected resources is denied.
+
+### Security Requirements
+
+* Only authorized administrators can manage invitations and user accounts.
+* Validate invitation ownership, expiration, and status.
+* Prevent unauthorized role changes and privilege escalation.
+* Do not expose sensitive account information to unauthorized users.
+* Preserve audit history for important account and role changes.
+
+### Expected Result
+
+The application provides a simplified, role-aware user interface with invitation-based onboarding and centralized administrator account management. There is no separate user-restriction page or unnecessary pending-application approval workflow.
+
+---
+
 ## 📝 License
 This project is licensed under the MIT License.
 

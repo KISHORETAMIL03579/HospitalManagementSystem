@@ -22,36 +22,69 @@ interface NavItem {
   icon: React.ElementType;
   badge?: string;
   badgeColor?: string;
+  roles?: string[];
 }
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  const userRole = (user?.roleName || "Admin").toLowerCase();
+
   const navItems: NavItem[] = [
     { label: "Dashboard", path: "/", icon: LayoutDashboard },
-    { label: "Patients", path: "/patients", icon: Users },
+    {
+      label: "Patients",
+      path: "/patients",
+      icon: Users,
+      roles: ["admin", "doctor", "nurse", "receptionist"],
+    },
     {
       label: "Appointments",
       path: "/appointments",
       icon: Calendar,
+      roles: ["admin", "doctor", "nurse", "receptionist", "patient"],
     },
-    { label: "Doctors", path: "/doctors", icon: Stethoscope },
+    {
+      label: "Doctors",
+      path: "/doctors",
+      icon: Stethoscope,
+      roles: ["admin", "doctor", "nurse", "receptionist"],
+    },
     {
       label: "User Management",
       path: "/admin/users",
       icon: UserCog,
+      roles: ["admin"],
     },
     {
       label: "Prescriptions",
       path: "/prescriptions",
       icon: Pill,
       badge: "Soon",
+      roles: ["admin", "doctor", "nurse", "pharmacist", "patient"],
     },
-    { label: "Laboratory", path: "/laboratory", icon: TestTube, badge: "Soon" },
-    { label: "Billing", path: "/billing", icon: CreditCard, badge: "Soon" },
+    {
+      label: "Laboratory",
+      path: "/laboratory",
+      icon: TestTube,
+      badge: "Soon",
+      roles: ["admin", "doctor", "labtechnician", "nurse"],
+    },
+    {
+      label: "Billing",
+      path: "/billing",
+      icon: CreditCard,
+      badge: "Soon",
+      roles: ["admin", "receptionist"],
+    },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
+
+  const visibleNavItems = navItems.filter((item) => {
+    if (!item.roles || item.roles.length === 0) return true;
+    return item.roles.includes(userRole);
+  });
 
   const getInitials = (name?: string) => {
     if (!name) return "US";
@@ -82,7 +115,7 @@ export const AppLayout: React.FC = () => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive =
               location.pathname === item.path ||
