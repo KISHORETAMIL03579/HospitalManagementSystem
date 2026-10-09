@@ -697,6 +697,7 @@ public class AuthService : IAuthService
             var role = await _userRepository.GetRoleByIdOrNameAsync(request.RoleId, null, cancellationToken);
             if (role is null) throw new InvalidOperationException("Selected role is invalid.");
             user.RoleId = role.RoleId;
+            user.Role = null; // Detach stale navigation property so EF Core updates RoleId in SQL
         }
 
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
@@ -704,7 +705,8 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin updated details for user #{UserId} ('{Email}').", user.UserId, user.Email);
 
-        return MapToAdminUserDto(user);
+        var reloaded = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        return MapToAdminUserDto(reloaded ?? user);
     }
 
     public async Task<AdminUserDto> UpdateUserRoleByAdminAsync(int userId, int roleId, CancellationToken cancellationToken = default)
@@ -722,11 +724,13 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = role.RoleId;
+        user.Role = null; // Detach stale navigation property so EF Core updates RoleId in SQL
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin changed role for user #{UserId} to '{Role}'.", user.UserId, role.Name);
 
-        return MapToAdminUserDto(user);
+        var reloaded = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        return MapToAdminUserDto(reloaded ?? user);
     }
 
     public async Task<AdminUserDto> ToggleUserStatusByAdminAsync(int targetUserId, int currentAdminId, bool isActive, CancellationToken cancellationToken = default)
@@ -763,7 +767,8 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user, cancellationToken);
         _logger?.LogInformation("ADMIN ACTION: Admin #{AdminId} changed status of user #{TargetUserId} to IsActive={IsActive}.", currentAdminId, targetUserId, isActive);
 
-        return MapToAdminUserDto(user);
+        var reloaded = await _userRepository.GetByIdAsync(targetUserId, cancellationToken);
+        return MapToAdminUserDto(reloaded ?? user);
     }
 
     public async Task<bool> DeleteUserByAdminAsync(int targetUserId, int currentAdminId, CancellationToken cancellationToken = default)
