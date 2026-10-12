@@ -715,15 +715,15 @@ export const SettingsPage: React.FC = () => {
 
               {/* Time Format Toggle */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   Time Display Format
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label
                     className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
                       timeFormat === "12"
-                        ? "border-indigo-600 bg-indigo-50/60 text-indigo-900 font-bold"
-                        : "border-slate-200 hover:bg-slate-50"
+                        ? "border-indigo-600 bg-indigo-50/60 text-indigo-900 font-bold dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-500"
+                        : "border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
                     <input
@@ -739,8 +739,10 @@ export const SettingsPage: React.FC = () => {
                       className="text-indigo-600 focus:ring-indigo-500"
                     />
                     <div>
-                      <div className="text-sm">12-Hour Format</div>
-                      <div className="text-xs text-slate-400 font-mono">
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        12-Hour Format
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         10:30 AM / 02:45 PM
                       </div>
                     </div>
@@ -749,8 +751,8 @@ export const SettingsPage: React.FC = () => {
                   <label
                     className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition ${
                       timeFormat === "24"
-                        ? "border-indigo-600 bg-indigo-50/60 text-indigo-900 font-bold"
-                        : "border-slate-200 hover:bg-slate-50"
+                        ? "border-indigo-600 bg-indigo-50/60 text-indigo-900 font-bold dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-500"
+                        : "border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
                     <input
@@ -766,8 +768,10 @@ export const SettingsPage: React.FC = () => {
                       className="text-indigo-600 focus:ring-indigo-500"
                     />
                     <div>
-                      <div className="text-sm">24-Hour Format</div>
-                      <div className="text-xs text-slate-400 font-mono">
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        24-Hour Format
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         10:30 / 14:45
                       </div>
                     </div>
@@ -778,7 +782,7 @@ export const SettingsPage: React.FC = () => {
               {/* Time Zone Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Hospital Operating Time Zone
                   </label>
                   <select
@@ -788,28 +792,43 @@ export const SettingsPage: React.FC = () => {
                       localStorage.setItem("careflow_timeZone", e.target.value);
                       notifySettingsChanged();
                     }}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
-                    <option value="Asia/Kolkata">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="Asia/Kolkata"
+                    >
                       Asia/Kolkata (IST - UTC+05:30)
                     </option>
-                    <option value="UTC">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="UTC"
+                    >
                       UTC (Coordinated Universal Time)
                     </option>
-                    <option value="America/New_York">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="America/New_York"
+                    >
                       America/New_York (EST - UTC-05:00)
                     </option>
-                    <option value="Europe/London">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="Europe/London"
+                    >
                       Europe/London (GMT - UTC+00:00)
                     </option>
-                    <option value="Asia/Dubai">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="Asia/Dubai"
+                    >
                       Asia/Dubai (GST - UTC+04:00)
                     </option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Date Formatting
                   </label>
                   <select
@@ -822,15 +841,24 @@ export const SettingsPage: React.FC = () => {
                       );
                       notifySettingsChanged();
                     }}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
-                    <option value="DD/MM/YYYY">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="DD/MM/YYYY"
+                    >
                       DD/MM/YYYY (e.g. 09/10/2026)
                     </option>
-                    <option value="MM/DD/YYYY">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="MM/DD/YYYY"
+                    >
                       MM/DD/YYYY (e.g. 10/09/2026)
                     </option>
-                    <option value="YYYY-MM-DD">
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="YYYY-MM-DD"
+                    >
                       YYYY-MM-DD (ISO standard)
                     </option>
                   </select>
@@ -840,7 +868,7 @@ export const SettingsPage: React.FC = () => {
               {/* Language & First Day of Week */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Application Interface Language
                   </label>
                   <select
@@ -850,17 +878,37 @@ export const SettingsPage: React.FC = () => {
                       localStorage.setItem("careflow_language", e.target.value);
                       notifySettingsChanged();
                     }}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
-                    <option value="en-US">English (United States)</option>
-                    <option value="es-ES">Spanish (Español)</option>
-                    <option value="fr-FR">French (Français)</option>
-                    <option value="hi-IN">Hindi (हिन्दी)</option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="en-US"
+                    >
+                      English (United States)
+                    </option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="es-ES"
+                    >
+                      Spanish (Español)
+                    </option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="fr-FR"
+                    >
+                      French (Français)
+                    </option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="hi-IN"
+                    >
+                      Hindi (हिन्दी)
+                    </option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Calendar First Day of Week
                   </label>
                   <select
@@ -870,10 +918,20 @@ export const SettingsPage: React.FC = () => {
                       localStorage.setItem("careflow_firstDay", e.target.value);
                       notifySettingsChanged();
                     }}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
-                    <option value="monday">Monday</option>
-                    <option value="sunday">Sunday</option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="monday"
+                    >
+                      Monday
+                    </option>
+                    <option
+                      className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+                      value="sunday"
+                    >
+                      Sunday
+                    </option>
                   </select>
                 </div>
               </div>

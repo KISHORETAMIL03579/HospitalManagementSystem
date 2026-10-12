@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "react-international-phone/style.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* --------------------------------------------------
    CareFlow HMS — Global Theme
    Tailwind CSS v4
@@ -63,6 +65,7 @@ html.dark {
   select,
   textarea {
     font: inherit;
+    color: inherit;
   }
 
   button:not(:disabled) {
@@ -87,11 +90,21 @@ html.dark {
     background-color: #1d4ed8;
     color: #ffffff;
   }
+
+  /* Native form control options */
+  select option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  html.dark select option {
+    background-color: #1e293b;
+    color: #f8fafc;
+  }
 }
 
 /* --------------------------------------------------
-   Shared theme surfaces
-   Use these classes in components where appropriate.
+   CareFlow Surface & Component Mappings
 -------------------------------------------------- */
 
 .cf-surface {
@@ -127,6 +140,71 @@ html.dark {
 .cf-input:focus {
   outline: 2px solid var(--cf-focus);
   outline-offset: 1px;
+}
+
+/* --------------------------------------------------
+   Theme Mappings for Application Pages
+   Ensures cards, panels, inputs, and text adapt cleanly
+-------------------------------------------------- */
+
+html.dark .bg-white {
+  background-color: var(--cf-surface);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-50\/60,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-100 {
+  background-color: var(--cf-surface-muted);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: var(--cf-text);
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: var(--cf-text-muted);
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+  border-color: var(--cf-border);
+}
+
+input,
+select,
+textarea {
+  color: var(--cf-text);
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: var(--cf-input-bg);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+html.dark table th {
+  background-color: var(--cf-surface-muted);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+html.dark table td {
+  border-color: var(--cf-border);
+}
+
+html.dark tr:hover {
+  background-color: var(--cf-surface-muted);
 }
 
 /* --------------------------------------------------
@@ -212,7 +290,6 @@ html.compact-mode td {
   line-height: 1.35;
 }
 
-/* Optional compact spacing utility for application components */
 html.compact-mode .cf-compact-card {
   padding: 0.75rem !important;
 }
