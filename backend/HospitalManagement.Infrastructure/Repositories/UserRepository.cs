@@ -21,13 +21,13 @@ public class UserRepository : IUserRepository
                 .ThenInclude(r => r.RolePermissions)
                     .ThenInclude(rp => rp.Permission)
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
     }
 
     public async Task<User?> GetTrackedByIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
     }
 
     public async Task<User?> GetByEmailOrUsernameAsync(string identifier, CancellationToken cancellationToken = default)

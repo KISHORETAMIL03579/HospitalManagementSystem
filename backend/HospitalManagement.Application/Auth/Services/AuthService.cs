@@ -496,15 +496,15 @@ public class AuthService : IAuthService
     public async Task<UserDto?> GetCurrentUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-        return user is null ? null : MapToUserDto(user);
+        return (user is null || !user.IsActive) ? null : MapToUserDto(user);
     }
 
     public async Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-        if (user is null)
+        if (user is null || !user.IsActive)
         {
-            throw new KeyNotFoundException("User not found.");
+            throw new KeyNotFoundException("User not found or account is deactivated.");
         }
 
         if (!string.IsNullOrWhiteSpace(request.FullName))
@@ -531,9 +531,9 @@ public class AuthService : IAuthService
     public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-        if (user is null)
+        if (user is null || !user.IsActive)
         {
-            throw new KeyNotFoundException("User not found.");
+            throw new KeyNotFoundException("User not found or account is deactivated.");
         }
 
         if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
