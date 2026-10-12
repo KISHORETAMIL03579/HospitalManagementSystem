@@ -612,28 +612,28 @@ export const StaffApprovalPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-xs text-slate-700 min-w-[980px]">
+            <table className="w-full text-left text-xs text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[260px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[190px]">
                     Applicant & Details
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[180px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[130px]">
                     Requested Role
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[110px]">
                     Invitation Code
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[105px]">
                     Submitted At
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[160px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[125px]">
                     Approval Status
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[130px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[100px]">
                     Email Status
                   </th>
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[250px]">
+                  <th className="py-3 px-3.5 text-right whitespace-nowrap min-w-[170px]">
                     Actions
                   </th>
                 </tr>
@@ -645,9 +645,9 @@ export const StaffApprovalPage: React.FC = () => {
                     className="hover:bg-slate-50/80 transition-colors"
                   >
                     {/* Applicant & Details */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
                           {req.fullName
                             .split(" ")
                             .map((n) => n[0])
@@ -659,7 +659,7 @@ export const StaffApprovalPage: React.FC = () => {
                           <div className="font-bold text-slate-900 text-sm">
                             {req.fullName}
                           </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                             <a
                               href={`mailto:${req.email}`}
                               className="hover:underline text-blue-600 font-medium"
@@ -677,8 +677,8 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Requested Role & Department */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      <div className="space-y-1">
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                      <div className="space-y-0.5">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                           <User className="w-3 h-3 text-blue-500" />
                           {req.requestedRoleName}
@@ -693,14 +693,14 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Invitation Code */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap font-mono font-semibold text-slate-600 text-xs">
-                      <span className="px-2 py-1 bg-slate-100 rounded-lg border border-slate-200 text-slate-800">
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap font-mono font-semibold text-slate-600 text-xs">
+                      <span className="px-2 py-0.5 bg-slate-100 rounded-lg border border-slate-200 text-slate-800">
                         {req.invitationCode}
                       </span>
                     </td>
 
                     {/* Submitted At */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap text-slate-500 text-xs">
                       <div>
                         {formatDateByPattern(req.submittedAt, "MMM dd, yyyy")}
                       </div>
@@ -710,14 +710,13 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Approval Status */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      {req.status === 0 && (
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                      {isPendingStatus(req.status) ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                           <Clock className="w-3.5 h-3.5 text-amber-600" />
                           Pending Review
                         </span>
-                      )}
-                      {req.status === 1 && (
+                      ) : isApprovedStatus(req.status) ? (
                         <div>
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -729,8 +728,7 @@ export const StaffApprovalPage: React.FC = () => {
                             </div>
                           )}
                         </div>
-                      )}
-                      {req.status === 2 && (
+                      ) : isRejectedStatus(req.status) ? (
                         <div>
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                             <XCircle className="w-3.5 h-3.5 text-rose-600" />
@@ -745,12 +743,16 @@ export const StaffApprovalPage: React.FC = () => {
                             </div>
                           )}
                         </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                          {String(req.status)}
+                        </span>
                       )}
                     </td>
 
                     {/* Email Status */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      <div className="space-y-1">
+                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                      <div className="space-y-0.5">
                         {getEmailStatusBadge(
                           req.emailStatus,
                           req.emailErrorMessage,
@@ -767,7 +769,7 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 text-right align-middle whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-right align-middle whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         {/* Edit Button for all stages */}
                         <button
@@ -781,7 +783,7 @@ export const StaffApprovalPage: React.FC = () => {
                         </button>
 
                         {/* Stage Action Buttons */}
-                        {req.status === 0 ? (
+                        {isPendingStatus(req.status) ? (
                           <>
                             <button
                               onClick={() => {
@@ -807,7 +809,7 @@ export const StaffApprovalPage: React.FC = () => {
                               Reject
                             </button>
                           </>
-                        ) : req.status === 2 ? (
+                        ) : isRejectedStatus(req.status) ? (
                           <button
                             onClick={() => {
                               setSelectedRequestForApprove(req);

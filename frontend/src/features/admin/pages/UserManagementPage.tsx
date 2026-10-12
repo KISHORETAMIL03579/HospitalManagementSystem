@@ -885,22 +885,22 @@ export const UserManagementPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[880px] text-left text-xs text-slate-700">
+              <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-amber-50/60 border-b border-amber-200/60 text-[11px] font-semibold text-amber-900 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[260px]">
+                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[200px]">
                       Applicant & Contact
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[180px]">
+                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[140px]">
                       Requested Role & Dept
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
+                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[110px]">
                       Invitation Code
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
+                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[120px]">
                       Submitted Date
                     </th>
-                    <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[260px]">
+                    <th className="py-3 px-3.5 text-right whitespace-nowrap min-w-[170px]">
                       Actions
                     </th>
                   </tr>
@@ -1023,25 +1023,25 @@ export const UserManagementPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
-            <table className="w-full min-w-[900px] text-left text-xs text-slate-700">
+            <table className="w-full text-left text-xs text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4 min-w-[280px] whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[210px] whitespace-nowrap">
                     User & Contact
                   </th>
-                  <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[120px] whitespace-nowrap">
                     Role
                   </th>
-                  <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[95px] whitespace-nowrap">
                     Status
                   </th>
-                  <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[120px] whitespace-nowrap">
                     Last Login
                   </th>
-                  <th className="py-3.5 px-4 min-w-[120px] whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[105px] whitespace-nowrap">
                     Created Date
                   </th>
-                  <th className="py-3.5 px-4 min-w-[240px] text-right whitespace-nowrap">
+                  <th className="py-3 px-3.5 min-w-[180px] text-right whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
