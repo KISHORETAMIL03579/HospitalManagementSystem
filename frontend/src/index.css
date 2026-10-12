@@ -1,119 +1,237 @@
 @import "tailwindcss";
 @import "react-international-phone/style.css";
 
+/* --------------------------------------------------
+   CareFlow HMS — Global Theme
+   Tailwind CSS v4
+-------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --cf-bg: #f8fafc;
+  --cf-surface: #ffffff;
+  --cf-surface-muted: #f1f5f9;
+  --cf-text: #0f172a;
+  --cf-text-muted: #64748b;
+  --cf-border: #e2e8f0;
+  --cf-input-bg: #ffffff;
+  --cf-focus: #3b82f6;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --cf-bg: #0f172a;
+  --cf-surface: #1e293b;
+  --cf-surface-muted: #334155;
+  --cf-text: #f8fafc;
+  --cf-text-muted: #94a3b8;
+  --cf-border: #334155;
+  --cf-input-bg: #0f172a;
+  --cf-focus: #60a5fa;
+}
+
 @layer base {
+  html {
+    min-height: 100%;
+    background-color: var(--cf-bg);
+    color: var(--cf-text);
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans min-h-screen transition-colors duration-200;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--cf-bg);
+    color: var(--cf-text);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cf-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: #bfdbfe;
+    color: #1e3a8a;
+  }
+
+  html.dark ::selection {
+    background-color: #1d4ed8;
+    color: #ffffff;
   }
 }
 
-/* React International Phone Styling Fixes */
+/* --------------------------------------------------
+   Shared theme surfaces
+   Use these classes in components where appropriate.
+-------------------------------------------------- */
+
+.cf-surface {
+  background-color: var(--cf-surface);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+.cf-surface-muted {
+  background-color: var(--cf-surface-muted);
+  color: var(--cf-text);
+  border-color: var(--cf-border);
+}
+
+.cf-muted {
+  color: var(--cf-text-muted);
+}
+
+.cf-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--cf-border);
+  border-radius: 0.5rem;
+  background-color: var(--cf-input-bg);
+  color: var(--cf-text);
+}
+
+.cf-input::placeholder {
+  color: var(--cf-text-muted);
+}
+
+.cf-input:focus {
+  outline: 2px solid var(--cf-focus);
+  outline-offset: 1px;
+}
+
+/* --------------------------------------------------
+   React International Phone
+-------------------------------------------------- */
+
+.react-international-phone-input-container {
+  width: 100%;
+}
+
+.react-international-phone-country-selector {
+  flex-shrink: 0;
+}
+
 .react-international-phone-country-selector-button {
   height: 40px !important;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
-  border-top-left-radius: 0.5rem !important;
-  border-bottom-left-radius: 0.5rem !important;
-  border-color: #cbd5e1 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--cf-border) !important;
+  border-radius: 0.5rem 0 0 0.5rem !important;
+  background-color: var(--cf-surface-muted) !important;
+  color: var(--cf-text) !important;
 }
 
 .react-international-phone-input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
   height: 40px !important;
-  border-top-right-radius: 0.5rem !important;
-  border-bottom-right-radius: 0.5rem !important;
-  border-color: #cbd5e1 !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--cf-border) !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  background-color: var(--cf-input-bg) !important;
+  color: var(--cf-text) !important;
   font-size: 0.875rem !important;
 }
 
-html.dark .react-international-phone-country-selector-button {
-  background-color: #334155 !important;
-  border-color: #475569 !important;
-  color: #f8fafc !important;
+.react-international-phone-input:focus {
+  outline: 2px solid var(--cf-focus) !important;
+  outline-offset: 1px;
+  z-index: 1;
 }
 
-html.dark .react-international-phone-country-selector-dropdown {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #475569 !important;
+.react-international-phone-input::placeholder {
+  color: var(--cf-text-muted) !important;
+  opacity: 1;
 }
 
-html.dark .react-international-phone-country-selector-dropdown-item {
-  color: #f8fafc !important;
+.react-international-phone-country-selector-dropdown {
+  z-index: 1000 !important;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--cf-border) !important;
+  border-radius: 0.5rem !important;
+  background-color: var(--cf-surface) !important;
+  color: var(--cf-text) !important;
+  box-shadow: 0 10px 25px rgb(15 23 42 / 15%);
 }
 
-html.dark .react-international-phone-country-selector-dropdown-item:hover {
-  background-color: #334155 !important;
+.react-international-phone-country-selector-dropdown__list-item {
+  color: var(--cf-text) !important;
 }
 
-/* Global Dark Mode Styling Rules */
-html.dark body {
-  background-color: #0f172a !important; /* slate-900 */
-  color: #f8fafc !important; /* slate-50 */
+.react-international-phone-country-selector-dropdown__list-item:hover,
+.react-international-phone-country-selector-dropdown__list-item--focused {
+  background-color: var(--cf-surface-muted) !important;
 }
 
-html.dark .bg-white {
-  background-color: #1e293b !important; /* slate-800 */
-  color: #f8fafc !important;
-  border-color: #334155 !important; /* slate-700 */
-}
-
-html.dark .bg-slate-50,
-html.dark .bg-slate-50\/50,
-html.dark .bg-slate-50\/60,
-html.dark .bg-slate-50\/80,
-html.dark .bg-slate-100 {
-  background-color: #0f172a !important; /* slate-900 */
-  color: #cbd5e1 !important;
-  border-color: #334155 !important;
-}
-
-html.dark .text-slate-800,
-html.dark .text-slate-900,
-html.dark .text-slate-700 {
-  color: #f8fafc !important;
-}
-
-html.dark .text-slate-600,
-html.dark .text-slate-500,
-html.dark .text-slate-400 {
-  color: #94a3b8 !important;
-}
-
-html.dark input,
-html.dark select,
-html.dark textarea {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-html.dark table th {
-  background-color: #0f172a !important;
-  color: #cbd5e1 !important;
-  border-color: #334155 !important;
-}
-
-html.dark table td {
-  border-color: #334155 !important;
-}
-
-html.dark tr:hover {
-  background-color: #334155 !important;
-}
-
-html.dark header {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-}
-
-/* Compact Density Mode */
-html.compact-mode td,
-html.compact-mode th {
-  padding-top: 0.375rem !important;
-  padding-bottom: 0.375rem !important;
-  font-size: 0.8125rem !important;
-}
+/* --------------------------------------------------
+   Compact Density Mode
+-------------------------------------------------- */
 
 html.compact-mode table {
-  font-size: 0.8125rem !important;
+  font-size: 0.8125rem;
+}
+
+html.compact-mode th,
+html.compact-mode td {
+  padding-block: 0.375rem !important;
+}
+
+html.compact-mode th,
+html.compact-mode td {
+  line-height: 1.35;
+}
+
+/* Optional compact spacing utility for application components */
+html.compact-mode .cf-compact-card {
+  padding: 0.75rem !important;
+}
+
+html.compact-mode .cf-compact-stack {
+  gap: 0.5rem !important;
+}
+
+/* --------------------------------------------------
+   Reduced Motion
+-------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
