@@ -573,36 +573,63 @@ export const UserManagementPage: React.FC = () => {
       {/* Filter Bar & Controls */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs max-w-full">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full xl:w-auto overflow-x-auto shrink-0">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl w-full xl:w-auto overflow-x-auto shrink-0">
           <button
             onClick={() => setStatusTab("all")}
-            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               statusTab === "all"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-blue-600 text-white shadow-xs font-bold"
+                : "text-slate-600 hover:text-blue-700 hover:bg-blue-50/60"
             }`}
           >
-            All Accounts ({metrics.total})
+            <span>All Accounts</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                statusTab === "all"
+                  ? "bg-white text-blue-700"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {metrics.total}
+            </span>
           </button>
           <button
             onClick={() => setStatusTab("active")}
-            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               statusTab === "active"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-emerald-600 text-white shadow-xs font-bold"
+                : "text-emerald-700 hover:bg-emerald-50"
             }`}
           >
-            Active ({metrics.active})
+            <span>Active</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                statusTab === "active"
+                  ? "bg-white text-emerald-700"
+                  : "bg-emerald-100 text-emerald-800"
+              }`}
+            >
+              {metrics.active}
+            </span>
           </button>
           <button
             onClick={() => setStatusTab("inactive")}
-            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               statusTab === "inactive"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-rose-600 text-white shadow-xs font-bold"
+                : "text-rose-700 hover:bg-rose-50"
             }`}
           >
-            Inactive ({metrics.inactive})
+            <span>Inactive</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                statusTab === "inactive"
+                  ? "bg-white text-rose-700"
+                  : "bg-rose-100 text-rose-800"
+              }`}
+            >
+              {metrics.inactive}
+            </span>
           </button>
           <button
             onClick={() => setStatusTab("pending")}

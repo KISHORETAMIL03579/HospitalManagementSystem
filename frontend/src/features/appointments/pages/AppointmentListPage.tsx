@@ -479,7 +479,10 @@ export const AppointmentListPage: React.FC = () => {
                       )}
                     </div>
                   </th>
-                  <th className="px-6 py-3.5 text-right">Actions</th>
+                  <th className="px-6 py-3.5 text-center min-w-[190px]">
+                    Actions
+                  </th>
+                  <th className="px-6 py-3.5 text-right w-[100px]">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -538,120 +541,137 @@ export const AppointmentListPage: React.FC = () => {
                         {getStatusBadge(apt.status)}
                       </td>
                       <td
-                        className="px-6 py-4 whitespace-nowrap text-right space-x-2"
+                        className="px-6 py-4 whitespace-nowrap text-center"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {(statusNum === 0 ||
-                          statusNum === AppointmentStatus.Pending) && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.Confirmed,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100"
-                            >
-                              Confirm
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.Cancelled,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
-                        {(statusNum === 10 ||
-                          statusNum === AppointmentStatus.Confirmed) && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.CheckedIn,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 rounded hover:bg-sky-100"
-                            >
-                              Check In
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.Cancelled,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
-                        {(statusNum === 20 ||
-                          statusNum === AppointmentStatus.CheckedIn) && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.InConsultation,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100"
-                            >
-                              Start Visit
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.NoShow,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 rounded hover:bg-slate-200"
-                            >
-                              No Show
-                            </button>
-                          </>
-                        )}
-                        {(statusNum === 30 ||
-                          statusNum === AppointmentStatus.InConsultation) && (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.Completed,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100"
-                            >
-                              Complete
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  apt.appointmentId,
-                                  AppointmentStatus.Cancelled,
-                                )
-                              }
-                              className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
+                        <div className="flex items-center justify-center gap-1.5 min-h-[28px]">
+                          {(statusNum === 0 ||
+                            statusNum === AppointmentStatus.Pending) && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.Confirmed,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.Cancelled,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          {(statusNum === 10 ||
+                            statusNum === AppointmentStatus.Confirmed) && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.CheckedIn,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 rounded-md hover:bg-sky-100 transition-colors"
+                              >
+                                Check In
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.Cancelled,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          {(statusNum === 20 ||
+                            statusNum === AppointmentStatus.CheckedIn) && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.InConsultation,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
+                              >
+                                Start Visit
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.NoShow,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 rounded-md hover:bg-slate-200 transition-colors"
+                              >
+                                No Show
+                              </button>
+                            </>
+                          )}
+                          {(statusNum === 30 ||
+                            statusNum === AppointmentStatus.InConsultation) && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.Completed,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors"
+                              >
+                                Complete
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(
+                                    apt.appointmentId,
+                                    AppointmentStatus.Cancelled,
+                                  )
+                                }
+                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          {(statusNum === 40 ||
+                            statusNum === AppointmentStatus.Completed ||
+                            statusNum === 50 ||
+                            statusNum === AppointmentStatus.Cancelled ||
+                            statusNum === 60 ||
+                            statusNum === AppointmentStatus.NoShow) && (
+                            <span className="text-xs text-slate-400 font-mono">
+                              —
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td
+                        className="px-6 py-4 whitespace-nowrap text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
                           onClick={() => setSelectedAppointment(apt)}
-                          className="px-2 py-1 text-xs font-medium text-slate-500 hover:text-indigo-600 underline"
+                          className="px-3 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 border border-indigo-200 rounded-md transition-colors"
                         >
                           Details
                         </button>
