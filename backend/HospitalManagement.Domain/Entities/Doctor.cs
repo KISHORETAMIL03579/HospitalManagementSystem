@@ -25,4 +25,6 @@ public class Doctor : BaseEntity
     public string FullName => $"Dr. {FirstName} {LastName}";
 
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
+    public ICollection<DoctorScheduleException> ScheduleExceptions { get; set; } = new List<DoctorScheduleException>();
 }

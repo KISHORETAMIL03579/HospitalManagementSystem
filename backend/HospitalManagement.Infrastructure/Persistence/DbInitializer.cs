@@ -408,6 +408,74 @@ public static class DbInitializer
             logger.LogInformation("Department and Doctor seeding completed successfully.");
         }
 
+        // 4b. Seed DoctorSchedules migrated from existing Doctor records if empty
+        if (!await context.DoctorSchedules.AnyAsync())
+        {
+            var doctors = await context.Doctors.ToListAsync();
+            var schedules = new List<DoctorSchedule>();
+
+            foreach (var doc in doctors)
+            {
+                var days = (doc.AvailableDays ?? "Monday,Tuesday,Wednesday,Thursday,Friday")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+                var start = TimeOnly.FromTimeSpan(doc.StartTime);
+                var end = TimeOnly.FromTimeSpan(doc.EndTime);
+
+                foreach (var dayStr in days)
+                {
+                    if (Enum.TryParse<DayOfWeek>(dayStr, true, out var dayOfWeek))
+                    {
+                        // Split into Morning and Afternoon sessions if overall window is 6+ hours
+                        if (end > start.AddHours(5))
+                        {
+                            var morningEnd = start.AddHours(3.5);
+                            var afternoonStart = start.AddHours(4.5);
+
+                            schedules.Add(new DoctorSchedule
+                            {
+                                DoctorId = doc.DoctorId,
+                                DayOfWeek = dayOfWeek,
+                                StartTime = start,
+                                EndTime = morningEnd,
+                                SlotDurationMinutes = 30,
+                                SessionName = "Morning Clinic"
+                            });
+
+                            schedules.Add(new DoctorSchedule
+                            {
+                                DoctorId = doc.DoctorId,
+                                DayOfWeek = dayOfWeek,
+                                StartTime = afternoonStart,
+                                EndTime = end,
+                                SlotDurationMinutes = 30,
+                                SessionName = "Afternoon Clinic"
+                            });
+                        }
+                        else
+                        {
+                            schedules.Add(new DoctorSchedule
+                            {
+                                DoctorId = doc.DoctorId,
+                                DayOfWeek = dayOfWeek,
+                                StartTime = start,
+                                EndTime = end,
+                                SlotDurationMinutes = 30,
+                                SessionName = "Regular Clinic"
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (schedules.Any())
+            {
+                await context.DoctorSchedules.AddRangeAsync(schedules);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Seeded {Count} DoctorSchedules migrated from doctor profiles.", schedules.Count);
+            }
+        }
+
         // 5. Seed Patients if empty
         if (!await context.Patients.AnyAsync())
         {
