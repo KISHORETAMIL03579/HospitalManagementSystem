@@ -60,7 +60,6 @@ public class AdminUserService : IAdminUserService
             EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
             Phone = NormalizeAndValidatePhone(request.Phone),
             RoleId = role.RoleId,
-            Role = role,
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };

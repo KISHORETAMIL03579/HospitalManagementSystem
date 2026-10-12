@@ -161,7 +161,6 @@ public class StaffRegistrationService : IStaffRegistrationService
                 FullName = staffReq.FullName,
                 EmployeeId = staffReq.EmployeeId,
                 RoleId = role.RoleId,
-                Role = role,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };

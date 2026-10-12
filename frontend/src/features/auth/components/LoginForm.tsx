@@ -23,9 +23,18 @@ import {
   Mail,
   X,
   Send,
+  Clock,
 } from "lucide-react";
 
 import { RegistrationStatusModal } from "./RegistrationStatusModal";
+
+type LoginStatusType =
+  | "ACCOUNT_INACTIVE"
+  | "ACCOUNT_PENDING_APPROVAL"
+  | "ACCOUNT_REJECTED"
+  | "ACCOUNT_NOT_FOUND"
+  | "INVALID_CREDENTIALS"
+  | "GENERIC_ERROR";
 
 export const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
@@ -60,6 +69,11 @@ export const LoginForm: React.FC = () => {
   const [notRegisteredMessage, setNotRegisteredMessage] = useState<
     string | null
   >(null);
+  const [accountStatusError, setAccountStatusError] = useState<{
+    code: LoginStatusType;
+    message: string;
+    details?: string;
+  } | null>(null);
 
   // Dynamic Password Strength Meter
   const getPasswordStrength = (pass: string) => {
@@ -92,16 +106,66 @@ export const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setNotRegisteredMessage(null);
+    setAccountStatusError(null);
     try {
       await login(data);
       navigate("/");
     } catch (err: any) {
       const responseData = err?.response?.data;
-      if (responseData?.isNotRegistered || err?.response?.status === 404) {
+      const status = err?.response?.status;
+      const code = responseData?.code as LoginStatusType | undefined;
+      const message = responseData?.message;
+
+      if (
+        code === "ACCOUNT_INACTIVE" ||
+        (status === 403 && message?.toLowerCase().includes("inactive"))
+      ) {
+        setAccountStatusError({
+          code: "ACCOUNT_INACTIVE",
+          message: "Account Inactive",
+          details:
+            message ||
+            "Your account has been created but is currently inactive. You cannot sign in until your account is activated by an authorized hospital administrator.",
+        });
+      } else if (
+        code === "ACCOUNT_PENDING_APPROVAL" ||
+        (status === 403 && message?.toLowerCase().includes("awaiting"))
+      ) {
+        setAccountStatusError({
+          code: "ACCOUNT_PENDING_APPROVAL",
+          message: "Registration Awaiting Approval",
+          details:
+            message ||
+            "Your staff onboarding application is currently awaiting administrator review. You will receive an email notification once your request has been reviewed.",
+        });
+      } else if (
+        code === "ACCOUNT_REJECTED" ||
+        (status === 403 && message?.toLowerCase().includes("rejected"))
+      ) {
+        setAccountStatusError({
+          code: "ACCOUNT_REJECTED",
+          message: "Registration Not Approved",
+          details:
+            message ||
+            "Your staff registration request was not approved. Please contact the hospital administration office for further details.",
+        });
+      } else if (
+        code === "ACCOUNT_NOT_FOUND" ||
+        responseData?.isNotRegistered ||
+        status === 404
+      ) {
         setNotRegisteredMessage(
-          responseData?.message ||
+          message ||
             `The identity '${data.usernameOrEmail}' is not registered in CareFlow HMS.`,
         );
+      } else {
+        setAccountStatusError({
+          code: "INVALID_CREDENTIALS",
+          message: "Invalid Credentials",
+          details:
+            message ||
+            "Invalid password or username. Please check your credentials.",
+        });
       }
     }
   };
@@ -247,12 +311,12 @@ export const LoginForm: React.FC = () => {
           {activeTab === "login" && (
             <div className="space-y-4">
               {notRegisteredMessage ? (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
-                  <div className="flex items-start gap-2 text-amber-800 text-xs font-semibold">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl space-y-2">
+                  <div className="flex items-start gap-2 text-amber-800 dark:text-amber-200 text-xs font-semibold">
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <span>{notRegisteredMessage}</span>
                   </div>
-                  <p className="text-[11px] text-amber-700">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300">
                     This account identity is not registered. Would you like to
                     create a new staff account now?
                   </p>
@@ -265,9 +329,73 @@ export const LoginForm: React.FC = () => {
                     <span>Create Staff Account Now</span>
                   </button>
                 </div>
+              ) : accountStatusError?.code === "ACCOUNT_INACTIVE" ? (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl space-y-2">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1 text-xs text-amber-800 dark:text-amber-200">
+                      <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">
+                        Account Inactive
+                      </h4>
+                      <p className="leading-relaxed">
+                        Your account has been created but is currently inactive.
+                        You cannot sign in until your account is activated by an
+                        authorized hospital administrator.
+                      </p>
+                      <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                        Please contact your hospital administrator or the IT
+                        support team to request activation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : accountStatusError?.code === "ACCOUNT_PENDING_APPROVAL" ? (
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2">
+                  <div className="flex items-start gap-2.5">
+                    <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
+                      <h4 className="font-bold text-sm text-blue-900 dark:text-blue-100">
+                        Registration Awaiting Approval
+                      </h4>
+                      <p className="leading-relaxed">
+                        {accountStatusError.details}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsStatusModalOpen(true)}
+                        className="mt-1 text-xs font-semibold text-blue-700 dark:text-blue-300 underline hover:text-blue-900 flex items-center gap-1"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Check Request Status
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : accountStatusError?.code === "ACCOUNT_REJECTED" ? (
+                <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl space-y-2">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1 text-xs text-rose-800 dark:text-rose-200">
+                      <h4 className="font-bold text-sm text-rose-900 dark:text-rose-100">
+                        Registration Not Approved
+                      </h4>
+                      <p className="leading-relaxed">
+                        {accountStatusError.details}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : accountStatusError?.code === "INVALID_CREDENTIALS" ? (
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl flex items-center gap-3 text-rose-800 dark:text-rose-200 text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                  <span>
+                    {accountStatusError.details ||
+                      "Invalid password or username. Please check your credentials."}
+                  </span>
+                </div>
               ) : loginError ? (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-800 text-xs font-medium">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl flex items-center gap-3 text-rose-800 dark:text-rose-200 text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>
                     Invalid password or username. Please check your credentials.
                   </span>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FluentValidation;
 using HospitalManagement.Application.Auth.DTOs;
+using HospitalManagement.Application.Auth.Exceptions;
 using HospitalManagement.Application.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
@@ -38,13 +40,25 @@ public class AuthController : ControllerBase
             _logger.LogInformation("User '{Username}' logged in successfully.", response.User.Username);
             return Ok(response);
         }
+        catch (AccountInactiveException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "ACCOUNT_INACTIVE", message = ex.Message });
+        }
+        catch (AccountPendingApprovalException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "ACCOUNT_PENDING_APPROVAL", message = ex.Message });
+        }
+        catch (AccountRejectedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "ACCOUNT_REJECTED", message = ex.Message });
+        }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message, isNotRegistered = true });
+            return NotFound(new { code = "ACCOUNT_NOT_FOUND", message = ex.Message, isNotRegistered = true });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Unauthorized(new { message = ex.Message });
+            return Unauthorized(new { code = "INVALID_CREDENTIALS", message = ex.Message });
         }
         catch (ValidationException ex)
         {

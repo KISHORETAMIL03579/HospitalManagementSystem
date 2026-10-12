@@ -46,9 +46,25 @@ public class AuthService : IAuthService
             throw new ValidationException(validationResult.Errors);
         }
 
-        var user = await _userRepository.GetByEmailOrUsernameAsync(request.UsernameOrEmail.Trim(), cancellationToken);
+        var identifier = request.UsernameOrEmail.Trim();
+        var user = await _userRepository.GetByEmailOrUsernameAsync(identifier, cancellationToken);
         if (user is null)
         {
+            var staffRequest = await _userRepository.GetStaffRegistrationRequestByEmailAsync(identifier, cancellationToken);
+            if (staffRequest is not null)
+            {
+                if (staffRequest.Status == RegistrationStatus.Pending)
+                {
+                    throw new HospitalManagement.Application.Auth.Exceptions.AccountPendingApprovalException(
+                        "Your staff onboarding request is currently awaiting administrator review. You will receive an email notification once your request has been reviewed.");
+                }
+                if (staffRequest.Status == RegistrationStatus.Rejected)
+                {
+                    throw new HospitalManagement.Application.Auth.Exceptions.AccountRejectedException(
+                        "Your staff registration request was not approved. Please contact the hospital administration office for further details.");
+                }
+            }
+
             throw new KeyNotFoundException($"Account '{request.UsernameOrEmail}' is not registered in CareFlow HMS.");
         }
 
@@ -59,7 +75,8 @@ public class AuthService : IAuthService
 
         if (!user.IsActive)
         {
-            throw new UnauthorizedAccessException("This account has been deactivated or is awaiting administrative approval.");
+            throw new HospitalManagement.Application.Auth.Exceptions.AccountInactiveException(
+                "Your account has been created but is currently inactive. You cannot sign in until your account is activated by an authorized hospital administrator. Please contact your hospital administrator or the IT support team to request activation.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;
