@@ -470,9 +470,16 @@ export const UserManagementPage: React.FC = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Accounts */}
-        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+        <div
+          onClick={() => setStatusTab("all")}
+          className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+            statusTab === "all"
+              ? "bg-blue-500/10 border-blue-400 ring-2 ring-blue-500/20 shadow-sm"
+              : "bg-white border-slate-200 hover:border-slate-300"
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
               Total Accounts
             </span>
             <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">

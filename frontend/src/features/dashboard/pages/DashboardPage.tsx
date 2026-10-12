@@ -11,7 +11,7 @@ import {
   formatLiveTime,
   formatDateByPattern,
 } from "../../../utils/dateUtils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Users,
   UserPlus,
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const settings = useSettings();
 
@@ -230,12 +231,16 @@ export const DashboardPage: React.FC = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm table-fixed">
-              <thead className="text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+              <thead className="bg-slate-100/80 dark:bg-slate-800/80 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="w-[28%] pb-3 text-left pl-1 pr-3">MRN</th>
-                  <th className="w-[36%] pb-3 text-left px-3">Patient Name</th>
-                  <th className="w-[16%] pb-3 text-left px-3">Age</th>
-                  <th className="w-[20%] pb-3 text-right pl-3 pr-1">
+                  <th className="w-[28%] py-2.5 text-left pl-3 pr-3 rounded-l-lg">
+                    MRN
+                  </th>
+                  <th className="w-[36%] py-2.5 text-left px-3">
+                    Patient Name
+                  </th>
+                  <th className="w-[16%] py-2.5 text-left px-3">Age</th>
+                  <th className="w-[20%] py-2.5 text-right pl-3 pr-3 rounded-r-lg">
                     Registered
                   </th>
                 </tr>
@@ -263,9 +268,11 @@ export const DashboardPage: React.FC = () => {
                   patientData.items.map((patient) => (
                     <tr
                       key={patient.patientId}
-                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
+                      onClick={() => navigate("/patients")}
+                      className="hover:bg-blue-50/60 dark:hover:bg-slate-800/80 transition-colors cursor-pointer group"
+                      title="Click to view patient directory"
                     >
-                      <td className="py-3.5 pl-1 pr-3 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 truncate">
+                      <td className="py-3.5 pl-3 pr-3 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline truncate">
                         {patient.medicalRecordNumber}
                       </td>
                       <td className="py-3.5 px-3 font-medium text-slate-800 dark:text-slate-100 truncate">
@@ -274,7 +281,7 @@ export const DashboardPage: React.FC = () => {
                       <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {calculateAge(patient.dateOfBirth)} yrs
                       </td>
-                      <td className="py-3.5 pl-3 pr-1 text-right text-xs text-slate-400 dark:text-slate-400 whitespace-nowrap">
+                      <td className="py-3.5 pl-3 pr-3 text-right text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                         {formatDateByPattern(
                           patient.createdAt,
                           settings.dateFormat,
@@ -324,10 +331,19 @@ export const DashboardPage: React.FC = () => {
                 appointments.slice(0, 4).map((apt) => (
                   <div
                     key={apt.appointmentId}
-                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs"
+                    onClick={() => navigate("/appointments")}
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/50 dark:hover:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 flex items-center justify-between text-xs cursor-pointer transition-all shadow-2xs group"
+                    role="button"
+                    tabIndex={0}
+                    title="Click to view appointments"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        navigate("/appointments");
+                      }
+                    }}
                   >
                     <div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-100">
+                      <div className="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {apt.patientName}
                       </div>
                       <div className="text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
