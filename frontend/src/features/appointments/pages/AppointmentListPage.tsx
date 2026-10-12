@@ -499,7 +499,11 @@ export const AppointmentListPage: React.FC = () => {
                         </div>
                         <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          {formatTimeSlot(apt.timeSlot, settings.timeFormat)}
+                          {formatTimeSlot(
+                            apt.timeSlot,
+                            settings.timeFormat,
+                            settings.timeZone,
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -779,6 +783,7 @@ export const AppointmentListPage: React.FC = () => {
                     {formatTimeSlot(
                       selectedAppointment.timeSlot,
                       settings.timeFormat,
+                      settings.timeZone,
                     )}
                   </span>
                 </div>

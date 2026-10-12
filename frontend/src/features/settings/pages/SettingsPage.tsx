@@ -4,9 +4,10 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import { authApi } from "../../auth/api/authApi";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import {
-  applyThemeMode,
-  applyFontSize,
-  applyDensityMode,
+  updateTheme,
+  updateFontSize,
+  updateDensityMode,
+  updateStoredSettings,
   notifySettingsChanged,
 } from "../../../utils/dateUtils";
 import {
@@ -156,16 +157,16 @@ export const SettingsPage: React.FC = () => {
         queryClient.setQueryData(["auth_user"], updatedUser);
       }
 
-      // Save local storage preferences
-      localStorage.setItem("careflow_timeFormat", timeFormat);
-      localStorage.setItem("careflow_timeZone", timeZone);
-      localStorage.setItem("careflow_theme", theme);
-      localStorage.setItem("careflow_language", language);
-      localStorage.setItem("careflow_dateFormat", dateFormat);
-      localStorage.setItem("careflow_fontSize", fontSize);
-      localStorage.setItem("careflow_density", density);
-
-      applyThemeMode(theme);
+      // Save local preferences and apply theme
+      updateStoredSettings({
+        timeFormat,
+        timeZone,
+        theme,
+        language,
+        dateFormat,
+        fontSize,
+        density,
+      });
 
       showNotification(
         "Profile and preferences saved successfully to the server database!",
@@ -219,13 +220,13 @@ export const SettingsPage: React.FC = () => {
   const handleSaveRegional = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem("careflow_timeFormat", timeFormat);
-      localStorage.setItem("careflow_timeZone", timeZone);
-      localStorage.setItem("careflow_dateFormat", dateFormat);
-      localStorage.setItem("careflow_language", language);
-      localStorage.setItem("careflow_firstDay", firstDayOfWeek);
-
-      notifySettingsChanged();
+      updateStoredSettings({
+        timeFormat,
+        timeZone,
+        dateFormat,
+        language,
+        firstDay: firstDayOfWeek,
+      });
 
       showNotification(
         "Regional settings & time format preferences saved successfully!",
@@ -238,13 +239,11 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleSaveAppearance = () => {
-    localStorage.setItem("careflow_theme", theme);
-    localStorage.setItem("careflow_fontSize", fontSize);
-    localStorage.setItem("careflow_density", density);
-    applyThemeMode(theme);
-    applyFontSize(fontSize);
-    applyDensityMode(density);
-    notifySettingsChanged();
+    updateStoredSettings({
+      theme,
+      fontSize,
+      density,
+    });
     showNotification(
       "Appearance & visual layout preferences saved successfully!",
     );
@@ -565,8 +564,7 @@ export const SettingsPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setTheme("light");
-                      localStorage.setItem("careflow_theme", "light");
-                      applyThemeMode("light");
+                      updateTheme("light");
                     }}
                     className={`p-4 rounded-xl border text-center transition flex flex-col items-center gap-2 ${
                       theme === "light"
@@ -582,8 +580,7 @@ export const SettingsPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setTheme("dark");
-                      localStorage.setItem("careflow_theme", "dark");
-                      applyThemeMode("dark");
+                      updateTheme("dark");
                     }}
                     className={`p-4 rounded-xl border text-center transition flex flex-col items-center gap-2 ${
                       theme === "dark"
@@ -599,8 +596,7 @@ export const SettingsPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setTheme("system");
-                      localStorage.setItem("careflow_theme", "system");
-                      applyThemeMode("system");
+                      updateTheme("system");
                     }}
                     className={`p-4 rounded-xl border text-center transition flex flex-col items-center gap-2 ${
                       theme === "system"
@@ -626,8 +622,7 @@ export const SettingsPage: React.FC = () => {
                       type="button"
                       onClick={() => {
                         setFontSize(sz);
-                        localStorage.setItem("careflow_fontSize", sz);
-                        applyFontSize(sz);
+                        updateFontSize(sz);
                       }}
                       className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-semibold capitalize transition ${
                         fontSize === sz
@@ -657,8 +652,7 @@ export const SettingsPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setDensity("comfortable");
-                      localStorage.setItem("careflow_density", "comfortable");
-                      applyDensityMode("comfortable");
+                      updateDensityMode("comfortable");
                     }}
                     className={`p-3 rounded-xl border text-left transition ${
                       density === "comfortable"
@@ -676,8 +670,7 @@ export const SettingsPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setDensity("compact");
-                      localStorage.setItem("careflow_density", "compact");
-                      applyDensityMode("compact");
+                      updateDensityMode("compact");
                     }}
                     className={`p-3 rounded-xl border text-left transition ${
                       density === "compact"

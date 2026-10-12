@@ -98,10 +98,18 @@ export const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-2 bg-blue-950/60 backdrop-blur border border-blue-400/20 px-4 py-2 rounded-xl">
               <Clock className="w-4 h-4 text-blue-400 animate-pulse" />
               <div className="text-sm font-mono font-semibold tracking-wide">
-                {formatLiveTime(currentTime, settings.timeFormat)}
+                {formatLiveTime(
+                  currentTime,
+                  settings.timeFormat,
+                  settings.timeZone,
+                )}
               </div>
               <div className="text-xs text-blue-300 font-sans border-l border-blue-400/30 pl-2">
-                {formatDateByPattern(currentTime, settings.dateFormat)}
+                {formatDateByPattern(
+                  currentTime,
+                  settings.dateFormat,
+                  settings.timeZone,
+                )}
               </div>
             </div>
 
@@ -323,7 +331,11 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-medium text-slate-700">
-                        {formatTimeSlot(apt.timeSlot, settings.timeFormat)}
+                        {formatTimeSlot(
+                          apt.timeSlot,
+                          settings.timeFormat,
+                          settings.timeZone,
+                        )}
                       </div>
                       <span className="inline-block mt-0.5 text-[10px] px-2 py-0.5 rounded font-semibold bg-indigo-50 text-indigo-700">
                         {apt.statusName}
