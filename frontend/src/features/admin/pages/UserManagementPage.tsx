@@ -399,7 +399,7 @@ export const UserManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Top Banner & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
@@ -564,12 +564,12 @@ export const UserManagementPage: React.FC = () => {
       </div>
 
       {/* Filter Bar & Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs max-w-full">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full xl:w-auto overflow-x-auto shrink-0">
           <button
             onClick={() => setStatusTab("all")}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               statusTab === "all"
                 ? "bg-white text-slate-900 shadow-xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
@@ -579,7 +579,7 @@ export const UserManagementPage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusTab("active")}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               statusTab === "active"
                 ? "bg-white text-slate-900 shadow-xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
@@ -589,7 +589,7 @@ export const UserManagementPage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusTab("inactive")}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               statusTab === "inactive"
                 ? "bg-white text-slate-900 shadow-xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
@@ -599,7 +599,7 @@ export const UserManagementPage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusTab("pending")}
-            className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            className={`flex-1 xl:flex-initial px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${
               statusTab === "pending"
                 ? "bg-amber-500 text-white shadow-xs font-bold"
                 : "text-amber-800 hover:bg-amber-50"
@@ -619,7 +619,7 @@ export const UserManagementPage: React.FC = () => {
         </div>
 
         {/* Role Filter & Search */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
           {/* Role Filter Dropdown */}
           <select
             value={selectedRoleFilter || ""}
@@ -666,15 +666,25 @@ export const UserManagementPage: React.FC = () => {
               No pending staff onboarding requests matching criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[760px] text-left text-xs text-slate-700">
                 <thead className="bg-amber-50/60 border-b border-amber-200/60 text-[11px] font-semibold text-amber-900 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-4">Applicant & Contact</th>
-                    <th className="py-3.5 px-4">Requested Role & Dept</th>
-                    <th className="py-3.5 px-4">Invitation Code</th>
-                    <th className="py-3.5 px-4">Submitted Date</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">
+                      Applicant & Contact
+                    </th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">
+                      Requested Role & Dept
+                    </th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">
+                      Invitation Code
+                    </th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">
+                      Submitted Date
+                    </th>
+                    <th className="py-3.5 px-4 text-right whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -781,16 +791,22 @@ export const UserManagementPage: React.FC = () => {
             No user accounts found matching the criteria.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[840px] text-left text-xs text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">User & Contact</th>
-                  <th className="py-3.5 px-4">Role</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Last Login</th>
-                  <th className="py-3.5 px-4">Created Date</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">
+                    User & Contact
+                  </th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Role</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Last Login</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">
+                    Created Date
+                  </th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -800,7 +816,7 @@ export const UserManagementPage: React.FC = () => {
                     className="hover:bg-slate-50/80 transition-colors"
                   >
                     {/* User Details */}
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
                           {u.fullName
@@ -840,7 +856,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Role Badge */}
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
                           u.roleName,
@@ -852,7 +868,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Status Pill */}
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       {u.isActive ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -867,7 +883,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Last Login */}
-                    <td className="py-4 px-4 text-slate-500 text-xs">
+                    <td className="py-4 px-4 whitespace-nowrap text-slate-500 text-xs">
                       {u.lastLoginAt ? (
                         <div>
                           <div>
@@ -885,12 +901,12 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Created Date */}
-                    <td className="py-4 px-4 text-slate-500 text-xs">
+                    <td className="py-4 px-4 whitespace-nowrap text-slate-500 text-xs">
                       {formatDateByPattern(u.createdAt, "MMM dd, yyyy")}
                     </td>
 
                     {/* Actions */}
-                    <td className="py-4 px-4 text-right">
+                    <td className="py-4 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         {/* Edit Account */}
                         <button
