@@ -14,6 +14,8 @@ import {
   MailCheck,
   Send,
   Edit,
+  Eye,
+  X,
 } from "lucide-react";
 import {
   authApi,
@@ -34,6 +36,10 @@ export const StaffApprovalPage: React.FC = () => {
   >("pending");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+
+  // Application Details View Modal State
+  const [viewingRequest, setViewingRequest] =
+    useState<StaffRegistrationRequest | null>(null);
 
   // Approval Modal State
   const [selectedRequestForApprove, setSelectedRequestForApprove] =
@@ -627,13 +633,13 @@ export const StaffApprovalPage: React.FC = () => {
                   <th className="py-3 px-3.5 whitespace-nowrap min-w-[105px]">
                     Submitted At
                   </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[125px]">
+                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[180px]">
                     Approval Status
                   </th>
                   <th className="py-3 px-3.5 whitespace-nowrap min-w-[100px]">
                     Email Status
                   </th>
-                  <th className="py-3 px-3.5 text-right whitespace-nowrap min-w-[170px]">
+                  <th className="py-3 px-3.5 pr-5 text-right whitespace-nowrap min-w-[320px]">
                     Actions
                   </th>
                 </tr>
@@ -644,10 +650,14 @@ export const StaffApprovalPage: React.FC = () => {
                     key={req.id}
                     className="hover:bg-slate-50/80 transition-colors"
                   >
-                    {/* Applicant & Details */}
+                    {/* Applicant & Details (Clickable to view details) */}
                     <td className="py-3 px-3.5 align-middle whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
+                      <div
+                        onClick={() => setViewingRequest(req)}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                        title="Click to view complete application details"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition">
                           {req.fullName
                             .split(" ")
                             .map((n) => n[0])
@@ -656,12 +666,14 @@ export const StaffApprovalPage: React.FC = () => {
                             .toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 text-sm">
-                            {req.fullName}
+                          <div className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition flex items-center gap-1.5">
+                            <span>{req.fullName}</span>
+                            <Eye className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
                           </div>
                           <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                             <a
                               href={`mailto:${req.email}`}
+                              onClick={(e) => e.stopPropagation()}
                               className="hover:underline text-blue-600 font-medium"
                             >
                               {req.email}
@@ -710,41 +722,45 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Approval Status */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                    <td className="py-3 px-3.5 align-middle">
                       {isPendingStatus(req.status) ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
                           <Clock className="w-3.5 h-3.5 text-amber-600" />
                           Pending Review
                         </span>
                       ) : isApprovedStatus(req.status) ? (
                         <div>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             Approved
                           </span>
                           {req.reviewedByName && (
-                            <div className="text-[10px] text-slate-400 mt-0.5">
+                            <div className="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">
                               by {req.reviewedByName}
                             </div>
                           )}
                         </div>
                       ) : isRejectedStatus(req.status) ? (
                         <div>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
                             <XCircle className="w-3.5 h-3.5 text-rose-600" />
                             Rejected
                           </span>
                           {req.rejectionReason && (
                             <div
-                              title={req.rejectionReason}
-                              className="text-[10px] text-rose-600 truncate max-w-[140px] mt-0.5 italic"
+                              onClick={() => setViewingRequest(req)}
+                              className="mt-1 flex items-start gap-1 max-w-[220px] cursor-pointer group"
+                              title="Click to view complete application details"
                             >
-                              "{req.rejectionReason}"
+                              <AlertCircle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                              <p className="text-[11px] text-rose-600 font-medium leading-snug line-clamp-2 group-hover:underline">
+                                "{req.rejectionReason}"
+                              </p>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
                           {String(req.status)}
                         </span>
                       )}
@@ -769,8 +785,18 @@ export const StaffApprovalPage: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3 px-3.5 text-right align-middle whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-3.5 pr-5 text-right align-middle whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 flex-nowrap">
+                        {/* View Full Application Details */}
+                        <button
+                          onClick={() => setViewingRequest(req)}
+                          title="View Full Application Details"
+                          className="h-8 px-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Details</span>
+                        </button>
+
                         {/* Edit Button for all stages */}
                         <button
                           onClick={() => openEditModal(req)}
@@ -794,7 +820,7 @@ export const StaffApprovalPage: React.FC = () => {
                               className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm flex items-center gap-1 shrink-0"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              Approve
+                              <span>Approve</span>
                             </button>
                             <button
                               onClick={() => {
@@ -806,7 +832,7 @@ export const StaffApprovalPage: React.FC = () => {
                               className="h-8 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 shrink-0"
                             >
                               <XCircle className="w-3.5 h-3.5" />
-                              Reject
+                              <span>Reject</span>
                             </button>
                           </>
                         ) : isRejectedStatus(req.status) ? (
@@ -819,7 +845,7 @@ export const StaffApprovalPage: React.FC = () => {
                             className="h-8 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold text-xs transition-colors shadow-sm flex items-center gap-1 shrink-0"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
-                            Re-approve
+                            <span>Re-approve</span>
                           </button>
                         ) : null}
 
@@ -1272,6 +1298,321 @@ export const StaffApprovalPage: React.FC = () => {
                 )}
                 Save Changes & Apply Stage
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* APPLICATION DETAILS VIEW MODAL */}
+      {viewingRequest && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                  <Eye className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 text-base">
+                      Application Details
+                    </h3>
+                    <span className="text-xs text-slate-400 font-mono">
+                      #{viewingRequest.id}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Comprehensive onboarding information & status history.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewingRequest(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Applicant Profile Card */}
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-sm shadow-sm shrink-0">
+                  {viewingRequest.fullName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)
+                    .toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-slate-900">
+                    {viewingRequest.fullName}
+                  </h4>
+                  <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
+                    <span className="font-mono text-slate-600">
+                      @{viewingRequest.username}
+                    </span>
+                    <span>•</span>
+                    <a
+                      href={`mailto:${viewingRequest.email}`}
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      {viewingRequest.email}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="shrink-0 text-right">
+                {isPendingStatus(viewingRequest.status) ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    Pending Review
+                  </span>
+                ) : isApprovedStatus(viewingRequest.status) ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Approved
+                  </span>
+                ) : isRejectedStatus(viewingRequest.status) ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                    Rejected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                    {String(viewingRequest.status)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Application Information Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Requested Role
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                  <User className="w-4 h-4 text-blue-500" />
+                  {viewingRequest.requestedRoleName}
+                </span>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Assigned Department
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                  <Building2 className="w-4 h-4 text-purple-500" />
+                  {viewingRequest.departmentName || "General / None"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Employee ID
+                </span>
+                <span className="font-mono font-bold text-slate-800 text-sm">
+                  {viewingRequest.employeeId || "None specified"}
+                </span>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Invitation Code
+                </span>
+                <span className="font-mono font-bold text-slate-800 text-sm bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                  {viewingRequest.invitationCode}
+                </span>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Application Submitted
+                </span>
+                <span className="text-slate-700 font-medium">
+                  {formatDateByPattern(
+                    viewingRequest.submittedAt,
+                    "MMM dd, yyyy - hh:mm a",
+                  )}
+                </span>
+              </div>
+
+              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Review Details
+                </span>
+                <span className="text-slate-700 font-medium">
+                  {viewingRequest.reviewedByName
+                    ? `By ${viewingRequest.reviewedByName} ${
+                        viewingRequest.reviewedAt
+                          ? `on ${formatDateByPattern(
+                              viewingRequest.reviewedAt,
+                              "MMM dd, yyyy",
+                            )}`
+                          : ""
+                      }`
+                    : "Awaiting review decision"}
+                </span>
+              </div>
+            </div>
+
+            {/* Dedicated Prominent Rejection Reason Card if Rejected or Reason exists */}
+            {viewingRequest.rejectionReason && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-rose-800 font-bold text-xs uppercase tracking-wider">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Rejection Reason & Auditor Notes</span>
+                </div>
+                <div className="p-3 bg-white rounded-lg border border-rose-200/80 text-rose-900 font-medium text-xs leading-relaxed whitespace-pre-wrap">
+                  {viewingRequest.rejectionReason}
+                </div>
+                {viewingRequest.reviewedByName && (
+                  <p className="text-[11px] text-rose-600">
+                    Recorded by{" "}
+                    <span className="font-semibold">
+                      {viewingRequest.reviewedByName}
+                    </span>
+                    {viewingRequest.reviewedAt &&
+                      ` on ${formatDateByPattern(
+                        viewingRequest.reviewedAt,
+                        "MMM dd, yyyy - hh:mm a",
+                      )}`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Email Notification History Card */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-purple-100 text-purple-700 rounded-lg">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-800 flex items-center gap-2">
+                    <span>Notification Email</span>
+                    {getEmailStatusBadge(
+                      viewingRequest.emailStatus,
+                      viewingRequest.emailErrorMessage,
+                    )}
+                  </div>
+                  {viewingRequest.lastEmailAttempt && (
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Last attempted:{" "}
+                      {formatDateByPattern(
+                        viewingRequest.lastEmailAttempt,
+                        "MMM dd, yyyy - hh:mm a",
+                      )}
+                    </div>
+                  )}
+                  {viewingRequest.emailErrorMessage && (
+                    <div className="text-[11px] text-rose-600 mt-0.5 font-medium">
+                      Error: {viewingRequest.emailErrorMessage}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {viewingRequest.emailStatus === 3 && (
+                <button
+                  onClick={() => {
+                    const req = viewingRequest;
+                    handleRetryEmail(req.id, req.fullName);
+                  }}
+                  disabled={actionLoadingId === viewingRequest.id}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 shrink-0 transition shadow-xs"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${
+                      actionLoadingId === viewingRequest.id
+                        ? "animate-spin"
+                        : ""
+                    }`}
+                  />
+                  Retry Email
+                </button>
+              )}
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setViewingRequest(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Edit Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = viewingRequest;
+                    setViewingRequest(null);
+                    openEditModal(target);
+                  }}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  Edit Request
+                </button>
+
+                {/* Stage-dependent Actions */}
+                {isPendingStatus(viewingRequest.status) && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = viewingRequest;
+                        setViewingRequest(null);
+                        setSelectedRequestForApprove(target);
+                        setSelectedRoleId(target.requestedRoleId);
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = viewingRequest;
+                        setViewingRequest(null);
+                        setSelectedRequestForReject(target);
+                        setRejectionReason("");
+                        setRejectError("");
+                      }}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Reject
+                    </button>
+                  </>
+                )}
+
+                {isRejectedStatus(viewingRequest.status) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = viewingRequest;
+                      setViewingRequest(null);
+                      setSelectedRequestForApprove(target);
+                      setSelectedRoleId(target.requestedRoleId);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Re-approve
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
