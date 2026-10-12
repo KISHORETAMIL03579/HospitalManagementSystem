@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using HospitalManagement.Application.Auth.DTOs;
 using HospitalManagement.Application.Auth.Interfaces;
 using HospitalManagement.Application.Auth.Services;
@@ -57,7 +58,7 @@ public class AdminUserService : IAdminUserService
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             FullName = request.FullName.Trim(),
             EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim(),
-            Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            Phone = NormalizeAndValidatePhone(request.Phone),
             RoleId = role.RoleId,
             Role = role,
             CreatedAt = DateTime.UtcNow,
@@ -100,7 +101,7 @@ public class AdminUserService : IAdminUserService
         user.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? user.EmployeeId : request.EmployeeId.Trim();
         if (request.Phone != null)
         {
-            user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+            user.Phone = NormalizeAndValidatePhone(request.Phone);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Password))
@@ -251,5 +252,20 @@ public class AdminUserService : IAdminUserService
             LastLoginAt = u.LastLoginAt,
             CreatedAt = u.CreatedAt
         };
+    }
+
+    private static string? NormalizeAndValidatePhone(string? rawPhone)
+    {
+        if (string.IsNullOrWhiteSpace(rawPhone)) return null;
+
+        var trimmed = rawPhone.Trim();
+        var digitsOnly = Regex.Replace(trimmed, @"\D", "");
+
+        if (digitsOnly.Length < 7 || digitsOnly.Length > 15)
+        {
+            throw new InvalidOperationException("Phone number must contain between 7 and 15 digits in valid international E.164 format (e.g. +919876543210).");
+        }
+
+        return trimmed.StartsWith('+') ? $"+{digitsOnly}" : (digitsOnly.Length > 10 ? $"+{digitsOnly}" : trimmed);
     }
 }
