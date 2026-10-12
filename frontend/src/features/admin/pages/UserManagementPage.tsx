@@ -907,9 +907,9 @@ export const UserManagementPage: React.FC = () => {
                             });
                           }}
                           title="Edit Account Details"
-                          className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                          className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
                         >
-                          <Edit className="w-3.5 h-3.5" />
+                          <Edit className="w-3.5 h-3.5 shrink-0" />
                           Edit
                         </button>
 
@@ -920,13 +920,13 @@ export const UserManagementPage: React.FC = () => {
                             setTargetRoleId(u.roleId);
                           }}
                           title="Change Assigned Role"
-                          className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                          className="h-8 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors"
                         >
-                          <UserCog className="w-3.5 h-3.5" />
+                          <UserCog className="w-3.5 h-3.5 shrink-0" />
                           Role
                         </button>
 
-                        {/* Activate / Deactivate Toggle */}
+                        {/* Activate / Deactivate Toggle (Fixed width to prevent column shifting) */}
                         <button
                           onClick={() => handleToggleStatus(u)}
                           disabled={actionLoadingId === u.userId}
@@ -935,7 +935,7 @@ export const UserManagementPage: React.FC = () => {
                               ? "Deactivate Account"
                               : "Activate Account"
                           }
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                          className={`h-8 w-[104px] px-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors shrink-0 ${
                             u.isActive
                               ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200"
                               : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
@@ -943,11 +943,13 @@ export const UserManagementPage: React.FC = () => {
                         >
                           {u.isActive ? (
                             <>
-                              <UserX className="w-3.5 h-3.5" /> Deactivate
+                              <UserX className="w-3.5 h-3.5 shrink-0" />
+                              <span>Deactivate</span>
                             </>
                           ) : (
                             <>
-                              <UserCheck className="w-3.5 h-3.5" /> Activate
+                              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                              <span>Activate</span>
                             </>
                           )}
                         </button>
@@ -956,7 +958,7 @@ export const UserManagementPage: React.FC = () => {
                         <button
                           onClick={() => setDeletingUser(u)}
                           title="Remove Account (Archive)"
-                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg transition-colors"
+                          className="h-8 w-8 inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg transition-colors shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
