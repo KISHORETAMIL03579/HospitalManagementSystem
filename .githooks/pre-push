@@ -58,7 +58,8 @@ if [ -n "$BACKEND_CHANGED" ]; then
     echo "\n[Backend] Backend changes detected. Running backend quality suite..."
 
     echo "\n -> [1/2] Checking C# code formatting..."
-    dotnet format HospitalManagement.slnx --verify-no-changes
+    dotnet format backend/HospitalManagement.Application/HospitalManagement.Application.csproj --verify-no-changes --no-restore
+    dotnet format backend/HospitalManagement.Infrastructure/HospitalManagement.Infrastructure.csproj --verify-no-changes --no-restore
     if [ $? -ne 0 ]; then
         echo "\n❌ Push blocked: Backend C# formatting check failed. Run 'dotnet format'."
         exit 1
