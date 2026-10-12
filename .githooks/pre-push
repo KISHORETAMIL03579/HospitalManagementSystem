@@ -66,7 +66,7 @@ if [ -n "$BACKEND_CHANGED" ]; then
     fi
 
     echo "\n -> [2/2] Running Backend unit tests..."
-    dotnet test backend/HospitalManagement.Tests/HospitalManagement.Tests.csproj
+    dotnet test backend/HospitalManagement.Tests/HospitalManagement.Tests.csproj --no-build
     if [ $? -ne 0 ]; then
         echo "\n❌ Push blocked: Backend unit tests failed."
         exit 1
