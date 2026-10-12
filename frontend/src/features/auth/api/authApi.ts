@@ -250,6 +250,25 @@ export const authApi = {
     return response.data;
   },
 
+  updateStaffRequest: async (
+    requestId: number,
+    data: {
+      fullName?: string;
+      email?: string;
+      employeeId?: string;
+      requestedRoleId?: number;
+      departmentId?: number;
+      status?: number;
+      rejectionReason?: string;
+    },
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.put(
+      `/StaffRegistration/requests/${requestId}`,
+      data,
+    );
+    return response.data;
+  },
+
   retryStaffEmail: async (
     requestId: number,
   ): Promise<StaffRegistrationRequest> => {

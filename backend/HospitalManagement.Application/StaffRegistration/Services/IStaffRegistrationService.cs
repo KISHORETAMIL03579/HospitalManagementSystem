@@ -10,5 +10,6 @@ public interface IStaffRegistrationService
     Task<IEnumerable<StaffRegistrationRequestDto>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status = null, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto> ApproveStaffRegistrationRequestAsync(int requestId, int adminUserId, ApproveStaffRequest request, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto> RejectStaffRegistrationRequestAsync(int requestId, int adminUserId, RejectStaffRequest request, CancellationToken cancellationToken = default);
+    Task<StaffRegistrationRequestDto> UpdateStaffRegistrationRequestAsync(int requestId, int adminUserId, UpdateStaffRegistrationRequest request, CancellationToken cancellationToken = default);
     Task<StaffRegistrationRequestDto> RetryStaffNotificationEmailAsync(int requestId, CancellationToken cancellationToken = default);
 }

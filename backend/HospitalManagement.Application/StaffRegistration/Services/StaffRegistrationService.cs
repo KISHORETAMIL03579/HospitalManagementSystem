@@ -128,9 +128,11 @@ public class StaffRegistrationService : IStaffRegistrationService
             return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
         }
 
+        // Allow re-approving previously rejected requests
         if (staffReq.Status == RegistrationStatus.Rejected)
         {
-            throw new InvalidOperationException("Cannot approve a request that has already been rejected.");
+            _logger?.LogInformation("STAFF APPROVAL: Re-evaluating previously rejected staff request #{Id} for approval.", requestId);
+            staffReq.RejectionReason = null;
         }
 
         var assignedRoleId = request.AuthorizedRoleId.HasValue && request.AuthorizedRoleId.Value > 0 ? request.AuthorizedRoleId.Value : staffReq.RequestedRoleId;
@@ -143,15 +145,14 @@ public class StaffRegistrationService : IStaffRegistrationService
         staffReq.Status = RegistrationStatus.Approved;
         staffReq.ReviewedByUserId = adminUserId;
         staffReq.ReviewedAt = DateTime.UtcNow;
-        if (request.AuthorizedRoleId.HasValue && request.AuthorizedRoleId.Value > 0)
-        {
-            staffReq.RequestedRoleId = request.AuthorizedRoleId.Value;
-        }
+        staffReq.RequestedRoleId = assignedRoleId;
+        staffReq.RequestedRole = null; // Clear navigation property to avoid EF Core entity graph conflicts
 
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
 
-        // Provision active User account idempotently if not already provisioned
-        if (!await _userRepository.ExistsByEmailAsync(staffReq.Email, cancellationToken))
+        // Provision active User account idempotently or activate existing
+        var existingUser = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+        if (existingUser is null)
         {
             var newUser = new User
             {
@@ -168,6 +169,14 @@ public class StaffRegistrationService : IStaffRegistrationService
             await _userRepository.AddAsync(newUser, cancellationToken);
             _logger?.LogInformation("STAFF APPROVAL: Provisioned new active user account #{UserId} ('{Email}') with role '{Role}'", newUser.UserId, newUser.Email, role.Name);
         }
+        else
+        {
+            existingUser.RoleId = role.RoleId;
+            existingUser.IsActive = true;
+            existingUser.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(existingUser, cancellationToken);
+            _logger?.LogInformation("STAFF APPROVAL: Reactivated existing user account #{UserId} ('{Email}') with role '{Role}'", existingUser.UserId, existingUser.Email, role.Name);
+        }
 
         var emailLog = await _emailService.SendStaffApprovalEmailAsync(staffReq.Email, staffReq.FullName, role.Name, requestId, cancellationToken);
         _logger?.LogInformation("STAFF APPROVAL: Dispatched approval email for request #{Id}. Email status: {Status}", requestId, emailLog.Status);
@@ -183,20 +192,173 @@ public class StaffRegistrationService : IStaffRegistrationService
             throw new KeyNotFoundException($"Staff registration request #{requestId} not found.");
         }
 
-        if (staffReq.Status != RegistrationStatus.Pending)
+        if (string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length < 5)
         {
-            throw new InvalidOperationException($"Cannot reject a request with status '{staffReq.Status}'. Only Pending requests may be rejected.");
+            throw new InvalidOperationException("Rejection reason is mandatory and must be at least 5 characters.");
+        }
+
+        // If previously approved, deactivate associated user account
+        if (staffReq.Status == RegistrationStatus.Approved)
+        {
+            var user = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Username, cancellationToken)
+                ?? await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+            if (user != null)
+            {
+                user.IsActive = false;
+                user.UpdatedAt = DateTime.UtcNow;
+                await _userRepository.UpdateAsync(user, cancellationToken);
+                _logger?.LogInformation("STAFF REJECTION: Deactivated user account #{UserId} ('{Email}') following request rejection", user.UserId, user.Email);
+            }
         }
 
         staffReq.Status = RegistrationStatus.Rejected;
         staffReq.ReviewedByUserId = adminUserId;
         staffReq.ReviewedAt = DateTime.UtcNow;
-        staffReq.RejectionReason = string.IsNullOrWhiteSpace(request.Reason) ? "Administrative review completed." : request.Reason.Trim();
+        staffReq.RejectionReason = request.Reason.Trim();
+        staffReq.RequestedRole = null;
 
         await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
 
         var emailLog = await _emailService.SendStaffRejectionEmailAsync(staffReq.Email, staffReq.FullName, staffReq.RejectionReason, requestId, cancellationToken);
         _logger?.LogInformation("STAFF REJECTION: Dispatched rejection email for request #{Id}. Email status: {Status}", requestId, emailLog.Status);
+
+        return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
+    }
+
+    public async Task<StaffRegistrationRequestDto> UpdateStaffRegistrationRequestAsync(int requestId, int adminUserId, UpdateStaffRegistrationRequest request, CancellationToken cancellationToken = default)
+    {
+        var staffReq = await _userRepository.GetStaffRegistrationRequestByIdAsync(requestId, cancellationToken);
+        if (staffReq is null)
+        {
+            throw new KeyNotFoundException($"Staff registration request #{requestId} not found.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+        {
+            staffReq.FullName = request.FullName.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            staffReq.Email = request.Email.Trim().ToLowerInvariant();
+        }
+
+        if (request.EmployeeId != null)
+        {
+            staffReq.EmployeeId = string.IsNullOrWhiteSpace(request.EmployeeId) ? null : request.EmployeeId.Trim();
+        }
+
+        if (request.RequestedRoleId.HasValue && request.RequestedRoleId.Value > 0)
+        {
+            staffReq.RequestedRoleId = request.RequestedRoleId.Value;
+        }
+
+        if (request.DepartmentId.HasValue)
+        {
+            staffReq.DepartmentId = request.DepartmentId.Value > 0 ? request.DepartmentId.Value : null;
+        }
+
+        if (request.RejectionReason != null)
+        {
+            staffReq.RejectionReason = request.RejectionReason.Trim();
+        }
+
+        // If status changed
+        if (request.Status.HasValue)
+        {
+            var newStatus = (RegistrationStatus)request.Status.Value;
+            var oldStatus = staffReq.Status;
+
+            if (newStatus != oldStatus)
+            {
+                staffReq.Status = newStatus;
+                staffReq.ReviewedByUserId = adminUserId;
+                staffReq.ReviewedAt = DateTime.UtcNow;
+
+                if (newStatus == RegistrationStatus.Approved)
+                {
+                    staffReq.RejectionReason = null;
+                    var role = await _userRepository.GetRoleByIdOrNameAsync(staffReq.RequestedRoleId, null, cancellationToken)
+                        ?? throw new InvalidOperationException($"Role #{staffReq.RequestedRoleId} not found.");
+
+                    var existingUser = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Username, cancellationToken)
+                        ?? await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+                    if (existingUser is null)
+                    {
+                        var newUser = new User
+                        {
+                            FullName = staffReq.FullName,
+                            Email = staffReq.Email,
+                            Username = staffReq.Username,
+                            PasswordHash = staffReq.PasswordHash,
+                            RoleId = role.RoleId,
+                            EmployeeId = staffReq.EmployeeId,
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _userRepository.AddAsync(newUser, cancellationToken);
+                    }
+                    else
+                    {
+                        existingUser.FullName = staffReq.FullName;
+                        existingUser.Email = staffReq.Email;
+                        existingUser.RoleId = role.RoleId;
+                        existingUser.EmployeeId = staffReq.EmployeeId;
+                        existingUser.IsActive = true;
+                        existingUser.UpdatedAt = DateTime.UtcNow;
+                        await _userRepository.UpdateAsync(existingUser, cancellationToken);
+                    }
+                }
+                else if (newStatus == RegistrationStatus.Rejected)
+                {
+                    if (string.IsNullOrWhiteSpace(request.RejectionReason) || request.RejectionReason.Trim().Length < 5)
+                    {
+                        throw new InvalidOperationException("Rejection reason is mandatory and must be at least 5 characters.");
+                    }
+                    staffReq.RejectionReason = request.RejectionReason.Trim();
+                    var existingUser = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Username, cancellationToken)
+                        ?? await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+                    if (existingUser is not null)
+                    {
+                        existingUser.IsActive = false;
+                        existingUser.UpdatedAt = DateTime.UtcNow;
+                        await _userRepository.UpdateAsync(existingUser, cancellationToken);
+                    }
+                }
+                else if (newStatus == RegistrationStatus.Pending)
+                {
+                    staffReq.RejectionReason = null;
+                    staffReq.ReviewedAt = null;
+                    staffReq.ReviewedByUserId = null;
+                    var existingUser = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Username, cancellationToken)
+                        ?? await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+                    if (existingUser is not null)
+                    {
+                        existingUser.IsActive = false;
+                        existingUser.UpdatedAt = DateTime.UtcNow;
+                        await _userRepository.UpdateAsync(existingUser, cancellationToken);
+                    }
+                }
+            }
+        }
+
+        // Sync user properties if user account already exists
+        var userRecord = await _userRepository.GetByEmailOrUsernameAsync(staffReq.Username, cancellationToken)
+            ?? await _userRepository.GetByEmailOrUsernameAsync(staffReq.Email, cancellationToken);
+        if (userRecord != null && staffReq.Status == RegistrationStatus.Approved)
+        {
+            userRecord.FullName = staffReq.FullName;
+            userRecord.Email = staffReq.Email;
+            userRecord.RoleId = staffReq.RequestedRoleId;
+            userRecord.EmployeeId = staffReq.EmployeeId;
+            userRecord.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(userRecord, cancellationToken);
+        }
+
+        staffReq.RequestedRole = null;
+        await _userRepository.UpdateStaffRegistrationRequestAsync(staffReq, cancellationToken);
+        _logger?.LogInformation("STAFF UPDATE: Admin #{AdminId} updated staff request #{RequestId}", adminUserId, requestId);
 
         return await MapToStaffRequestDtoAsync(staffReq, cancellationToken);
     }

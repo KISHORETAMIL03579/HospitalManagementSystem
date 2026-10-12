@@ -17,9 +17,18 @@ import {
   UserCheck,
   Users,
   X,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 import { useAuth } from "../../features/auth/hooks/useAuth";
+
+interface NavSubItem {
+  label: string;
+  path: string;
+  icon?: LucideIcon;
+  badge?: string;
+}
 
 interface NavItem {
   label: string;
@@ -27,6 +36,7 @@ interface NavItem {
   icon: LucideIcon;
   roles?: readonly string[];
   badge?: string;
+  children?: NavSubItem[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -61,22 +71,27 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin", "hospitalmanager", "doctor", "nurse", "receptionist"],
   },
   {
-    label: "Admin Dashboard",
+    label: "Administration",
     path: "/admin",
     icon: ShieldCheck,
     roles: ["admin", "hospitalmanager"],
-  },
-  {
-    label: "User Management",
-    path: "/admin/users",
-    icon: UserCog,
-    roles: ["admin", "hospitalmanager"],
-  },
-  {
-    label: "Staff Approvals",
-    path: "/admin/staff-approvals",
-    icon: UserCheck,
-    roles: ["admin", "hospitalmanager"],
+    children: [
+      {
+        label: "Admin Dashboard",
+        path: "/admin",
+        icon: ShieldCheck,
+      },
+      {
+        label: "Staff Approvals",
+        path: "/admin/staff-approvals",
+        icon: UserCheck,
+      },
+      {
+        label: "User Management",
+        path: "/admin/users",
+        icon: UserCog,
+      },
+    ],
   },
   {
     label: "Prescriptions",
@@ -118,6 +133,8 @@ const ROUTE_LABELS: Record<string, string> = {
   "/patients": "Patients",
   "/appointments": "Appointments",
   "/doctors": "Doctors",
+  "/admin": "Admin Dashboard",
+  "/admin/staff-approvals": "Staff Approvals",
   "/admin/users": "User Management",
   "/prescriptions": "Prescriptions",
   "/laboratory": "Laboratory",
@@ -196,6 +213,17 @@ export const AppLayout: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileNavOpen]);
 
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(() => {
+    return location.pathname.startsWith("/admin");
+  });
+
+  // Keep dropdown open when navigating to any admin route
+  useEffect(() => {
+    if (location.pathname.startsWith("/admin")) {
+      setIsAdminDropdownOpen(true);
+    }
+  }, [location.pathname]);
+
   // Never assume an unknown or missing role is Admin.
   const userRole = normalizeRole(user?.roleName);
 
@@ -222,11 +250,118 @@ export const AppLayout: React.FC = () => {
       {visibleNavItems.map((item) => {
         const Icon = item.icon;
 
-        const isActive =
-          item.path === "/"
-            ? location.pathname === "/"
-            : location.pathname === item.path ||
-              location.pathname.startsWith(`${item.path}/`);
+        if (item.children && item.children.length > 0) {
+          const isAnyChildActive = item.children.some(
+            (child) =>
+              location.pathname === child.path ||
+              location.pathname.startsWith(`${child.path}/`),
+          );
+
+          return (
+            <div key={item.path} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+                className={[
+                  "w-full flex items-center justify-between gap-3 rounded-lg",
+                  "px-3.5 py-2.5 text-sm font-medium transition-colors text-left",
+                  "focus-visible:outline-none focus-visible:ring-2",
+                  "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
+                  "focus-visible:ring-offset-slate-900",
+                  isAnyChildActive
+                    ? "bg-slate-800/80 text-white font-semibold"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-white",
+                ].join(" ")}
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <Icon
+                    aria-hidden="true"
+                    className={`h-4 w-4 shrink-0 ${
+                      isAnyChildActive ? "text-blue-400" : ""
+                    }`}
+                  />
+                  <span className="truncate">{item.label}</span>
+                </span>
+
+                <span className="flex items-center gap-1.5 shrink-0 text-slate-400">
+                  {item.badge && (
+                    <span className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+                      {item.badge}
+                    </span>
+                  )}
+                  {isAdminDropdownOpen ? (
+                    <ChevronDown className="h-4 w-4 text-slate-400 transition-transform" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-slate-400 transition-transform" />
+                  )}
+                </span>
+              </button>
+
+              {isAdminDropdownOpen && (
+                <div className="ml-4 pl-3 border-l border-slate-800 space-y-1 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {item.children.map((sub) => {
+                    const SubIcon = sub.icon;
+                    const isSubActive =
+                      sub.path === "/admin"
+                        ? location.pathname === "/admin"
+                        : location.pathname === sub.path ||
+                          location.pathname.startsWith(`${sub.path}/`);
+
+                    return (
+                      <Link
+                        key={sub.path}
+                        to={sub.path}
+                        onClick={closeMobileNav}
+                        aria-current={isSubActive ? "page" : undefined}
+                        className={[
+                          "flex items-center justify-between gap-2.5 rounded-lg",
+                          "px-3 py-2 text-xs font-medium transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2",
+                          "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
+                          "focus-visible:ring-offset-slate-900",
+                          isSubActive
+                            ? "bg-blue-600 text-white shadow-sm font-semibold"
+                            : "text-slate-400 hover:bg-slate-800 hover:text-white",
+                        ].join(" ")}
+                      >
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          {SubIcon && (
+                            <SubIcon
+                              aria-hidden="true"
+                              className={`h-3.5 w-3.5 shrink-0 ${
+                                isSubActive ? "text-white" : "text-slate-500"
+                              }`}
+                            />
+                          )}
+                          <span className="truncate">{sub.label}</span>
+                        </span>
+
+                        {sub.badge && (
+                          <span className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+                            {sub.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const isExactMatch = location.pathname === item.path;
+        const isChildMatch =
+          item.path !== "/" &&
+          location.pathname.startsWith(`${item.path}/`) &&
+          !visibleNavItems.some(
+            (other) =>
+              other.path !== item.path &&
+              other.path.startsWith(`${item.path}/`) &&
+              (location.pathname === other.path ||
+                location.pathname.startsWith(`${other.path}/`)),
+          );
+        const isActive = isExactMatch || isChildMatch;
 
         return (
           <Link

@@ -134,6 +134,38 @@ public class StaffRegistrationController : ControllerBase
     }
 
     /// <summary>
+    /// Update details and/or stage of a staff registration request
+    /// </summary>
+    [HttpPut("requests/{id:int}")]
+    [Authorize(Roles = "Admin,HospitalManager")]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStaffRequest(int id, [FromBody] UpdateStaffRegistrationRequest request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!int.TryParse(userIdClaim, out var adminUserId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var updated = await _staffRegistrationService.UpdateStaffRegistrationRequestAsync(id, adminUserId, request, cancellationToken);
+            _logger.LogInformation("Admin #{AdminId} updated staff request #{RequestId}", adminUserId, id);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Retry sending notification email for a staff registration request
     /// </summary>
     [HttpPost("requests/{id:int}/retry-email")]

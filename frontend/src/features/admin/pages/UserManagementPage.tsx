@@ -16,13 +16,18 @@ import {
   Clock,
   Eye,
   EyeOff,
+  Building2,
 } from "lucide-react";
 import {
   authApi,
   AdminUserDto,
   StaffRegistrationRequest,
   isPendingStatus,
+  isApprovedStatus,
+  isRejectedStatus,
 } from "../../auth/api/authApi";
+import { doctorApi } from "../../doctors/api/doctorApi";
+import { DepartmentDto } from "../../doctors/types/doctor.types";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
@@ -65,8 +70,26 @@ export const UserManagementPage: React.FC = () => {
   const [rejectRequest, setRejectRequest] =
     useState<StaffRegistrationRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>("");
+  const [rejectError, setRejectError] = useState<string>("");
 
-  // Create Form State
+  // Edit Request State for Pending Onboarding Requests
+  const [editingRequest, setEditingRequest] =
+    useState<StaffRegistrationRequest | null>(null);
+  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
+  const [editRequestForm, setEditRequestForm] = useState({
+    fullName: "",
+    email: "",
+    employeeId: "",
+    requestedRoleId: 0,
+    departmentId: 0,
+    status: 0,
+    rejectionReason: "",
+  });
+  const [editRequestErrors, setEditRequestErrors] = useState<
+    Record<string, string>
+  >({});
+
+  // Create Form State & Validation
   const [createForm, setCreateForm] = useState({
     fullName: "",
     email: "",
@@ -76,8 +99,9 @@ export const UserManagementPage: React.FC = () => {
     roleId: 4, // Default Receptionist
     employeeId: "EMP-2026-101",
   });
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
 
-  // Edit Form State
+  // Edit Form State & Validation
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: "",
@@ -87,6 +111,9 @@ export const UserManagementPage: React.FC = () => {
     password: "",
     roleId: 0,
   });
+  const [editUserErrors, setEditUserErrors] = useState<Record<string, string>>(
+    {},
+  );
 
   // Target Role for Role Change Modal
   const [targetRoleId, setTargetRoleId] = useState<number>(0);
@@ -124,9 +151,19 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const data = await doctorApi.getDepartments();
+      setDepartments(data);
+    } catch (err) {
+      console.error("Failed to load departments:", err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchRoles();
+    fetchDepartments();
   }, []);
 
   // Summary Metrics
@@ -200,6 +237,30 @@ export const UserManagementPage: React.FC = () => {
   // CREATE USER HANDLER
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
+    if (!createForm.fullName.trim() || createForm.fullName.trim().length < 2) {
+      errors.fullName = "Full name is required (minimum 2 characters).";
+    }
+    if (!createForm.username.trim() || createForm.username.trim().length < 3) {
+      errors.username = "Username must be at least 3 characters.";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!createForm.email.trim() || !emailRegex.test(createForm.email.trim())) {
+      errors.email = "Please provide a valid work email.";
+    }
+    if (!createForm.password || createForm.password.length < 6) {
+      errors.password = "Password must be at least 6 characters.";
+    }
+    if (!createForm.roleId) {
+      errors.roleId = "Please assign a role.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCreateErrors(errors);
+      return;
+    }
+
     setActionLoadingId(-1);
     try {
       const created = await authApi.createAdminUser(createForm);
@@ -208,6 +269,7 @@ export const UserManagementPage: React.FC = () => {
         message: `Successfully created user account for ${created.fullName} (${created.roleName}).`,
       });
       setIsCreateModalOpen(false);
+      setCreateErrors({});
       setCreateForm({
         fullName: "",
         email: "",
@@ -233,6 +295,24 @@ export const UserManagementPage: React.FC = () => {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+
+    const errors: Record<string, string> = {};
+    if (!editForm.fullName.trim() || editForm.fullName.trim().length < 2) {
+      errors.fullName = "Full name is required (minimum 2 characters).";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!editForm.email.trim() || !emailRegex.test(editForm.email.trim())) {
+      errors.email = "Please provide a valid work email.";
+    }
+    if (editForm.password && editForm.password.length < 6) {
+      errors.password = "New password must be at least 6 characters.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditUserErrors(errors);
+      return;
+    }
+
     setActionLoadingId(editingUser.userId);
     try {
       const updated = await authApi.updateAdminUser(
@@ -244,6 +324,7 @@ export const UserManagementPage: React.FC = () => {
         message: `Updated account details for ${updated.fullName}.`,
       });
       setEditingUser(null);
+      setEditUserErrors({});
       fetchUsers();
     } catch (err: any) {
       setFeedback({
@@ -360,11 +441,17 @@ export const UserManagementPage: React.FC = () => {
   // REJECT STAFF REQUEST HANDLER
   const handleRejectSubmit = async () => {
     if (!rejectRequest) return;
+
+    if (!rejectionReason.trim() || rejectionReason.trim().length < 5) {
+      setRejectError("Rejection reason is required (minimum 5 characters).");
+      return;
+    }
+
     setActionLoadingId(rejectRequest.id);
     try {
       await authApi.rejectStaffRequest(
         rejectRequest.id,
-        rejectionReason || "Application rejected by administrator.",
+        rejectionReason.trim(),
       );
       setFeedback({
         type: "success",
@@ -372,12 +459,109 @@ export const UserManagementPage: React.FC = () => {
       });
       setRejectRequest(null);
       setRejectionReason("");
+      setRejectError("");
       fetchUsers();
     } catch (err: any) {
       setFeedback({
         type: "error",
         message:
           err?.response?.data?.message || "Failed to reject staff request.",
+      });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // OPEN EDIT REQUEST MODAL
+  const openEditRequestModal = (req: StaffRegistrationRequest) => {
+    setEditingRequest(req);
+    const numericStatus =
+      typeof req.status === "number"
+        ? req.status
+        : isApprovedStatus(req.status)
+          ? 1
+          : isRejectedStatus(req.status)
+            ? 2
+            : 0;
+
+    setEditRequestForm({
+      fullName: req.fullName,
+      email: req.email,
+      employeeId: req.employeeId || "",
+      requestedRoleId: req.requestedRoleId,
+      departmentId: req.departmentId || 0,
+      status: numericStatus,
+      rejectionReason: req.rejectionReason || "",
+    });
+    setEditRequestErrors({});
+  };
+
+  // SUBMIT EDIT REQUEST
+  const handleEditRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRequest) return;
+
+    const errors: Record<string, string> = {};
+    if (
+      !editRequestForm.fullName.trim() ||
+      editRequestForm.fullName.trim().length < 2
+    ) {
+      errors.fullName = "Full name is required (minimum 2 characters).";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (
+      !editRequestForm.email.trim() ||
+      !emailRegex.test(editRequestForm.email.trim())
+    ) {
+      errors.email = "A valid email address is required.";
+    }
+    if (!editRequestForm.requestedRoleId) {
+      errors.requestedRoleId = "Please select a valid role.";
+    }
+    if (
+      editRequestForm.status === 2 &&
+      (!editRequestForm.rejectionReason.trim() ||
+        editRequestForm.rejectionReason.trim().length < 5)
+    ) {
+      errors.rejectionReason =
+        "Rejection reason is required (minimum 5 characters).";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditRequestErrors(errors);
+      return;
+    }
+
+    setActionLoadingId(editingRequest.id);
+    try {
+      await authApi.updateStaffRequest(editingRequest.id, {
+        fullName: editRequestForm.fullName.trim(),
+        email: editRequestForm.email.trim(),
+        employeeId: editRequestForm.employeeId.trim() || undefined,
+        requestedRoleId: editRequestForm.requestedRoleId,
+        departmentId:
+          editRequestForm.departmentId > 0
+            ? editRequestForm.departmentId
+            : undefined,
+        status: editRequestForm.status,
+        rejectionReason:
+          editRequestForm.status === 2
+            ? editRequestForm.rejectionReason.trim()
+            : undefined,
+      });
+
+      setFeedback({
+        type: "success",
+        message: `Updated onboarding request for ${editRequestForm.fullName.trim()}.`,
+      });
+      setEditingRequest(null);
+      fetchUsers();
+    } catch (err: any) {
+      setFeedback({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          "Failed to update staff request details.",
       });
     } finally {
       setActionLoadingId(null);
@@ -701,22 +885,22 @@ export const UserManagementPage: React.FC = () => {
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
-              <table className="w-full min-w-[760px] text-left text-xs text-slate-700">
+              <table className="w-full min-w-[880px] text-left text-xs text-slate-700">
                 <thead className="bg-amber-50/60 border-b border-amber-200/60 text-[11px] font-semibold text-amber-900 uppercase tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-4 whitespace-nowrap">
+                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[260px]">
                       Applicant & Contact
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap">
+                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[180px]">
                       Requested Role & Dept
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap">
+                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
                       Invitation Code
                     </th>
-                    <th className="py-3.5 px-4 whitespace-nowrap">
+                    <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px]">
                       Submitted Date
                     </th>
-                    <th className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[260px]">
                       Actions
                     </th>
                   </tr>
@@ -728,7 +912,7 @@ export const UserManagementPage: React.FC = () => {
                       className="hover:bg-amber-50/40 transition-colors"
                     >
                       {/* Applicant details */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0">
                             {req.fullName
@@ -758,7 +942,7 @@ export const UserManagementPage: React.FC = () => {
                       </td>
 
                       {/* Requested Role & Dept */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                         <div className="space-y-1">
                           <span
                             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
@@ -769,22 +953,23 @@ export const UserManagementPage: React.FC = () => {
                             {req.requestedRoleName}
                           </span>
                           {req.departmentName && (
-                            <div className="text-[11px] text-slate-500 font-medium">
-                              Dept: {req.departmentName}
+                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                              <Building2 className="w-3 h-3 text-slate-400" />
+                              <span>Dept: {req.departmentName}</span>
                             </div>
                           )}
                         </div>
                       </td>
 
                       {/* Invitation Code */}
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap font-mono font-bold text-slate-700 text-xs">
                         <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-bold border border-slate-200">
                           {req.invitationCode}
                         </span>
                       </td>
 
                       {/* Submitted Date */}
-                      <td className="py-4 px-4 text-slate-500 text-xs">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
                         {formatDateByPattern(
                           req.submittedAt,
                           "MMM dd, yyyy - hh:mm a",
@@ -792,24 +977,36 @@ export const UserManagementPage: React.FC = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-3.5 px-4 text-right align-middle whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => openEditRequestModal(req)}
+                            className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
+                            title="Edit applicant details & stage"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
                           <button
                             onClick={() => {
                               setApproveRequest(req);
                               setApproveRoleId(req.requestedRoleId);
                             }}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                            className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-colors shrink-0"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            Approve & Activate
+                            <span>Approve</span>
                           </button>
                           <button
-                            onClick={() => setRejectRequest(req)}
-                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors"
+                            onClick={() => {
+                              setRejectRequest(req);
+                              setRejectionReason("");
+                              setRejectError("");
+                            }}
+                            className="h-8 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
                           >
                             <XCircle className="w-3.5 h-3.5" />
-                            Reject
+                            <span>Reject</span>
                           </button>
                         </div>
                       </td>
@@ -826,19 +1023,25 @@ export const UserManagementPage: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
-            <table className="w-full min-w-[840px] text-left text-xs text-slate-700">
+            <table className="w-full min-w-[900px] text-left text-xs text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4 whitespace-nowrap">
+                  <th className="py-3.5 px-4 min-w-[280px] whitespace-nowrap">
                     User & Contact
                   </th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Role</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Last Login</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">
+                  <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">
+                    Role
+                  </th>
+                  <th className="py-3.5 px-4 min-w-[110px] whitespace-nowrap">
+                    Status
+                  </th>
+                  <th className="py-3.5 px-4 min-w-[140px] whitespace-nowrap">
+                    Last Login
+                  </th>
+                  <th className="py-3.5 px-4 min-w-[120px] whitespace-nowrap">
                     Created Date
                   </th>
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap">
+                  <th className="py-3.5 px-4 min-w-[240px] text-right whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -850,7 +1053,7 @@ export const UserManagementPage: React.FC = () => {
                     className="hover:bg-slate-50/80 transition-colors"
                   >
                     {/* User Details */}
-                    <td className="py-4 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
                           {u.fullName
@@ -890,7 +1093,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Role Badge */}
-                    <td className="py-4 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
                           u.roleName,
@@ -902,7 +1105,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Status Pill */}
-                    <td className="py-4 px-4 whitespace-nowrap">
+                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                       {u.isActive ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -917,7 +1120,7 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Last Login */}
-                    <td className="py-4 px-4 whitespace-nowrap text-slate-500 text-xs">
+                    <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
                       {u.lastLoginAt ? (
                         <div>
                           <div>
@@ -935,12 +1138,12 @@ export const UserManagementPage: React.FC = () => {
                     </td>
 
                     {/* Created Date */}
-                    <td className="py-4 px-4 whitespace-nowrap text-slate-500 text-xs">
+                    <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
                       {formatDateByPattern(u.createdAt, "MMM dd, yyyy")}
                     </td>
 
                     {/* Actions */}
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 align-middle text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         {/* Edit Account */}
                         <button
@@ -1053,11 +1256,23 @@ export const UserManagementPage: React.FC = () => {
                   required
                   placeholder="e.g. Dr. Arun Kumar"
                   value={createForm.fullName}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, fullName: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, fullName: e.target.value });
+                    if (createErrors.fullName)
+                      setCreateErrors({ ...createErrors, fullName: "" });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    createErrors.fullName
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-blue-500/20"
+                  }`}
                 />
+                {createErrors.fullName && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {createErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1070,11 +1285,26 @@ export const UserManagementPage: React.FC = () => {
                     required
                     placeholder="e.g. akumar"
                     value={createForm.username}
-                    onChange={(e) =>
-                      setCreateForm({ ...createForm, username: e.target.value })
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    onChange={(e) => {
+                      setCreateForm({
+                        ...createForm,
+                        username: e.target.value,
+                      });
+                      if (createErrors.username)
+                        setCreateErrors({ ...createErrors, username: "" });
+                    }}
+                    className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                      createErrors.username
+                        ? "border-rose-400 focus:ring-rose-500/20"
+                        : "border-slate-200 focus:ring-blue-500/20"
+                    }`}
                   />
+                  {createErrors.username && (
+                    <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {createErrors.username}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
@@ -1104,11 +1334,23 @@ export const UserManagementPage: React.FC = () => {
                   required
                   placeholder="arun@hospital.com"
                   value={createForm.email}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, email: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, email: e.target.value });
+                    if (createErrors.email)
+                      setCreateErrors({ ...createErrors, email: "" });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    createErrors.email
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-blue-500/20"
+                  }`}
                 />
+                {createErrors.email && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {createErrors.email}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1129,11 +1371,23 @@ export const UserManagementPage: React.FC = () => {
                   required
                   placeholder="••••••••"
                   value={createForm.password}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, password: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, password: e.target.value });
+                    if (createErrors.password)
+                      setCreateErrors({ ...createErrors, password: "" });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    createErrors.password
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-blue-500/20"
+                  }`}
                 />
+                {createErrors.password && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {createErrors.password}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1142,12 +1396,14 @@ export const UserManagementPage: React.FC = () => {
                 </label>
                 <select
                   value={createForm.roleId}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setCreateForm({
                       ...createForm,
                       roleId: Number(e.target.value),
-                    })
-                  }
+                    });
+                    if (createErrors.roleId)
+                      setCreateErrors({ ...createErrors, roleId: "" });
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 >
                   {roles.map((r) => (
@@ -1156,13 +1412,22 @@ export const UserManagementPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {createErrors.roleId && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {createErrors.roleId}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setIsCreateModalOpen(false)}
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setCreateErrors({});
+                }}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
               >
                 Cancel
@@ -1212,11 +1477,23 @@ export const UserManagementPage: React.FC = () => {
                   type="text"
                   required
                   value={editForm.fullName}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, fullName: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, fullName: e.target.value });
+                    if (editUserErrors.fullName)
+                      setEditUserErrors({ ...editUserErrors, fullName: "" });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    editUserErrors.fullName
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-indigo-500/20"
+                  }`}
                 />
+                {editUserErrors.fullName && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {editUserErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1227,11 +1504,23 @@ export const UserManagementPage: React.FC = () => {
                   type="email"
                   required
                   value={editForm.email}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, email: e.target.value })
-                  }
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, email: e.target.value });
+                    if (editUserErrors.email)
+                      setEditUserErrors({ ...editUserErrors, email: "" });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    editUserErrors.email
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-indigo-500/20"
+                  }`}
                 />
+                {editUserErrors.email && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {editUserErrors.email}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1252,10 +1541,16 @@ export const UserManagementPage: React.FC = () => {
                     type={showEditPassword ? "text" : "password"}
                     placeholder="Leave blank to keep existing password"
                     value={editForm.password || ""}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, password: e.target.value })
-                    }
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl pr-9"
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, password: e.target.value });
+                      if (editUserErrors.password)
+                        setEditUserErrors({ ...editUserErrors, password: "" });
+                    }}
+                    className={`w-full px-3 py-2 bg-slate-50 border rounded-xl pr-9 focus:outline-none focus:ring-2 ${
+                      editUserErrors.password
+                        ? "border-rose-400 focus:ring-rose-500/20"
+                        : "border-slate-200 focus:ring-indigo-500/20"
+                    }`}
                   />
                   <button
                     type="button"
@@ -1269,6 +1564,12 @@ export const UserManagementPage: React.FC = () => {
                     )}
                   </button>
                 </div>
+                {editUserErrors.password && (
+                  <p className="text-[11px] font-medium text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {editUserErrors.password}
+                  </p>
+                )}
                 <p className="text-[10px] text-slate-400 mt-1">
                   Enter a new password only if you want to reset this user's
                   password.
@@ -1316,7 +1617,10 @@ export const UserManagementPage: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setEditingUser(null)}
+                onClick={() => {
+                  setEditingUser(null);
+                  setEditUserErrors({});
+                }}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
               >
                 Cancel
@@ -1590,15 +1894,28 @@ export const UserManagementPage: React.FC = () => {
 
             <div className="space-y-1.5 text-xs">
               <label className="block font-semibold text-slate-700">
-                Reason for Rejection (Optional)
+                Reason for Rejection *
               </label>
               <textarea
                 rows={3}
                 value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g. Invalid credentials or expired invitation code."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                onChange={(e) => {
+                  setRejectionReason(e.target.value);
+                  if (rejectError) setRejectError("");
+                }}
+                placeholder="Please explain why this registration is being rejected (minimum 5 characters)..."
+                className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                  rejectError
+                    ? "border-rose-400 focus:ring-rose-500/20"
+                    : "border-slate-200 focus:ring-rose-500/20"
+                }`}
               />
+              {rejectError && (
+                <p className="text-[11px] font-medium text-rose-600 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {rejectError}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -1607,6 +1924,7 @@ export const UserManagementPage: React.FC = () => {
                 onClick={() => {
                   setRejectRequest(null);
                   setRejectionReason("");
+                  setRejectError("");
                 }}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
               >
@@ -1615,13 +1933,288 @@ export const UserManagementPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleRejectSubmit}
-                disabled={actionLoadingId !== null}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+                disabled={
+                  actionLoadingId !== null || rejectionReason.trim().length < 5
+                }
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
                 {actionLoadingId === rejectRequest.id && (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 )}
                 Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT STAFF REGISTRATION REQUEST MODAL */}
+      {editingRequest && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                  <Edit className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Edit Staff Onboarding Request
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Modify profile details, role, department or transition
+                    stage.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingRequest(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Full Name */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={editRequestForm.fullName}
+                  onChange={(e) => {
+                    setEditRequestForm({
+                      ...editRequestForm,
+                      fullName: e.target.value,
+                    });
+                    if (editRequestErrors.fullName)
+                      setEditRequestErrors({
+                        ...editRequestErrors,
+                        fullName: "",
+                      });
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                    editRequestErrors.fullName
+                      ? "border-rose-400 focus:ring-rose-500/20"
+                      : "border-slate-200 focus:ring-blue-500/20"
+                  }`}
+                />
+                {editRequestErrors.fullName && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium">
+                    {editRequestErrors.fullName}
+                  </p>
+                )}
+              </div>
+
+              {/* Work Email & Employee ID */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Work Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={editRequestForm.email}
+                    onChange={(e) => {
+                      setEditRequestForm({
+                        ...editRequestForm,
+                        email: e.target.value,
+                      });
+                      if (editRequestErrors.email)
+                        setEditRequestErrors({
+                          ...editRequestErrors,
+                          email: "",
+                        });
+                    }}
+                    className={`w-full px-3 py-2 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                      editRequestErrors.email
+                        ? "border-rose-400 focus:ring-rose-500/20"
+                        : "border-slate-200 focus:ring-blue-500/20"
+                    }`}
+                  />
+                  {editRequestErrors.email && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">
+                      {editRequestErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Employee ID
+                  </label>
+                  <input
+                    type="text"
+                    value={editRequestForm.employeeId}
+                    onChange={(e) =>
+                      setEditRequestForm({
+                        ...editRequestForm,
+                        employeeId: e.target.value,
+                      })
+                    }
+                    placeholder="EMP-XXXX"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Role & Department */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Assigned Role *
+                  </label>
+                  <select
+                    value={editRequestForm.requestedRoleId}
+                    onChange={(e) => {
+                      setEditRequestForm({
+                        ...editRequestForm,
+                        requestedRoleId: Number(e.target.value),
+                      });
+                      if (editRequestErrors.requestedRoleId)
+                        setEditRequestErrors({
+                          ...editRequestErrors,
+                          requestedRoleId: "",
+                        });
+                    }}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    {roles.map((r) => (
+                      <option key={r.roleId} value={r.roleId}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Clinical Department
+                  </label>
+                  <select
+                    value={editRequestForm.departmentId}
+                    onChange={(e) =>
+                      setEditRequestForm({
+                        ...editRequestForm,
+                        departmentId: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value={0}>General / None</option>
+                    {departments.map((d: any) => (
+                      <option key={d.departmentId} value={d.departmentId}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Workflow Stage */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Workflow Stage / Status *
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditRequestForm({ ...editRequestForm, status: 0 })
+                    }
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                      editRequestForm.status === 0
+                        ? "bg-amber-500/10 border-amber-500 text-amber-800 ring-2 ring-amber-500/20 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    Pending (0)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditRequestForm({ ...editRequestForm, status: 1 })
+                    }
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                      editRequestForm.status === 1
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-800 ring-2 ring-emerald-500/20 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    Approved (1)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditRequestForm({ ...editRequestForm, status: 2 })
+                    }
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition ${
+                      editRequestForm.status === 2
+                        ? "bg-rose-500/10 border-rose-500 text-rose-800 ring-2 ring-rose-500/20 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    Rejected (2)
+                  </button>
+                </div>
+              </div>
+
+              {/* Rejection Reason (when status === 2) */}
+              {editRequestForm.status === 2 && (
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Rejection Reason *
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editRequestForm.rejectionReason}
+                    onChange={(e) => {
+                      setEditRequestForm({
+                        ...editRequestForm,
+                        rejectionReason: e.target.value,
+                      });
+                      if (editRequestErrors.rejectionReason)
+                        setEditRequestErrors({
+                          ...editRequestErrors,
+                          rejectionReason: "",
+                        });
+                    }}
+                    placeholder="Enter reason for rejection (min 5 chars)..."
+                    className={`w-full p-2.5 bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 ${
+                      editRequestErrors.rejectionReason
+                        ? "border-rose-400 focus:ring-rose-500/20"
+                        : "border-slate-200 focus:ring-rose-500/20"
+                    }`}
+                  />
+                  {editRequestErrors.rejectionReason && (
+                    <p className="text-[11px] text-rose-600 mt-1 font-medium">
+                      {editRequestErrors.rejectionReason}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setEditingRequest(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditRequestSubmit}
+                disabled={actionLoadingId !== null}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
+              >
+                {actionLoadingId !== null && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
+                Save Changes & Apply Stage
               </button>
             </div>
           </div>

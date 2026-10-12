@@ -173,6 +173,7 @@ public class UserRepository : IUserRepository
             .Include(s => s.Department)
             .Include(s => s.RequestedRole)
             .Include(s => s.ReviewedByUser)
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.StaffRegistrationRequestId == requestId, cancellationToken);
     }
 
@@ -205,8 +206,26 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateStaffRegistrationRequestAsync(StaffRegistrationRequest request, CancellationToken cancellationToken = default)
     {
-        _context.StaffRegistrationRequests.Update(request);
-        await _context.SaveChangesAsync(cancellationToken);
+        var existing = await _context.StaffRegistrationRequests.FirstOrDefaultAsync(s => s.StaffRegistrationRequestId == request.StaffRegistrationRequestId, cancellationToken);
+        if (existing is not null)
+        {
+            existing.FullName = request.FullName;
+            existing.Email = request.Email;
+            existing.Status = request.Status;
+            existing.ReviewedByUserId = request.ReviewedByUserId;
+            existing.ReviewedAt = request.ReviewedAt;
+            existing.RejectionReason = request.RejectionReason;
+            existing.RequestedRoleId = request.RequestedRoleId;
+            existing.EmployeeId = request.EmployeeId;
+            existing.DepartmentId = request.DepartmentId;
+            existing.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            _context.StaffRegistrationRequests.Update(request);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<bool> ExistsPendingStaffRequestByEmailAsync(string email, CancellationToken cancellationToken = default)
