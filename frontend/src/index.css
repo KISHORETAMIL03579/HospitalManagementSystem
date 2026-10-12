@@ -235,3 +235,27 @@ html.compact-mode .cf-compact-stack {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --------------------------------------------------
+   CareFlow Counter Component Utility
+-------------------------------------------------- */
+
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--cf-text);
+  background: var(--cf-surface-muted);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+}
+
+.counter:hover {
+  border-color: var(--cf-border);
+}
+
+.counter:focus-visible {
+  outline: 2px solid var(--cf-focus);
+  outline-offset: 2px;
+}
