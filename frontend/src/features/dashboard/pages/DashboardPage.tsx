@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Clock,
+  Building2,
 } from "lucide-react";
 
 export const DashboardPage: React.FC = () => {
@@ -187,22 +188,22 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Metric 4: System Status */}
+        {/* Metric 4: Clinical Departments */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow transition-shadow">
           <div className="flex justify-between items-start mb-3">
             <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
-              System Status
+              Clinical Departments
             </span>
-            <div className="p-2 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-lg">
-              <Activity className="w-5 h-5" />
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg">
+              <Building2 className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-            <span>Online</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+          <div className="text-2xl font-bold text-slate-800 dark:text-white">
+            {isDeptsLoading ? "..." : `${totalDepartmentsCount} Active`}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            API v1 & Database connected
+          <div className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1 mt-1 font-medium">
+            <Activity className="w-3.5 h-3.5" />
+            <span>Specialty care & diagnostics</span>
           </div>
         </div>
       </div>

@@ -9,6 +9,8 @@ import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { UserManagementPage } from "../features/admin/pages/UserManagementPage";
+import { StaffApprovalPage } from "../features/admin/pages/StaffApprovalPage";
+import { AdminDashboardPage } from "../features/admin/pages/AdminDashboardPage";
 
 export const router = createBrowserRouter([
   {
@@ -43,8 +45,16 @@ export const router = createBrowserRouter([
             element: <AppointmentListPage />,
           },
           {
+            path: "admin",
+            element: <AdminDashboardPage />,
+          },
+          {
             path: "admin/users",
             element: <UserManagementPage />,
+          },
+          {
+            path: "admin/staff-approvals",
+            element: <StaffApprovalPage />,
           },
           {
             path: "settings",

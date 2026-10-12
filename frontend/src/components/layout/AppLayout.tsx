@@ -14,6 +14,7 @@ import {
   Stethoscope,
   TestTube,
   UserCog,
+  UserCheck,
   Users,
   X,
 } from "lucide-react";
@@ -60,9 +61,21 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin", "hospitalmanager", "doctor", "nurse", "receptionist"],
   },
   {
+    label: "Admin Dashboard",
+    path: "/admin",
+    icon: ShieldCheck,
+    roles: ["admin", "hospitalmanager"],
+  },
+  {
     label: "User Management",
     path: "/admin/users",
     icon: UserCog,
+    roles: ["admin", "hospitalmanager"],
+  },
+  {
+    label: "Staff Approvals",
+    path: "/admin/staff-approvals",
+    icon: UserCheck,
     roles: ["admin", "hospitalmanager"],
   },
   {

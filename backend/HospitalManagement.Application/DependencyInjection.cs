@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddScoped<IStaffRegistrationService, StaffRegistrationService>();
         services.AddScoped<IDoctorService, DoctorService>();
+        services.AddScoped<HospitalManagement.Application.Doctors.Interfaces.IDoctorAvailabilityService, DoctorAvailabilityService>();
+        services.AddSingleton(TimeProvider.System);
         services.AddScoped<IAppointmentService, AppointmentService>();
 
         return services;

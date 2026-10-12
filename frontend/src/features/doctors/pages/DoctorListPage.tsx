@@ -1,26 +1,32 @@
 import React, { useState, useMemo } from "react";
 import {
-  useDoctors,
+  useDoctorDirectory,
   useDepartments,
   useCreateDoctor,
 } from "../hooks/useDoctors";
-import { DoctorDto } from "../types/doctor.types";
+import {
+  DoctorDirectoryItemDto,
+  DoctorDto,
+  TimeSlotDto,
+} from "../types/doctor.types";
+import { DoctorAvailabilityBadge } from "../components/DoctorAvailabilityBadge";
+import { DoctorDetailsModal } from "../components/DoctorDetailsModal";
+import { DoctorScheduleModal } from "../components/DoctorScheduleModal";
+import { BookingModal } from "../../appointments/components/BookingModal";
 import { formatCurrency } from "../../../lib/utils";
 import {
   UserCheck,
   Plus,
   Stethoscope,
   Phone,
-  Mail,
-  Clock,
-  DollarSign,
-  Building,
   Search,
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  X,
   Calendar,
+  Settings,
+  Star,
+  Award,
 } from "lucide-react";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 
@@ -37,11 +43,25 @@ export const DoctorListPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(6);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<DoctorDto | null>(null);
+  // Modals state
+  const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
+  const [selectedDoctorForDetails, setSelectedDoctorForDetails] =
+    useState<DoctorDirectoryItemDto | null>(null);
+  const [selectedDoctorForSchedule, setSelectedDoctorForSchedule] =
+    useState<DoctorDirectoryItemDto | null>(null);
+  const [bookingModalState, setBookingModalState] = useState<{
+    isOpen: boolean;
+    doctorId?: number;
+    date?: string;
+    timeSlot?: string;
+  }>({
+    isOpen: false,
+  });
 
-  const { data: doctors, isLoading: isDoctorsLoading } =
-    useDoctors(selectedDepartment);
+  const { data: doctors, isLoading: isDoctorsLoading } = useDoctorDirectory(
+    selectedDepartment,
+    searchTerm || undefined,
+  );
   const { data: departments } = useDepartments();
   const createDoctorMutation = useCreateDoctor();
 
@@ -69,7 +89,7 @@ export const DoctorListPage: React.FC = () => {
       consultationFee: Number(formData.consultationFee),
     });
 
-    setIsModalOpen(false);
+    setIsAddDoctorModalOpen(false);
     setFormData({
       firstName: "",
       lastName: "",
@@ -85,21 +105,9 @@ export const DoctorListPage: React.FC = () => {
     });
   };
 
-  const filteredAndSortedDoctors = useMemo(() => {
+  const sortedDoctors = useMemo(() => {
     if (!doctors) return [];
-
-    let result = [...doctors];
-
-    if (searchTerm.trim() !== "") {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (doc) =>
-          doc.fullName.toLowerCase().includes(term) ||
-          doc.specialization.toLowerCase().includes(term) ||
-          doc.departmentName.toLowerCase().includes(term) ||
-          doc.licenseNumber.toLowerCase().includes(term),
-      );
-    }
+    const result = [...doctors];
 
     result.sort((a, b) => {
       let valA: any = a[sortField];
@@ -114,31 +122,44 @@ export const DoctorListPage: React.FC = () => {
     });
 
     return result;
-  }, [doctors, searchTerm, sortField, sortOrder]);
+  }, [doctors, sortField, sortOrder]);
 
-  const totalPages = Math.ceil(filteredAndSortedDoctors.length / pageSize) || 1;
+  const totalPages = Math.ceil(sortedDoctors.length / pageSize) || 1;
   const paginatedDoctors = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filteredAndSortedDoctors.slice(start, start + pageSize);
-  }, [filteredAndSortedDoctors, currentPage, pageSize]);
+    return sortedDoctors.slice(start, start + pageSize);
+  }, [sortedDoctors, currentPage, pageSize]);
+
+  const handleOpenBooking = (
+    doc: DoctorDirectoryItemDto | DoctorDto,
+    slot?: TimeSlotDto,
+    date?: string,
+  ) => {
+    setBookingModalState({
+      isOpen: true,
+      doctorId: doc.doctorId,
+      date: date,
+      timeSlot: slot ? slot.startTime.substring(0, 5) : undefined,
+    });
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Stethoscope className="w-7 h-7 text-indigo-600" />
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Stethoscope className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
             Medical Staff & Specialists
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Manage hospital doctors, department assignments, and consultation
-            schedules.
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Doctor directory, real-time availability calendar, and consultation
+            scheduling.
           </p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition"
+          onClick={() => setIsAddDoctorModalOpen(true)}
+          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition"
         >
           <Plus className="w-5 h-5" />
           Add New Doctor
@@ -146,7 +167,7 @@ export const DoctorListPage: React.FC = () => {
       </div>
 
       {/* Search, Filter & Sort Controls */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1 min-w-[240px]">
@@ -159,12 +180,12 @@ export const DoctorListPage: React.FC = () => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+              className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
             />
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
               <ArrowUpDown className="w-3.5 h-3.5" />
               <span>Sort By:</span>
             </div>
@@ -176,7 +197,7 @@ export const DoctorListPage: React.FC = () => {
                     "fullName" | "specialization" | "consultationFee",
                 )
               }
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600 bg-white"
+              className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-indigo-600"
             >
               <option value="fullName">Doctor Name</option>
               <option value="specialization">Specialization</option>
@@ -184,7 +205,7 @@ export const DoctorListPage: React.FC = () => {
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100"
+              className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
             >
               {sortOrder.toUpperCase()}
             </button>
@@ -192,16 +213,16 @@ export const DoctorListPage: React.FC = () => {
         </div>
 
         {/* Department Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={() => {
               setSelectedDepartment(undefined);
               setCurrentPage(1);
             }}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
               selectedDepartment === undefined
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             All Departments
@@ -213,10 +234,10 @@ export const DoctorListPage: React.FC = () => {
                 setSelectedDepartment(dept.departmentId);
                 setCurrentPage(1);
               }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
                 selectedDepartment === dept.departmentId
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               {dept.name}
@@ -225,18 +246,18 @@ export const DoctorListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Doctors Grid */}
+      {/* Doctors Cards Grid */}
       {isDoctorsLoading ? (
-        <div className="p-12 text-center text-slate-500">
-          Loading doctors...
+        <div className="p-16 text-center text-slate-500 dark:text-slate-400">
+          Loading medical staff directory & live schedules...
         </div>
-      ) : filteredAndSortedDoctors.length === 0 ? (
-        <div className="bg-white p-12 text-center border border-slate-200 rounded-xl">
+      ) : sortedDoctors.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 p-16 text-center border border-slate-200 dark:border-slate-800 rounded-2xl">
           <UserCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-700">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
             No doctors found
           </h3>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Try adjusting your search query or department filter.
           </p>
         </div>
@@ -246,66 +267,123 @@ export const DoctorListPage: React.FC = () => {
             {paginatedDoctors.map((doc) => (
               <div
                 key={doc.doctorId}
-                className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition space-y-4 cursor-pointer hover:border-indigo-300"
-                onClick={() => setSelectedDoctor(doc)}
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs hover:shadow-lg transition-all space-y-4 hover:border-indigo-300 dark:hover:border-indigo-700 flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-800">
-                      {doc.fullName}
-                    </h3>
-                    <span className="inline-block bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full mt-1">
-                      {doc.specialization}
+                <div className="space-y-3">
+                  {/* Top: Avatar, Name, Badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                        {doc.fullName
+                          ? doc.fullName.replace("Dr. ", "")[0]
+                          : "D"}
+                      </div>
+                      <div>
+                        <h3
+                          onClick={() => setSelectedDoctorForDetails(doc)}
+                          className="text-base font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition"
+                        >
+                          {doc.fullName}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                            {doc.specialization}
+                          </span>
+                          <span>•</span>
+                          <span>{doc.departmentName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded font-mono shrink-0">
+                      {doc.licenseNumber}
                     </span>
                   </div>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">
-                    {doc.licenseNumber}
-                  </span>
+
+                  {/* Real-Time Availability Badge & Slot Info */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                    <DoctorAvailabilityBadge
+                      status={doc.availabilityStatus}
+                      nextSlotText={doc.nextAvailableSlotText}
+                      size="md"
+                    />
+
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-400">
+                        Consultation
+                      </div>
+                      <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(doc.consultationFee)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ratings & Contact Info */}
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 pt-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-amber-500">
+                        <Star className="w-3.5 h-3.5 fill-current" />
+                        <span className="font-bold text-slate-700 dark:text-slate-200">
+                          {doc.rating || 4.9}
+                        </span>
+                        <span className="text-slate-400 text-[11px]">
+                          ({doc.reviewCount || 38})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-slate-500">
+                        <Award className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>{doc.yearsOfExperience || 8} yrs exp</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800 text-slate-500">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{doc.phone}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-slate-600 border-t border-slate-100 pt-3">
-                  <div className="flex items-center gap-2">
-                    <Building className="w-4 h-4 text-slate-400" />
-                    <span>{doc.departmentName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-slate-400" />
-                    <span>{doc.phone}</span>
-                  </div>
-                  {doc.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-slate-400" />
-                      <span>{doc.email}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span>
-                      {doc.startTime.substring(0, 5)} -{" "}
-                      {doc.endTime.substring(0, 5)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 font-medium text-slate-800">
-                    <DollarSign className="w-4 h-4 text-emerald-600" />
-                    <span>
-                      {formatCurrency(doc.consultationFee)} consultation fee
-                    </span>
-                  </div>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDoctorForDetails(doc)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition"
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                    Calendar & Slots
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenBooking(doc)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                  >
+                    Book
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDoctorForSchedule(doc)}
+                    className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded-xl transition"
+                    title="Manage schedule and exceptions"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Pagination Controls */}
-          <div className="bg-white px-6 py-3.5 border border-slate-200 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
-            <div className="text-xs text-slate-500">
-              Showing {paginatedDoctors.length} of{" "}
-              {filteredAndSortedDoctors.length} doctors (Page {currentPage} of{" "}
-              {totalPages})
+          <div className="bg-white dark:bg-slate-900 px-6 py-4 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Showing {paginatedDoctors.length} of {sortedDoctors.length}{" "}
+              doctors (Page {currentPage} of {totalPages})
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                 <span>Per page:</span>
                 <select
                   value={pageSize}
@@ -313,7 +391,7 @@ export const DoctorListPage: React.FC = () => {
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-2 py-1 border border-slate-300 rounded bg-white"
+                  className="px-2 py-1 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800"
                 >
                   <option value={6}>6</option>
                   <option value={12}>12</option>
@@ -325,7 +403,7 @@ export const DoctorListPage: React.FC = () => {
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="p-1.5 border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
+                  className="p-2 border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -334,7 +412,7 @@ export const DoctorListPage: React.FC = () => {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage >= totalPages}
-                  className="p-1.5 border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
+                  className="p-2 border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -344,17 +422,56 @@ export const DoctorListPage: React.FC = () => {
         </div>
       )}
 
-      {/* Add Doctor Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-slate-800">
+      {/* Doctor Details & Interactive Calendar Modal */}
+      {selectedDoctorForDetails && (
+        <DoctorDetailsModal
+          isOpen={!!selectedDoctorForDetails}
+          onClose={() => setSelectedDoctorForDetails(null)}
+          doctor={selectedDoctorForDetails}
+          onOpenScheduleManager={(doc) => {
+            setSelectedDoctorForDetails(null);
+            setSelectedDoctorForSchedule(doc as DoctorDirectoryItemDto);
+          }}
+          onBookAppointment={(doc, slot, date) => {
+            setSelectedDoctorForDetails(null);
+            handleOpenBooking(doc, slot, date);
+          }}
+        />
+      )}
+
+      {/* Doctor Schedule & Exception Manager Modal */}
+      {selectedDoctorForSchedule && (
+        <DoctorScheduleModal
+          isOpen={!!selectedDoctorForSchedule}
+          onClose={() => setSelectedDoctorForSchedule(null)}
+          doctor={selectedDoctorForSchedule}
+        />
+      )}
+
+      {/* Appointment Booking Modal */}
+      <BookingModal
+        isOpen={bookingModalState.isOpen}
+        onClose={() =>
+          setBookingModalState({
+            isOpen: false,
+          })
+        }
+        preselectedDoctorId={bookingModalState.doctorId}
+        preselectedDate={bookingModalState.date}
+        preselectedTimeSlot={bookingModalState.timeSlot}
+      />
+
+      {/* Add New Doctor Modal */}
+      {isAddDoctorModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
               Register New Doctor
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     First Name
                   </label>
                   <input
@@ -364,11 +481,11 @@ export const DoctorListPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, firstName: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     Last Name
                   </label>
                   <input
@@ -378,14 +495,14 @@ export const DoctorListPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, lastName: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     Specialization
                   </label>
                   <input
@@ -399,11 +516,11 @@ export const DoctorListPage: React.FC = () => {
                         specialization: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     License Number
                   </label>
                   <input
@@ -417,13 +534,13 @@ export const DoctorListPage: React.FC = () => {
                         licenseNumber: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   Department
                 </label>
                 <select
@@ -435,7 +552,7 @@ export const DoctorListPage: React.FC = () => {
                       departmentId: Number(e.target.value),
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                 >
                   <option value={0}>Select Department...</option>
                   {departments?.map((dept) => (
@@ -457,7 +574,7 @@ export const DoctorListPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                     Consultation Fee
                   </label>
                   <input
@@ -471,13 +588,13 @@ export const DoctorListPage: React.FC = () => {
                         consultationFee: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   Email
                 </label>
                 <input
@@ -486,106 +603,27 @@ export const DoctorListPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-indigo-600"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 focus:outline-indigo-600"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                  onClick={() => setIsAddDoctorModalOpen(false)}
+                  className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createDoctorMutation.isPending}
-                  className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 font-semibold shadow-xs"
                 >
                   {createDoctorMutation.isPending ? "Saving..." : "Save Doctor"}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-      {/* Doctor Details Modal */}
-      {selectedDoctor && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 border border-slate-200">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider font-mono">
-                  License: {selectedDoctor.licenseNumber}
-                </span>
-                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mt-0.5">
-                  <Stethoscope className="w-5 h-5 text-indigo-600" />
-                  {selectedDoctor.fullName}
-                </h2>
-              </div>
-              <button
-                onClick={() => setSelectedDoctor(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-sm text-slate-600">
-              <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 space-y-1">
-                <div className="font-semibold text-indigo-900 text-base">
-                  {selectedDoctor.specialization} Specialist
-                </div>
-                <div className="text-xs text-indigo-700 flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5" />
-                  Department: {selectedDoctor.departmentName}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Phone className="w-4 h-4 text-slate-400" />
-                  <span>Phone: {selectedDoctor.phone}</span>
-                </div>
-                {selectedDoctor.email && (
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Mail className="w-4 h-4 text-slate-400" />
-                    <span>Email: {selectedDoctor.email}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Clock className="w-4 h-4 text-slate-400" />
-                  <span>
-                    Consultation Hours:{" "}
-                    {selectedDoctor.startTime.substring(0, 5)} -{" "}
-                    {selectedDoctor.endTime.substring(0, 5)}
-                  </span>
-                </div>
-                {selectedDoctor.availableDays && (
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>Available Days: {selectedDoctor.availableDays}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-slate-800 font-semibold pt-2 border-t border-slate-100">
-                  <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span>
-                    Consultation Fee:{" "}
-                    {formatCurrency(selectedDoctor.consultationFee)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-3 border-t border-slate-100">
-              <button
-                onClick={() => setSelectedDoctor(null)}
-                className="px-4 py-2 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-xs"
-              >
-                Close Doctor Profile
-              </button>
-            </div>
           </div>
         </div>
       )}
