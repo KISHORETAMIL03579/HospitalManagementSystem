@@ -98,6 +98,21 @@ export const DoctorScheduleModal: React.FC<DoctorScheduleModalProps> = ({
     }
   }, [currentSchedules]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showConflictModal) {
+          setShowConflictModal(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, showConflictModal, onClose]);
+
   if (!isOpen) return null;
 
   const handleAddSession = (dayOfWeek: number) => {
@@ -233,24 +248,33 @@ export const DoctorScheduleModal: React.FC<DoctorScheduleModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden"
+      >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <div>
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="min-w-0">
             <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Schedule & Availability Manager
             </span>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5">
-              <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              {doctor.fullName}
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5 truncate">
+              <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <span className="truncate">{doctor.fullName}</span>
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            aria-label="Close modal"
+            title="Close (Esc)"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 

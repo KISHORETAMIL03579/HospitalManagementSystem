@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   DoctorDto,
   DoctorDirectoryItemDto,
@@ -13,7 +13,6 @@ import {
   Building,
   Phone,
   Mail,
-  DollarSign,
   Calendar,
   Settings,
   Star,
@@ -41,99 +40,121 @@ export const DoctorDetailsModal: React.FC<DoctorDetailsModalProps> = ({
   onOpenScheduleManager,
   onBookAppointment,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const directoryItem = doctor as DoctorDirectoryItemDto;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden"
+      >
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+            <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1 w-full">
+              {/* Avatar Placeholder */}
+              {(() => {
+                const cleanName = doctor.fullName
+                  .replace(/^Dr\.?\s*/i, "")
+                  .trim();
+                const parts = cleanName.split(/\s+/);
+                const initials =
+                  `${parts[0]?.[0] || "D"}${parts.length > 1 ? parts[parts.length - 1]?.[0] : ""}`.toUpperCase();
+                return (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-lg font-bold text-xl sm:text-2xl shrink-0">
+                    {initials}
+                  </div>
+                );
+              })()}
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            {/* Avatar Placeholder */}
-            {(() => {
-              const cleanName = doctor.fullName
-                .replace(/^Dr\.?\s*/i, "")
-                .trim();
-              const parts = cleanName.split(/\s+/);
-              const initials =
-                `${parts[0]?.[0] || "D"}${parts.length > 1 ? parts[parts.length - 1]?.[0] : ""}`.toUpperCase();
-              return (
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-lg font-bold text-2xl shrink-0">
-                  {initials}
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    {doctor.fullName}
+                  </h2>
+                  {directoryItem.availabilityStatus && (
+                    <DoctorAvailabilityBadge
+                      status={directoryItem.availabilityStatus}
+                      size="sm"
+                    />
+                  )}
                 </div>
-              );
-            })()}
 
-            <div className="space-y-1.5 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {doctor.fullName}
-                </h2>
-                {directoryItem.availabilityStatus && (
-                  <DoctorAvailabilityBadge
-                    status={directoryItem.availabilityStatus}
-                    size="sm"
-                  />
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                  <Stethoscope className="w-3.5 h-3.5" />
-                  {doctor.specialization}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
-                  {doctor.departmentName}
-                </span>
-                <span>•</span>
-                <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
-                  Lic: {doctor.licenseNumber}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                <div className="flex items-center gap-1 text-amber-500">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span className="font-bold text-slate-700 dark:text-slate-200">
-                    {directoryItem.rating || 4.9}
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    {doctor.specialization}
                   </span>
-                  <span className="text-slate-400">
-                    ({directoryItem.reviewCount || 38} reviews)
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    {doctor.departmentName}
+                  </span>
+                  <span>•</span>
+                  <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
+                    Lic: {doctor.licenseNumber}
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>
-                    {directoryItem.yearsOfExperience || 8}+ years experience
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Globe className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{directoryItem.languages || "English, Spanish"}</span>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    <span className="font-bold text-slate-700 dark:text-slate-200">
+                      {directoryItem.rating || 4.9}
+                    </span>
+                    <span className="text-slate-400">
+                      ({directoryItem.reviewCount || 38} reviews)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Award className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>
+                      {directoryItem.yearsOfExperience || 8}+ years experience
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{directoryItem.languages || "English, Spanish"}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-slate-200 dark:border-slate-800 gap-2 shrink-0">
-              <div className="text-left sm:text-right">
-                <div className="text-[11px] text-slate-400">
-                  Consultation Fee
+            {/* Right Header Column: Fee + Close button on top row, Action buttons on bottom row */}
+            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-0 border-slate-200 dark:border-slate-800 gap-3 shrink-0">
+              <div className="flex items-center gap-4 lg:justify-end w-full lg:w-auto justify-between">
+                <div className="text-left lg:text-right">
+                  <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                    Consultation Fee
+                  </div>
+                  <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(doctor.consultationFee)}
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center sm:justify-end text-emerald-600 dark:text-emerald-400">
-                  <DollarSign className="w-4 h-4" />
-                  {formatCurrency(doctor.consultationFee)}
-                </div>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close modal"
+                  title="Close (Esc)"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="flex items-center gap-2">

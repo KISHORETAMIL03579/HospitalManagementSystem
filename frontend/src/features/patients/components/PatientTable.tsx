@@ -51,11 +51,15 @@ export const PatientTable: React.FC = () => {
   const { data, isLoading, isError } = usePatients(searchTerm, page, pageSize);
 
   // Close ⋯ menu on Escape or scroll
+  // Close ⋯ menu or Patient Details modal on Escape or scroll
   useEffect(() => {
-    if (!openMenuPatient) return;
+    if (!openMenuPatient && !selectedPatient) return;
     const handleClose = () => setOpenMenuPatient(null);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenMenuPatient(null);
+      if (e.key === "Escape") {
+        if (openMenuPatient) setOpenMenuPatient(null);
+        else if (selectedPatient) setSelectedPatient(null);
+      }
     };
     window.addEventListener("scroll", handleClose, true);
     window.addEventListener("resize", handleClose);
@@ -65,7 +69,7 @@ export const PatientTable: React.FC = () => {
       window.removeEventListener("resize", handleClose);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openMenuPatient]);
+  }, [openMenuPatient, selectedPatient]);
 
   // Open patient details if navigated with ?patientId=
   useEffect(() => {
@@ -570,23 +574,32 @@ export const PatientTable: React.FC = () => {
 
       {/* Patient Details Modal */}
       {selectedPatient && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 border border-slate-200 dark:border-slate-800">
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
+        <div
+          onClick={() => setSelectedPatient(null)}
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 border border-slate-200 dark:border-slate-800"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="min-w-0">
                 <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
                   MRN: {selectedPatient.medicalRecordNumber}
                 </span>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5">
-                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  {selectedPatient.fullName}
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5 truncate">
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="truncate">{selectedPatient.fullName}</span>
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedPatient(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 

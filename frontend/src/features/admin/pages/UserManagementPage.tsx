@@ -81,23 +81,6 @@ export const UserManagementPage: React.FC = () => {
     right: number;
   } | null>(null);
 
-  useEffect(() => {
-    if (!openMenuUser && !openMenuRequest) return;
-    const handleDismiss = (e: Event) => {
-      if (e instanceof KeyboardEvent && e.key !== "Escape") return;
-      setOpenMenuUser(null);
-      setOpenMenuRequest(null);
-    };
-    window.addEventListener("keydown", handleDismiss);
-    window.addEventListener("resize", handleDismiss);
-    window.addEventListener("scroll", handleDismiss, true);
-    return () => {
-      window.removeEventListener("keydown", handleDismiss);
-      window.removeEventListener("resize", handleDismiss);
-      window.removeEventListener("scroll", handleDismiss, true);
-    };
-  }, [openMenuUser, openMenuRequest]);
-
   // Approval & Rejection Modals for Pending Onboarding Requests
   const [approveRequest, setApproveRequest] =
     useState<StaffRegistrationRequest | null>(null);
@@ -152,6 +135,68 @@ export const UserManagementPage: React.FC = () => {
 
   // Target Role for Role Change Modal
   const [targetRoleId, setTargetRoleId] = useState<number>(0);
+
+  useEffect(() => {
+    const hasOpenOverlay =
+      !!openMenuUser ||
+      !!openMenuRequest ||
+      isCreateModalOpen ||
+      !!editingUser ||
+      !!roleChangeUser ||
+      !!deletingUser ||
+      !!approveRequest ||
+      !!rejectRequest ||
+      !!editingRequest ||
+      !!viewingRequest ||
+      !!viewingUser;
+    if (!hasOpenOverlay) return;
+
+    const handleScrollOrResize = () => {
+      setOpenMenuUser(null);
+      setOpenMenuRequest(null);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (openMenuUser) setOpenMenuUser(null);
+      else if (openMenuRequest) setOpenMenuRequest(null);
+      else if (isCreateModalOpen) {
+        setIsCreateModalOpen(false);
+        setCreateErrors({});
+      } else if (editingUser) {
+        setEditingUser(null);
+        setEditUserErrors({});
+      } else if (roleChangeUser) setRoleChangeUser(null);
+      else if (deletingUser) setDeletingUser(null);
+      else if (approveRequest) setApproveRequest(null);
+      else if (rejectRequest) {
+        setRejectRequest(null);
+        setRejectionReason("");
+        setRejectError("");
+      } else if (editingRequest) setEditingRequest(null);
+      else if (viewingRequest) setViewingRequest(null);
+      else if (viewingUser) setViewingUser(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+    };
+  }, [
+    openMenuUser,
+    openMenuRequest,
+    isCreateModalOpen,
+    editingUser,
+    roleChangeUser,
+    deletingUser,
+    approveRequest,
+    rejectRequest,
+    editingRequest,
+    viewingRequest,
+    viewingUser,
+  ]);
 
   const fetchUsers = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -1489,23 +1534,43 @@ export const UserManagementPage: React.FC = () => {
 
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => {
+            setIsCreateModalOpen(false);
+            setCreateErrors({});
+          }}
+        >
           <form
             onSubmit={handleCreateSubmit}
+            onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
           >
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
-                <UserPlus className="w-6 h-6" />
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+                  <UserPlus className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Create User Account
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Direct admin provisioning of staff user credentials.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Create User Account
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Direct admin provisioning of staff user credentials.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setCreateErrors({});
+                }}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -1711,23 +1776,43 @@ export const UserManagementPage: React.FC = () => {
 
       {/* EDIT USER MODAL */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => {
+            setEditingUser(null);
+            setEditUserErrors({});
+          }}
+        >
           <form
             onSubmit={handleEditSubmit}
+            onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
           >
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl">
-                <Edit className="w-6 h-6" />
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+                  <Edit className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Edit Account Details
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Update permitted fields for user #{editingUser.userId}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Edit Account Details
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Update permitted fields for user #{editingUser.userId}.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingUser(null);
+                  setEditUserErrors({});
+                }}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -1904,24 +1989,38 @@ export const UserManagementPage: React.FC = () => {
 
       {/* CHANGE ROLE MODAL */}
       {roleChangeUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setRoleChangeUser(null)}
+        >
           <form
             onSubmit={handleRoleChangeSubmit}
+            onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
           >
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl">
-                <UserCog className="w-6 h-6" />
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl shrink-0">
+                  <UserCog className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Change User Role
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Update role and RBAC permission level for{" "}
+                    {roleChangeUser.fullName}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Change User Role
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Update role and RBAC permission level for{" "}
-                  {roleChangeUser.fullName}.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setRoleChangeUser(null)}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
@@ -1985,20 +2084,36 @@ export const UserManagementPage: React.FC = () => {
 
       {/* REMOVE / ARCHIVE CONFIRMATION MODAL */}
       {deletingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
-                <Trash2 className="w-6 h-6" />
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setDeletingUser(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl shrink-0">
+                  <Trash2 className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Remove Account (Archive)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Deactivate account while preserving medical records.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Remove Account (Archive)
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Deactivate account while preserving medical records.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs space-y-1 text-rose-900">
@@ -2038,21 +2153,37 @@ export const UserManagementPage: React.FC = () => {
 
       {/* APPROVE STAFF REQUEST MODAL */}
       {approveRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
-                <CheckCircle2 className="w-6 h-6" />
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setApproveRequest(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Approve Staff Onboarding
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Activate account and grant access for{" "}
+                    {approveRequest.fullName}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Approve Staff Onboarding
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Activate account and grant access for{" "}
-                  {approveRequest.fullName}.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setApproveRequest(null)}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
@@ -2123,20 +2254,44 @@ export const UserManagementPage: React.FC = () => {
 
       {/* REJECT STAFF REQUEST MODAL */}
       {rejectRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
-                <XCircle className="w-6 h-6" />
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => {
+            setRejectRequest(null);
+            setRejectionReason("");
+            setRejectError("");
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl shrink-0">
+                  <XCircle className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Reject Onboarding Request
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Decline registration request for {rejectRequest.fullName}.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Reject Onboarding Request
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Decline registration request for {rejectRequest.fullName}.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectRequest(null);
+                  setRejectionReason("");
+                  setRejectError("");
+                }}
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
@@ -2212,14 +2367,20 @@ export const UserManagementPage: React.FC = () => {
 
       {/* EDIT STAFF REGISTRATION REQUEST MODAL */}
       {editingRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setEditingRequest(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl shrink-0">
                   <Edit className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold text-slate-900 text-base">
                     Edit Staff Onboarding Request
                   </h3>
@@ -2230,10 +2391,12 @@ export const UserManagementPage: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setEditingRequest(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition shrink-0"
               >
-                <XCircle className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -2485,15 +2648,21 @@ export const UserManagementPage: React.FC = () => {
 
       {/* APPLICATION DETAILS VIEW MODAL */}
       {viewingRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setViewingRequest(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto"
+          >
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
                   <Eye className="w-6 h-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-900 dark:text-white text-base">
                       Application Details
@@ -2508,8 +2677,10 @@ export const UserManagementPage: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setViewingRequest(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2732,15 +2903,21 @@ export const UserManagementPage: React.FC = () => {
 
       {/* USER PROFILE DETAILS VIEW MODAL */}
       {viewingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setViewingUser(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto"
+          >
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
                   <UserCog className="w-6 h-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-900 dark:text-white text-base">
                       User Account Profile
@@ -2756,8 +2933,10 @@ export const UserManagementPage: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setViewingUser(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Close modal"
+                className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2910,62 +3089,67 @@ export const UserManagementPage: React.FC = () => {
                   Edit Account
                 </button>
 
-                {/* Change Role */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const u = viewingUser;
-                    setViewingUser(null);
-                    setRoleChangeUser(u);
-                    setTargetRoleId(u.roleId);
-                  }}
-                  className="px-3.5 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
-                >
-                  <UserCog className="w-3.5 h-3.5" />
-                  Change Role
-                </button>
+                {viewingUser.userId !== currentUser?.userId &&
+                  viewingUser.username !== currentUser?.username && (
+                    <>
+                      {/* Change Role */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const u = viewingUser;
+                          setViewingUser(null);
+                          setRoleChangeUser(u);
+                          setTargetRoleId(u.roleId);
+                        }}
+                        className="px-3.5 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                      >
+                        <UserCog className="w-3.5 h-3.5" />
+                        Change Role
+                      </button>
 
-                {/* Activate / Deactivate Toggle */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const u = viewingUser;
-                    setViewingUser(null);
-                    handleToggleStatus(u);
-                  }}
-                  className={`px-3.5 py-2 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 ${
-                    viewingUser.isActive
-                      ? "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-                      : "bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                  }`}
-                >
-                  {viewingUser.isActive ? (
-                    <>
-                      <UserX className="w-3.5 h-3.5" />
-                      Deactivate
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="w-3.5 h-3.5" />
-                      Activate
+                      {/* Activate / Deactivate Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const u = viewingUser;
+                          setViewingUser(null);
+                          handleToggleStatus(u);
+                        }}
+                        className={`px-3.5 py-2 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 ${
+                          viewingUser.isActive
+                            ? "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                            : "bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                        }`}
+                      >
+                        {viewingUser.isActive ? (
+                          <>
+                            <UserX className="w-3.5 h-3.5" />
+                            Deactivate
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="w-3.5 h-3.5" />
+                            Activate
+                          </>
+                        )}
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const u = viewingUser;
+                          setViewingUser(null);
+                          setDeletingUser(u);
+                        }}
+                        className="px-3 py-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-semibold text-xs rounded-xl transition flex items-center gap-1"
+                        title="Archive / Soft Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
                     </>
                   )}
-                </button>
-
-                {/* Delete */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const u = viewingUser;
-                    setViewingUser(null);
-                    setDeletingUser(u);
-                  }}
-                  className="px-3 py-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-semibold text-xs rounded-xl transition flex items-center gap-1"
-                  title="Archive / Soft Delete"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
-                </button>
               </div>
             </div>
           </div>

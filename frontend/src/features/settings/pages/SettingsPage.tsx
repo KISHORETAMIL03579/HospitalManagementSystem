@@ -1347,96 +1347,151 @@ export const SettingsPage: React.FC = () => {
           {activeTab === "about" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <HelpCircle className="w-5 h-5 text-indigo-600" />
-                  System Identification & Support
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  Application Information & Clinical Support
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  CareFlow Hospital Management System architectural
-                  specifications and technical support.
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  CareFlow Hospital Management System release details, clinical
+                  compliance standards, and hospital helpdesk resources.
                 </p>
               </div>
 
-              {/* System Card */}
-              <div className="p-5 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl space-y-4 shadow-md">
-                <div className="flex items-center justify-between">
+              {/* Application Overview Banner */}
+              <div className="p-5 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl space-y-4 shadow-md border border-indigo-800/40">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-indigo-500/20 rounded-xl border border-indigo-400/30">
-                      <Activity className="w-6 h-6 text-indigo-400 animate-pulse" />
+                      <Activity className="w-6 h-6 text-indigo-300" />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">
-                        CareFlow HMS
+                        CareFlow HMS — Enterprise Clinical Suite
                       </h3>
                       <p className="text-xs text-indigo-200">
-                        Production Clinical Operations Management Suite
+                        Integrated Outpatient, Inpatient & Hospital Operations
+                        Platform
                       </p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    v3.2.0-prod
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Version 3.2.0 (Stable Release)
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs border-t border-slate-800">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 text-xs border-t border-slate-800/80">
                   <div>
-                    <span className="text-slate-400 block text-[10px]">
-                      Backend Framework
+                    <span className="text-slate-400 block text-[11px]">
+                      Application Edition
                     </span>
-                    <span className="font-medium text-slate-200">
-                      ASP.NET Core 10
+                    <span className="font-semibold text-slate-100 mt-0.5 block">
+                      Enterprise Hospital Care
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">
-                      Database Storage
+                    <span className="text-slate-400 block text-[11px]">
+                      Clinical Data Standard
                     </span>
-                    <span className="font-medium text-slate-200">
-                      SQL Server LocalDB
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px]">
-                      Frontend Stack
-                    </span>
-                    <span className="font-medium text-slate-200">
-                      React 19 + TypeScript
+                    <span className="font-semibold text-slate-100 mt-0.5 block">
+                      HL7 FHIR R4 & ICD-10
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">
-                      Security Model
+                    <span className="text-slate-400 block text-[11px]">
+                      Privacy & Compliance
                     </span>
-                    <span className="font-medium text-slate-200">
-                      Dynamic RBAC
+                    <span className="font-semibold text-slate-100 mt-0.5 block">
+                      HIPAA / Role-Based Access
                     </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">
+                      Facility License Status
+                    </span>
+                    <span className="font-semibold text-emerald-300 mt-0.5 block">
+                      Active • Verified Facility
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Facility & Session Context */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    Registered Facility
+                  </div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    CareFlow General Hospital
+                  </div>
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                    Primary Clinical Campus • Main Wing
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Audit & Data Protection
+                  </div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    End-to-End Clinical Audit
+                  </div>
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                    Medical records & access events logged
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                    <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    Service Availability
+                  </div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    24/7 Clinical Operations
+                  </div>
+                  <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                    Automated daily EMR backup enabled
                   </div>
                 </div>
               </div>
 
               {/* Help & Contact */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 border border-slate-200 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800">
-                    Hospital IT Technical Support
+                <div className="p-4 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    Hospital IT & Clinical Helpdesk
                   </h4>
-                  <p className="text-slate-500">
-                    Need assistance or reporting system anomalies?
+                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                    For account access, role permissions, appointment scheduling
+                    assistance, or reporting clinical workflow issues:
                   </p>
-                  <div className="font-medium text-indigo-600">
-                    support@careflow.com • Ext. 4400
+                  <div className="pt-1 font-semibold text-indigo-600 dark:text-indigo-400 flex flex-wrap items-center gap-2">
+                    <a
+                      href="mailto:support@careflow.com"
+                      className="hover:underline"
+                    >
+                      support@careflow.com
+                    </a>
+                    <span>•</span>
+                    <span>Internal Helpdesk Ext. 4400</span>
                   </div>
                 </div>
 
-                <div className="p-4 border border-slate-200 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800">
-                    Documentation & Policy Standard
+                <div className="p-4 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2">
+                  <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    Clinical User Guide & Policies
                   </h4>
-                  <p className="text-slate-500">
-                    View HL7 FHIR clinical guidelines and user manual.
+                  <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Standard operating procedures (SOPs) for patient intake,
+                    doctor scheduling, staff approvals, and HIPAA privacy rules:
                   </p>
-                  <div className="font-medium text-indigo-600">
-                    https://careflow-hms.internal/docs
+                  <div className="pt-1 font-semibold text-indigo-600 dark:text-indigo-400">
+                    Hospital Intranet → Clinical Operations Manual (SOP-2026)
                   </div>
                 </div>
               </div>

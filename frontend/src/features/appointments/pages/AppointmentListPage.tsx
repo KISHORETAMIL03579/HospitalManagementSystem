@@ -78,12 +78,15 @@ export const AppointmentListPage: React.FC = () => {
   const { data: doctors } = useDoctors();
   const updateStatusMutation = useUpdateAppointmentStatus();
 
-  // Close ⋯ menu on Escape or scroll
+  // Close ⋯ menu or Appointment Details modal on Escape or scroll
   useEffect(() => {
-    if (!openMenuApt) return;
+    if (!openMenuApt && !selectedAppointment) return;
     const handleClose = () => setOpenMenuApt(null);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenMenuApt(null);
+      if (e.key === "Escape") {
+        if (openMenuApt) setOpenMenuApt(null);
+        else if (selectedAppointment) setSelectedAppointment(null);
+      }
     };
     window.addEventListener("scroll", handleClose, true);
     window.addEventListener("resize", handleClose);
@@ -93,7 +96,7 @@ export const AppointmentListPage: React.FC = () => {
       window.removeEventListener("resize", handleClose);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openMenuApt]);
+  }, [openMenuApt, selectedAppointment]);
 
   // Open appointment details if navigated with ?appointmentId=
   useEffect(() => {
@@ -885,23 +888,34 @@ export const AppointmentListPage: React.FC = () => {
 
       {/* Appointment Details Modal */}
       {selectedAppointment && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 border border-slate-200">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+        <div
+          onClick={() => setSelectedAppointment(null)}
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 border border-slate-200 dark:border-slate-800"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                   Appointment Details #{selectedAppointment.appointmentId}
                 </span>
-                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mt-0.5">
-                  <User className="w-5 h-5 text-indigo-600" />
-                  {selectedAppointment.patientName}
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5 truncate">
+                  <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span className="truncate">
+                    {selectedAppointment.patientName}
+                  </span>
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedAppointment(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 

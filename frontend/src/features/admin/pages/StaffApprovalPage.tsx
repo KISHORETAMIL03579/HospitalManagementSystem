@@ -85,20 +85,41 @@ export const StaffApprovalPage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    if (!openMenuRequest) return;
-    const handleClose = () => setOpenMenuRequest(null);
+    const hasOpenModal =
+      !!openMenuRequest ||
+      !!selectedRequestForApprove ||
+      !!selectedRequestForReject ||
+      !!selectedRequestForEdit ||
+      !!viewingRequest;
+    if (!hasOpenModal) return;
+
+    const handleCloseMenu = () => setOpenMenuRequest(null);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenMenuRequest(null);
+      if (e.key === "Escape") {
+        if (openMenuRequest) setOpenMenuRequest(null);
+        else if (selectedRequestForApprove) setSelectedRequestForApprove(null);
+        else if (selectedRequestForReject) {
+          setSelectedRequestForReject(null);
+          setRejectError("");
+        } else if (selectedRequestForEdit) setSelectedRequestForEdit(null);
+        else if (viewingRequest) setViewingRequest(null);
+      }
     };
-    window.addEventListener("scroll", handleClose, true);
-    window.addEventListener("resize", handleClose);
+    window.addEventListener("scroll", handleCloseMenu, true);
+    window.addEventListener("resize", handleCloseMenu);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener("scroll", handleClose, true);
-      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("scroll", handleCloseMenu, true);
+      window.removeEventListener("resize", handleCloseMenu);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openMenuRequest]);
+  }, [
+    openMenuRequest,
+    selectedRequestForApprove,
+    selectedRequestForReject,
+    selectedRequestForEdit,
+    viewingRequest,
+  ]);
 
   const fetchRequests = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -989,24 +1010,41 @@ export const StaffApprovalPage: React.FC = () => {
 
       {/* APPROVE MODAL */}
       {selectedRequestForApprove && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
-                <CheckCircle2 className="w-6 h-6" />
+        <div
+          onClick={() => setSelectedRequestForApprove(null)}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate">
+                    {selectedRequestForApprove.status === 2
+                      ? "Re-approve Staff Registration"
+                      : "Approve Staff Registration"}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {selectedRequestForApprove.status === 2
+                      ? "Re-evaluate and re-activate user account access."
+                      : "Authorize and provision active user account."}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  {selectedRequestForApprove.status === 2
-                    ? "Re-approve Staff Registration"
-                    : "Approve Staff Registration"}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {selectedRequestForApprove.status === 2
-                    ? "Re-evaluate and re-activate user account access."
-                    : "Authorize and provision active user account."}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRequestForApprove(null)}
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
@@ -1086,20 +1124,43 @@ export const StaffApprovalPage: React.FC = () => {
 
       {/* REJECT MODAL */}
       {selectedRequestForReject && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
-                <XCircle className="w-6 h-6" />
+        <div
+          onClick={() => {
+            setSelectedRequestForReject(null);
+            setRejectError("");
+          }}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
+                  <XCircle className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate">
+                    Reject Staff Registration
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Deny access request for this applicant.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Reject Staff Registration
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Deny access request for this applicant.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRequestForReject(null);
+                  setRejectError("");
+                }}
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
@@ -1177,21 +1238,38 @@ export const StaffApprovalPage: React.FC = () => {
 
       {/* EDIT REQUEST MODAL */}
       {selectedRequestForEdit && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
-                <Edit className="w-6 h-6" />
+        <div
+          onClick={() => setSelectedRequestForEdit(null)}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+                  <Edit className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate">
+                    Edit Onboarding Request
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Update applicant details, assigned role, or transition
+                    workflow stage.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Edit Onboarding Request
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Update applicant details, assigned role, or transition
-                  workflow stage.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRequestForEdit(null)}
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
@@ -1415,20 +1493,26 @@ export const StaffApprovalPage: React.FC = () => {
 
       {/* APPLICATION DETAILS VIEW MODAL */}
       {viewingRequest && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+        <div
+          onClick={() => setViewingRequest(null)}
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto"
+          >
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl">
+            <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
                   <Eye className="w-6 h-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base truncate">
                       Application Details
                     </h3>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-400 font-mono shrink-0">
                       #{viewingRequest.id}
                     </span>
                   </div>
@@ -1438,10 +1522,13 @@ export const StaffApprovalPage: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setViewingRequest(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Close modal"
+                title="Close (Esc)"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
