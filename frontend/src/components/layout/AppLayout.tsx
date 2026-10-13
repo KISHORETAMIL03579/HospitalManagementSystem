@@ -21,11 +21,13 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  Bell,
 } from "lucide-react";
 
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { formatRoleDisplay } from "../../features/auth/types/auth.types";
 import { useSettings } from "../../hooks/useSettings";
+import { NotificationBell } from "../../features/notifications/components/NotificationBell";
 
 interface NavSubItem {
   label: string;
@@ -130,6 +132,11 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin", "hospitalmanager", "receptionist"],
   },
   {
+    label: "Notifications",
+    path: "/notifications",
+    icon: Bell,
+  },
+  {
     label: "Settings",
     path: "/settings",
     icon: Settings,
@@ -147,6 +154,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/prescriptions": "Prescriptions",
   "/laboratory": "Laboratory",
   "/billing": "Billing",
+  "/notifications": "Notifications",
   "/settings": "Settings",
 };
 
@@ -668,6 +676,9 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+            {/* Notification Bell */}
+            <NotificationBell />
+
             {/* Theme Toggle (Light / Dark) */}
             <button
               type="button"
@@ -690,16 +701,6 @@ export const AppLayout: React.FC = () => {
                 </>
               )}
             </button>
-
-            {user && (
-              <div className="flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 sm:px-3">
-                <span
-                  aria-hidden="true"
-                  className="h-2 w-2 rounded-full bg-emerald-500"
-                />
-                <span>Signed in</span>
-              </div>
-            )}
           </div>
         </header>
 

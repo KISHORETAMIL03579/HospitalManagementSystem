@@ -27,6 +27,13 @@ import { DepartmentDto } from "../../doctors/types/doctor.types";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 import { PageHeader, StatusBadge } from "../../../components/common";
 
+const isFailedEmailStatus = (emailStatus: any): boolean => {
+  if (emailStatus === 3) return true;
+  if (!emailStatus) return false;
+  const s = String(emailStatus).toLowerCase();
+  return s === "failed" || s === "bounced";
+};
+
 export const StaffApprovalPage: React.FC = () => {
   const [requests, setRequests] = useState<StaffRegistrationRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -352,10 +359,13 @@ export const StaffApprovalPage: React.FC = () => {
     setActionLoadingId(requestId);
     try {
       const updated = await authApi.retryStaffEmail(requestId);
+      const isSent =
+        updated.emailStatus === 1 ||
+        String(updated.emailStatus).toLowerCase() === "sent";
       setFeedback({
         type: "success",
-        message: `Re-sent notification email for ${applicantName}. Delivery status: ${
-          updated.emailStatus === 1 ? "SENT" : "QUEUED"
+        message: `Notification email dispatched for ${applicantName}. Delivery status: ${
+          isSent ? "SENT" : String(updated.emailStatus).toUpperCase()
         }.`,
       });
       fetchRequests();
@@ -777,11 +787,32 @@ export const StaffApprovalPage: React.FC = () => {
 
                   {/* Email Status */}
                   <td className="px-3 py-3 align-middle">
-                    <div className="space-y-0.5">
-                      {getEmailStatusBadge(
-                        req.emailStatus,
-                        req.emailErrorMessage,
-                      )}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {getEmailStatusBadge(
+                          req.emailStatus,
+                          req.emailErrorMessage,
+                        )}
+                        {isFailedEmailStatus(req.emailStatus) && (
+                          <button
+                            type="button"
+                            title="Retry sending notification email"
+                            disabled={actionLoadingId === req.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetryEmail(req.id, req.fullName);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-rose-700 bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:hover:bg-rose-900 border border-rose-300 dark:border-rose-800 transition cursor-pointer shadow-2xs disabled:opacity-50"
+                          >
+                            <RefreshCw
+                              className={`w-3 h-3 ${
+                                actionLoadingId === req.id ? "animate-spin" : ""
+                              }`}
+                            />
+                            <span>Retry</span>
+                          </button>
+                        )}
+                      </div>
                       {req.lastEmailAttempt && (
                         <div className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
                           {formatDateByPattern(req.lastEmailAttempt, "hh:mm a")}
@@ -906,27 +937,30 @@ export const StaffApprovalPage: React.FC = () => {
             </button>
 
             {/* Retry / Resend Email */}
-            {(openMenuRequest.req.emailStatus === 3 ||
-              isApprovedStatus(openMenuRequest.req.status) ||
-              isRejectedStatus(openMenuRequest.req.status)) && (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  const target = openMenuRequest.req;
-                  setOpenMenuRequest(null);
-                  handleRetryEmail(target.id, target.fullName);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-colors"
-              >
-                <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-                <span>
-                  {openMenuRequest.req.emailStatus === 3
-                    ? "Retry failed email delivery"
-                    : "Resend notification email"}
-                </span>
-              </button>
-            )}
+            <button
+              type="button"
+              role="menuitem"
+              disabled={actionLoadingId === openMenuRequest.req.id}
+              onClick={() => {
+                const target = openMenuRequest.req;
+                setOpenMenuRequest(null);
+                handleRetryEmail(target.id, target.fullName);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 shrink-0 ${
+                  actionLoadingId === openMenuRequest.req.id
+                    ? "animate-spin"
+                    : ""
+                }`}
+              />
+              <span>
+                {isFailedEmailStatus(openMenuRequest.req.emailStatus)
+                  ? "Retry failed email delivery"
+                  : "Resend notification email"}
+              </span>
+            </button>
 
             {/* Consequential Reject Action for Pending Requests */}
             {isPendingStatus(openMenuRequest.req.status) && (
@@ -1660,25 +1694,30 @@ export const StaffApprovalPage: React.FC = () => {
                 </div>
               </div>
 
-              {viewingRequest.emailStatus === 3 && (
-                <button
-                  onClick={() => {
-                    const req = viewingRequest;
-                    handleRetryEmail(req.id, req.fullName);
-                  }}
-                  disabled={actionLoadingId === viewingRequest.id}
-                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 shrink-0 transition shadow-xs"
-                >
-                  <RefreshCw
-                    className={`w-3.5 h-3.5 ${
-                      actionLoadingId === viewingRequest.id
-                        ? "animate-spin"
-                        : ""
-                    }`}
-                  />
-                  Retry Email
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const req = viewingRequest;
+                  handleRetryEmail(req.id, req.fullName);
+                }}
+                disabled={actionLoadingId === viewingRequest.id}
+                className={`px-3 py-1.5 ${
+                  isFailedEmailStatus(viewingRequest.emailStatus)
+                    ? "bg-rose-600 hover:bg-rose-700 text-white"
+                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                } rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition shadow-xs disabled:opacity-50 cursor-pointer`}
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${
+                    actionLoadingId === viewingRequest.id ? "animate-spin" : ""
+                  }`}
+                />
+                <span>
+                  {isFailedEmailStatus(viewingRequest.emailStatus)
+                    ? "Retry Email Delivery"
+                    : "Resend Email"}
+                </span>
+              </button>
             </div>
 
             {/* Modal Actions Footer */}

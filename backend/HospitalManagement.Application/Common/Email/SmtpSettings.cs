@@ -10,5 +10,7 @@ public class SmtpSettings
     public string Password { get; set; } = "";
     public bool EnableSsl { get; set; } = true;
     public bool EnableRealDelivery { get; set; } = false;
+    public string FrontendBaseUrl { get; set; } = "http://localhost:5173";
+    public string SupportEmail { get; set; } = "support@careflow.com";
+    public string SupportUrl { get; set; } = "http://localhost:5173/contact";
 }
-

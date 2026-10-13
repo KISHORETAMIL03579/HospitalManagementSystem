@@ -16,4 +16,5 @@ public class DoctorDto
     public string AvailableDays { get; set; } = string.Empty;
     public string StartTime { get; set; } = string.Empty;
     public string EndTime { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
 }

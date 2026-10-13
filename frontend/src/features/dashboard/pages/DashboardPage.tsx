@@ -65,7 +65,8 @@ export const DashboardPage: React.FC = () => {
 
   // Computed Real-time Metrics
   const totalPatientsCount = patientData?.totalCount ?? 0;
-  const activeDoctorsCount = doctors?.filter((d) => d.isActive).length ?? 0;
+  const activeDoctorsCount =
+    doctors?.filter((d) => d.isActive !== false).length ?? 0;
   const totalDepartmentsCount = departments?.length ?? 0;
   const totalAppointmentsCount = appointments?.length ?? 0;
 
@@ -177,18 +178,18 @@ export const DashboardPage: React.FC = () => {
             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 My Appointments
               </span>
-              <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-lg">
-                <Calendar className="w-5 h-5" />
+              <div className="p-2.5 bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 rounded-xl shadow-2xs">
+                <Calendar className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
             <div className="text-2xl font-bold text-slate-800 dark:text-white">
               {isAppointmentsLoading ? "..." : totalAppointmentsCount}
             </div>
             <div className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1 mt-1 font-medium">
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5 stroke-[2]" />
               <span>{todayScheduledCount} scheduled for today</span>
             </div>
           </div>
@@ -204,18 +205,18 @@ export const DashboardPage: React.FC = () => {
             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 Total Patients
               </span>
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg">
-                <Users className="w-5 h-5" />
+              <div className="p-2.5 bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 rounded-xl shadow-2xs">
+                <Users className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
             <div className="text-2xl font-bold text-slate-800 dark:text-white">
               {isPatientsLoading ? "..." : totalPatientsCount}
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1 font-medium">
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3.5 h-3.5 stroke-[2]" />
               <span>Active registered records</span>
             </div>
           </div>
@@ -234,18 +235,18 @@ export const DashboardPage: React.FC = () => {
             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 Today's Visits
               </span>
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg">
-                <Clock className="w-5 h-5" />
+              <div className="p-2.5 bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 rounded-xl shadow-2xs">
+                <Clock className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
             <div className="text-2xl font-bold text-slate-800 dark:text-white">
               {isAppointmentsLoading ? "..." : todayScheduledCount}
             </div>
             <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1 font-medium">
-              <Activity className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5 stroke-[2]" />
               <span>Active appointments today</span>
             </div>
           </div>
@@ -261,11 +262,11 @@ export const DashboardPage: React.FC = () => {
             className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer group"
           >
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 Appointments
               </span>
-              <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-lg">
-                <Calendar className="w-5 h-5" />
+              <div className="p-2.5 bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 rounded-xl shadow-2xs">
+                <Calendar className="w-5 h-5 stroke-[2.2]" />
               </div>
             </div>
             <div className="text-2xl font-bold text-slate-800 dark:text-white">
@@ -274,7 +275,7 @@ export const DashboardPage: React.FC = () => {
                 : `${totalAppointmentsCount} Total`}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5 stroke-[2]" />
               <span>{todayScheduledCount} pending today</span>
             </div>
           </div>
@@ -302,18 +303,18 @@ export const DashboardPage: React.FC = () => {
           className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               {isPatient ? "Specialists Available" : "Doctors On Duty"}
             </span>
-            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-lg">
-              <Stethoscope className="w-5 h-5" />
+            <div className="p-2.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 rounded-xl shadow-2xs">
+              <Stethoscope className="w-5 h-5 stroke-[2.2]" />
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-800 dark:text-white">
             {isDoctorsLoading ? "..." : `${activeDoctorsCount} Active`}
           </div>
           <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5" />
+            <ShieldCheck className="w-3.5 h-3.5 stroke-[2]" />
             <span>
               Across {isDeptsLoading ? "..." : totalDepartmentsCount}{" "}
               Departments
@@ -343,11 +344,11 @@ export const DashboardPage: React.FC = () => {
           className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               Clinical Departments
             </span>
-            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg">
-              <Building2 className="w-5 h-5" />
+            <div className="p-2.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800 rounded-xl shadow-2xs">
+              <Building2 className="w-5 h-5 stroke-[2.2]" />
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-800 dark:text-white">
@@ -660,30 +661,30 @@ export const DashboardPage: React.FC = () => {
                 <>
                   <Link
                     to="/appointments"
-                    className="p-3 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-800 dark:text-purple-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-purple-100/70 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 border border-purple-200/90 dark:border-purple-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <Calendar className="w-5 h-5 text-purple-700 dark:text-purple-300 stroke-[2.2]" />
                     <span>My Visits</span>
                   </Link>
                   <Link
                     to="/appointments"
-                    className="p-3 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-200/90 dark:border-emerald-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Stethoscope className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <Stethoscope className="w-5 h-5 text-emerald-700 dark:text-emerald-300 stroke-[2.2]" />
                     <span>Book Visit</span>
                   </Link>
                   <Link
                     to="/settings"
-                    className="p-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-blue-100/70 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-900 dark:text-blue-200 border border-blue-200/90 dark:border-blue-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Settings className="w-5 h-5 text-blue-700 dark:text-blue-300 stroke-[2.2]" />
                     <span>My Profile</span>
                   </Link>
                   <Link
                     to="/patients"
-                    className="p-3 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-amber-100/70 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-200/90 dark:border-amber-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <HeartPulse className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <HeartPulse className="w-5 h-5 text-amber-700 dark:text-amber-300 stroke-[2.2]" />
                     <span>Health Record</span>
                   </Link>
                 </>
@@ -691,30 +692,30 @@ export const DashboardPage: React.FC = () => {
                 <>
                   <Link
                     to="/patients/new"
-                    className="p-3 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-blue-100/70 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-900 dark:text-blue-200 border border-blue-200/90 dark:border-blue-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <UserPlus className="w-5 h-5 text-blue-700 dark:text-blue-300 stroke-[2.2]" />
                     <span>New Patient</span>
                   </Link>
                   <Link
                     to="/appointments"
-                    className="p-3 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-800 dark:text-purple-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-purple-100/70 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-900 dark:text-purple-200 border border-purple-200/90 dark:border-purple-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <Calendar className="w-5 h-5 text-purple-700 dark:text-purple-300 stroke-[2.2]" />
                     <span>Book Visit</span>
                   </Link>
                   <Link
                     to="/doctors"
-                    className="p-3 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-200/90 dark:border-emerald-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Stethoscope className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <Stethoscope className="w-5 h-5 text-emerald-700 dark:text-emerald-300 stroke-[2.2]" />
                     <span>Doctors</span>
                   </Link>
                   <Link
                     to="/patients"
-                    className="p-3 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
+                    className="p-3 bg-amber-100/70 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-200/90 dark:border-amber-800 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition shadow-2xs"
                   >
-                    <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <Users className="w-5 h-5 text-amber-700 dark:text-amber-300 stroke-[2.2]" />
                     <span>Patients</span>
                   </Link>
                 </>

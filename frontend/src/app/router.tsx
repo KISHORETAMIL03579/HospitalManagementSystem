@@ -5,9 +5,12 @@ import { PatientCreatePage } from "../features/patients/pages/PatientCreatePage"
 import { DoctorListPage } from "../features/doctors/pages/DoctorListPage";
 import { AppointmentListPage } from "../features/appointments/pages/AppointmentListPage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
+import { ResetPasswordPage } from "../features/auth/pages/ResetPasswordPage";
+import { ContactPage } from "../features/auth/pages/ContactPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
+import { NotificationPage } from "../features/notifications/pages/NotificationPage";
 import { UserManagementPage } from "../features/admin/pages/UserManagementPage";
 import { StaffApprovalPage } from "../features/admin/pages/StaffApprovalPage";
 import { AdminDashboardPage } from "../features/admin/pages/AdminDashboardPage";
@@ -27,6 +30,14 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
+  },
+  {
+    path: "/contact",
+    element: <ContactPage />,
   },
   {
     element: <ProtectedRoute />,
@@ -80,6 +91,10 @@ export const router = createBrowserRouter([
           {
             path: "settings",
             element: <SettingsPage />,
+          },
+          {
+            path: "notifications",
+            element: <NotificationPage />,
           },
         ],
       },

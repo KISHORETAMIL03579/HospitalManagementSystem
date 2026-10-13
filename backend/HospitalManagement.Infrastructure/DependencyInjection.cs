@@ -48,6 +48,9 @@ public static class DependencyInjection
                 options.Password = section["Password"] ?? options.Password;
                 if (bool.TryParse(section["EnableSsl"], out var ssl)) options.EnableSsl = ssl;
                 if (bool.TryParse(section["EnableRealDelivery"], out var realDelivery)) options.EnableRealDelivery = realDelivery;
+                options.FrontendBaseUrl = section["FrontendBaseUrl"] ?? options.FrontendBaseUrl;
+                options.SupportEmail = section["SupportEmail"] ?? options.SupportEmail;
+                options.SupportUrl = section["SupportUrl"] ?? options.SupportUrl;
             }
         });
 
@@ -57,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
         services.AddScoped<IEmailService, EmailService>();
 
         return services;

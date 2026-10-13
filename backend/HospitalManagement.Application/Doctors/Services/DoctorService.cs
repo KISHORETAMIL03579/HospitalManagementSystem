@@ -85,6 +85,7 @@ public class DoctorService : IDoctorService
         Email = d.Email,
         AvailableDays = d.AvailableDays ?? "Monday-Friday",
         StartTime = d.StartTime.ToString(@"hh\:mm"),
-        EndTime = d.EndTime.ToString(@"hh\:mm")
+        EndTime = d.EndTime.ToString(@"hh\:mm"),
+        IsActive = d.IsActive
     };
 }
