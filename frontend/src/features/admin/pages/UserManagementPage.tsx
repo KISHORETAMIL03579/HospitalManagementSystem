@@ -2259,37 +2259,37 @@ export const UserManagementPage: React.FC = () => {
       {/* APPLICATION DETAILS VIEW MODAL */}
       {viewingRequest && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
                   <Eye className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-base">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
                       Application Details
                     </h3>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                       #{viewingRequest.id}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Comprehensive onboarding information & status history.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setViewingRequest(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Applicant Profile Card */}
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-sm shadow-sm shrink-0">
                   {viewingRequest.fullName
@@ -2300,17 +2300,17 @@ export const UserManagementPage: React.FC = () => {
                     .toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-slate-900">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
                     {viewingRequest.fullName}
                   </h4>
-                  <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
-                    <span className="font-mono text-slate-600">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                    <span className="font-mono text-slate-600 dark:text-slate-300">
                       @{viewingRequest.username}
                     </span>
                     <span>•</span>
                     <a
                       href={`mailto:${viewingRequest.email}`}
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
                       {viewingRequest.email}
                     </a>
@@ -2321,22 +2321,22 @@ export const UserManagementPage: React.FC = () => {
               {/* Status Badge */}
               <div className="shrink-0 text-right">
                 {isPendingStatus(viewingRequest.status) ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                    <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     Pending Review
                   </span>
                 ) : isApprovedStatus(viewingRequest.status) ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     Approved
                   </span>
                 ) : isRejectedStatus(viewingRequest.status) ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
-                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                     Rejected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                     {String(viewingRequest.status)}
                   </span>
                 )}
@@ -2345,49 +2345,49 @@ export const UserManagementPage: React.FC = () => {
 
             {/* Application Information Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Requested Role
                 </span>
-                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100 text-sm">
                   <User className="w-4 h-4 text-blue-500" />
                   {viewingRequest.requestedRoleName}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Assigned Department
                 </span>
-                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 text-sm">
+                <span className="inline-flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100 text-sm">
                   <Building2 className="w-4 h-4 text-purple-500" />
                   {viewingRequest.departmentName || "General / None"}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Employee ID
                 </span>
-                <span className="font-mono font-bold text-slate-800 text-sm">
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">
                   {viewingRequest.employeeId || "None specified"}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Invitation Code
                 </span>
-                <span className="font-mono font-bold text-slate-800 text-sm bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-600 inline-block">
                   {viewingRequest.invitationCode}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Application Submitted
                 </span>
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {formatDateByPattern(
                     viewingRequest.submittedAt,
                     "MMM dd, yyyy - hh:mm a",
@@ -2395,11 +2395,11 @@ export const UserManagementPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Review Details
                 </span>
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {viewingRequest.reviewedByName
                     ? `By ${viewingRequest.reviewedByName} ${
                         viewingRequest.reviewedAt
@@ -2416,16 +2416,16 @@ export const UserManagementPage: React.FC = () => {
 
             {/* Prominent Rejection Reason Card */}
             {viewingRequest.rejectionReason && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-rose-800 font-bold text-xs uppercase tracking-wider">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-xs uppercase tracking-wider">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>Rejection Reason & Auditor Notes</span>
                 </div>
-                <div className="p-3 bg-white rounded-lg border border-rose-200/80 text-rose-900 font-medium text-xs leading-relaxed whitespace-pre-wrap">
+                <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-rose-200/80 dark:border-rose-800/60 text-rose-900 dark:text-rose-200 font-medium text-xs leading-relaxed whitespace-pre-wrap">
                   {viewingRequest.rejectionReason}
                 </div>
                 {viewingRequest.reviewedByName && (
-                  <p className="text-[11px] text-rose-600">
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400">
                     Recorded by{" "}
                     <span className="font-semibold">
                       {viewingRequest.reviewedByName}
@@ -2441,11 +2441,11 @@ export const UserManagementPage: React.FC = () => {
             )}
 
             {/* Modal Actions Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setViewingRequest(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               >
                 Close
               </button>
@@ -2459,7 +2459,7 @@ export const UserManagementPage: React.FC = () => {
                     setViewingRequest(null);
                     openEditRequestModal(target);
                   }}
-                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
                 >
                   <Edit className="w-3.5 h-3.5" />
                   Edit Request
@@ -2506,23 +2506,23 @@ export const UserManagementPage: React.FC = () => {
       {/* USER PROFILE DETAILS VIEW MODAL */}
       {viewingUser && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-5 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl">
                   <UserCog className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 text-base">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
                       User Account Profile
                     </h3>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                       #{viewingUser.userId}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Comprehensive hospital user credentials and authorization
                     status.
                   </p>
@@ -2530,14 +2530,14 @@ export const UserManagementPage: React.FC = () => {
               </div>
               <button
                 onClick={() => setViewingUser(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* User Profile Card */}
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-sm shadow-sm shrink-0">
                   {viewingUser.fullName
@@ -2548,17 +2548,17 @@ export const UserManagementPage: React.FC = () => {
                     .toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-slate-900">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
                     {viewingUser.fullName}
                   </h4>
-                  <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
-                    <span className="font-mono text-slate-600">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
+                    <span className="font-mono text-slate-600 dark:text-slate-300">
                       @{viewingUser.username}
                     </span>
                     <span>•</span>
                     <a
                       href={`mailto:${viewingUser.email}`}
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
                       {viewingUser.email}
                     </a>
@@ -2569,13 +2569,13 @@ export const UserManagementPage: React.FC = () => {
               {/* Status Badge */}
               <div className="shrink-0 text-right">
                 {viewingUser.isActive ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     Active Staff
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
-                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                     Inactive Account
                   </span>
                 )}
@@ -2584,8 +2584,8 @@ export const UserManagementPage: React.FC = () => {
 
             {/* Profile Information Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Assigned RBAC Role
                 </span>
                 <span
@@ -2598,31 +2598,31 @@ export const UserManagementPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Employee ID
                 </span>
-                <span className="font-mono font-bold text-slate-800 text-sm">
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-100 text-sm">
                   {viewingUser.employeeId || "None assigned"}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Phone Number
                 </span>
-                <span className="font-semibold text-slate-800 text-sm">
+                <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
                   {viewingUser.phone
                     ? `📞 ${viewingUser.phone}`
                     : "No phone provided"}
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Account Created
                 </span>
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {formatDateByPattern(
                     viewingUser.createdAt,
                     "MMM dd, yyyy - hh:mm a",
@@ -2630,18 +2630,18 @@ export const UserManagementPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1 col-span-2">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1 col-span-2">
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                   Last Login Activity
                 </span>
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {viewingUser.lastLoginAt ? (
                     formatDateByPattern(
                       viewingUser.lastLoginAt,
                       "MMMM dd, yyyy - hh:mm a",
                     )
                   ) : (
-                    <span className="text-slate-400 italic">
+                    <span className="text-slate-400 dark:text-slate-500 italic">
                       Never logged in
                     </span>
                   )}
@@ -2650,11 +2650,11 @@ export const UserManagementPage: React.FC = () => {
             </div>
 
             {/* Modal Actions Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setViewingUser(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               >
                 Close
               </button>
@@ -2677,7 +2677,7 @@ export const UserManagementPage: React.FC = () => {
                       roleId: u.roleId,
                     });
                   }}
-                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
                 >
                   <Edit className="w-3.5 h-3.5" />
                   Edit Account
@@ -2692,7 +2692,7 @@ export const UserManagementPage: React.FC = () => {
                     setRoleChangeUser(u);
                     setTargetRoleId(u.roleId);
                   }}
-                  className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
                 >
                   <UserCog className="w-3.5 h-3.5" />
                   Change Role
@@ -2708,8 +2708,8 @@ export const UserManagementPage: React.FC = () => {
                   }}
                   className={`px-3.5 py-2 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 ${
                     viewingUser.isActive
-                      ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200"
-                      : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                      ? "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                      : "bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                   }`}
                 >
                   {viewingUser.isActive ? (
@@ -2733,7 +2733,7 @@ export const UserManagementPage: React.FC = () => {
                     setViewingUser(null);
                     setDeletingUser(u);
                   }}
-                  className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold text-xs rounded-xl transition flex items-center gap-1"
+                  className="px-3 py-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-semibold text-xs rounded-xl transition flex items-center gap-1"
                   title="Archive / Soft Delete"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

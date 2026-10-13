@@ -19,9 +19,12 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { useSettings } from "../../hooks/useSettings";
 
 interface NavSubItem {
   label: string;
@@ -199,7 +202,34 @@ function getPageTitle(pathname: string): string {
 export const AppLayout: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, updateSetting } = useSettings();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkDark = () => {
+      if (typeof document !== "undefined") {
+        setIsDark(document.documentElement.classList.contains("dark"));
+      }
+    };
+    checkDark();
+    window.addEventListener("careflow_settings_updated", checkDark);
+    return () => {
+      window.removeEventListener("careflow_settings_updated", checkDark);
+    };
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = isDark ? "light" : "dark";
+    updateSetting("theme", nextTheme);
+    setIsDark(!isDark);
+  };
 
   // Close mobile drawer on Escape key press
   useEffect(() => {
@@ -546,15 +576,40 @@ export const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          {user && (
-            <div className="flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 sm:px-3">
-              <span
-                aria-hidden="true"
-                className="h-2 w-2 rounded-full bg-emerald-500"
-              />
-              <span>Signed in</span>
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+            {/* Theme Toggle (Light / Dark) */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                isDark ? "Switch to light mode" : "Switch to dark mode"
+              }
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-white"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="h-4 w-4 text-amber-400" />
+                  <span className="hidden sm:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="hidden sm:inline">Dark</span>
+                </>
+              )}
+            </button>
+
+            {user && (
+              <div className="flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 sm:px-3">
+                <span
+                  aria-hidden="true"
+                  className="h-2 w-2 rounded-full bg-emerald-500"
+                />
+                <span>Signed in</span>
+              </div>
+            )}
+          </div>
         </header>
 
         <main

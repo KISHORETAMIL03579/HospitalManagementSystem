@@ -367,9 +367,9 @@ export const AppointmentListPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden space-y-2">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
           {/* Active Sort & Filter Indicator Summary Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-600">
                 Active Column Sort:

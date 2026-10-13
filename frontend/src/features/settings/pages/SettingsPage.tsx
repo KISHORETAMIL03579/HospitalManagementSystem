@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { authApi } from "../../auth/api/authApi";
@@ -62,6 +62,25 @@ export const SettingsPage: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark" | "system">(
     (localStorage.getItem("careflow_theme") as any) || "light",
   );
+
+  useEffect(() => {
+    const handleSettingsUpdated = () => {
+      const savedTheme =
+        (localStorage.getItem("careflow_theme") as
+          "light" | "dark" | "system") || "light";
+      setTheme(savedTheme);
+    };
+    window.addEventListener("careflow_settings_updated", handleSettingsUpdated);
+    window.addEventListener("storage", handleSettingsUpdated);
+    return () => {
+      window.removeEventListener(
+        "careflow_settings_updated",
+        handleSettingsUpdated,
+      );
+      window.removeEventListener("storage", handleSettingsUpdated);
+    };
+  }, []);
+
   const [fontSize, setFontSize] = useState<"small" | "medium" | "large">(
     (localStorage.getItem("careflow_fontSize") as any) || "medium",
   );
