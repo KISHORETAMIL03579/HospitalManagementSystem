@@ -47,8 +47,10 @@ public class AppointmentService : IAppointmentService
         {
             throw new ValidationException(validationResult.Errors);
         }
-
-        var timeSlot = TimeSpan.Parse(request.TimeSlot);
+        if (!TimeSpan.TryParse(request.TimeSlot, out var timeSlot))
+        {
+            throw new ValidationException(new[] { new FluentValidation.Results.ValidationFailure(nameof(request.TimeSlot), "Invalid time slot format.") });
+        }
 
         if (await _appointmentRepository.IsSlotBookedAsync(request.DoctorId, request.AppointmentDate.Date, timeSlot, cancellationToken))
         {

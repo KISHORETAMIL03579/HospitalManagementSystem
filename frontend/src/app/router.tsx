@@ -11,6 +11,17 @@ import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { UserManagementPage } from "../features/admin/pages/UserManagementPage";
 import { StaffApprovalPage } from "../features/admin/pages/StaffApprovalPage";
 import { AdminDashboardPage } from "../features/admin/pages/AdminDashboardPage";
+import { UserRole } from "../features/auth/types/auth.types";
+
+const STAFF_ROLES = [
+  UserRole.Admin,
+  UserRole.HospitalManager,
+  UserRole.Doctor,
+  UserRole.Nurse,
+  UserRole.Receptionist,
+];
+
+const ADMIN_ROLES = [UserRole.Admin, UserRole.HospitalManager];
 
 export const router = createBrowserRouter([
   {
@@ -33,28 +44,38 @@ export const router = createBrowserRouter([
             element: <PatientListPage />,
           },
           {
-            path: "patients/new",
-            element: <PatientCreatePage />,
-          },
-          {
-            path: "doctors",
-            element: <DoctorListPage />,
+            element: <ProtectedRoute allowedRoles={STAFF_ROLES} />,
+            children: [
+              {
+                path: "patients/new",
+                element: <PatientCreatePage />,
+              },
+              {
+                path: "doctors",
+                element: <DoctorListPage />,
+              },
+            ],
           },
           {
             path: "appointments",
             element: <AppointmentListPage />,
           },
           {
-            path: "admin",
-            element: <AdminDashboardPage />,
-          },
-          {
-            path: "admin/users",
-            element: <UserManagementPage />,
-          },
-          {
-            path: "admin/staff-approvals",
-            element: <StaffApprovalPage />,
+            element: <ProtectedRoute allowedRoles={ADMIN_ROLES} />,
+            children: [
+              {
+                path: "admin",
+                element: <AdminDashboardPage />,
+              },
+              {
+                path: "admin/users",
+                element: <UserManagementPage />,
+              },
+              {
+                path: "admin/staff-approvals",
+                element: <StaffApprovalPage />,
+              },
+            ],
           },
           {
             path: "settings",

@@ -282,13 +282,23 @@ export const DashboardPage: React.FC = () => {
 
         {/* Metric 3: Doctors On Duty */}
         <div
-          onClick={() => navigate("/doctors")}
+          onClick={() => {
+            if (isStaff) navigate("/doctors");
+            else navigate("/appointments");
+          }}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") navigate("/doctors");
+            if (e.key === "Enter" || e.key === " ") {
+              if (isStaff) navigate("/doctors");
+              else navigate("/appointments");
+            }
           }}
-          title="Open doctors directory"
+          title={
+            isStaff
+              ? "Open doctors directory"
+              : "Book appointment with specialists"
+          }
           className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-3">
@@ -313,13 +323,23 @@ export const DashboardPage: React.FC = () => {
 
         {/* Metric 4: Clinical Departments */}
         <div
-          onClick={() => navigate("/doctors")}
+          onClick={() => {
+            if (isStaff) navigate("/doctors");
+            else navigate("/appointments");
+          }}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") navigate("/doctors");
+            if (e.key === "Enter" || e.key === " ") {
+              if (isStaff) navigate("/doctors");
+              else navigate("/appointments");
+            }
           }}
-          title="View clinical departments & specialists"
+          title={
+            isStaff
+              ? "View clinical departments & specialists"
+              : "Explore hospital departments"
+          }
           className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
         >
           <div className="flex justify-between items-start mb-3">
@@ -646,11 +666,11 @@ export const DashboardPage: React.FC = () => {
                     <span>My Visits</span>
                   </Link>
                   <Link
-                    to="/doctors"
+                    to="/appointments"
                     className="p-3 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
                   >
                     <Stethoscope className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Find Doctors</span>
+                    <span>Book Visit</span>
                   </Link>
                   <Link
                     to="/settings"
@@ -659,15 +679,13 @@ export const DashboardPage: React.FC = () => {
                     <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <span>My Profile</span>
                   </Link>
-                  <div
-                    onClick={() => navigate("/doctors")}
-                    role="button"
-                    tabIndex={0}
-                    className="p-3 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition cursor-pointer"
+                  <Link
+                    to="/patients"
+                    className="p-3 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold flex flex-col items-center gap-1 transition"
                   >
-                    <Building2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <span>Departments</span>
-                  </div>
+                    <HeartPulse className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <span>Health Record</span>
+                  </Link>
                 </>
               ) : (
                 <>

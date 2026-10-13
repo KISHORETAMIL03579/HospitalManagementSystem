@@ -140,6 +140,101 @@ public class AuthorizationAuditTests
     }
 
     [Fact]
+    public async Task AppointmentsController_GetAppointmentById_PatientRole_OtherPatient_ReturnsForbidden()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "5"),
+            new Claim(ClaimTypes.Role, "Patient")
+        };
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+        _appointmentsController.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        _appointmentServiceMock.Setup(s => s.GetAppointmentByIdAsync(99, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HospitalManagement.Application.Appointments.DTOs.AppointmentDto
+            {
+                AppointmentId = 99,
+                PatientId = 42 // Different patient
+            });
+
+        _appointmentServiceMock.Setup(s => s.GetPatientIdForUserAsync(5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1); // My patient ID is 1
+
+        var result = await _appointmentsController.GetAppointmentById(99, CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AppointmentsController_UpdateStatus_PatientRole_CannotSetCompleted_ReturnsForbidden()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "5"),
+            new Claim(ClaimTypes.Role, "Patient")
+        };
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+        _appointmentsController.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        _appointmentServiceMock.Setup(s => s.GetAppointmentByIdAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HospitalManagement.Application.Appointments.DTOs.AppointmentDto
+            {
+                AppointmentId = 10,
+                PatientId = 1
+            });
+
+        _appointmentServiceMock.Setup(s => s.GetPatientIdForUserAsync(5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var request = new HospitalManagement.Application.Appointments.DTOs.UpdateAppointmentStatusRequest
+        {
+            Status = HospitalManagement.Domain.Enums.AppointmentStatus.Completed
+        };
+
+        var result = await _appointmentsController.UpdateAppointmentStatus(10, request, CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AppointmentsController_UpdateStatus_PatientRole_CanCancelOwnAppointment()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "5"),
+            new Claim(ClaimTypes.Role, "Patient")
+        };
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+        _appointmentsController.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        _appointmentServiceMock.Setup(s => s.GetAppointmentByIdAsync(10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HospitalManagement.Application.Appointments.DTOs.AppointmentDto
+            {
+                AppointmentId = 10,
+                PatientId = 1
+            });
+
+        _appointmentServiceMock.Setup(s => s.GetPatientIdForUserAsync(5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var request = new HospitalManagement.Application.Appointments.DTOs.UpdateAppointmentStatusRequest
+        {
+            Status = HospitalManagement.Domain.Enums.AppointmentStatus.Cancelled
+        };
+
+        var result = await _appointmentsController.UpdateAppointmentStatus(10, request, CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+        _appointmentServiceMock.Verify(s => s.UpdateStatusAsync(10, HospitalManagement.Domain.Enums.AppointmentStatus.Cancelled, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+
+    [Fact]
     public async Task StaffRegistrationController_ApproveStaffRequest_WithoutUserIdClaim_ReturnsUnauthorized()
     {
         var httpContext = new DefaultHttpContext();

@@ -89,6 +89,29 @@ public class AppointmentsController : ControllerBase
             return NotFound(new { message = $"Appointment with ID '{id}' was not found." });
         }
 
+        var isStaff = User.IsInRole("Admin") || User.IsInRole("HospitalManager") ||
+                      User.IsInRole("Doctor") || User.IsInRole("Nurse") ||
+                      User.IsInRole("Receptionist") || User.IsInRole("Pharmacist") ||
+                      User.IsInRole("LabTechnician");
+
+        if (!isStaff)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                var resolvedPatientId = await _appointmentService.GetPatientIdForUserAsync(userId, cancellationToken);
+                if (!resolvedPatientId.HasValue || appointment.PatientId != resolvedPatientId.Value)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "You are not authorized to view another patient's appointment details." });
+                }
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
         return Ok(appointment);
     }
 
@@ -149,6 +172,7 @@ public class AppointmentsController : ControllerBase
     [Authorize(Roles = "Admin,HospitalManager,Doctor,Nurse,Receptionist,Patient")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateAppointmentStatus(
         int id,
@@ -161,8 +185,36 @@ public class AppointmentsController : ControllerBase
             return NotFound(new { message = $"Appointment with ID '{id}' was not found." });
         }
 
+        var isStaff = User.IsInRole("Admin") || User.IsInRole("HospitalManager") ||
+                      User.IsInRole("Doctor") || User.IsInRole("Nurse") ||
+                      User.IsInRole("Receptionist");
+
+        if (!isStaff)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                var resolvedPatientId = await _appointmentService.GetPatientIdForUserAsync(userId, cancellationToken);
+                if (!resolvedPatientId.HasValue || existing.PatientId != resolvedPatientId.Value)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "You are not authorized to update another patient's appointment." });
+                }
+
+                if (request.Status != HospitalManagement.Domain.Enums.AppointmentStatus.Cancelled)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "Patients are only authorized to cancel their appointments." });
+                }
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
         await _appointmentService.UpdateStatusAsync(id, request.Status, request.Notes, cancellationToken);
         _logger.LogInformation("Appointment ID {AppointmentId} status updated to {Status}", id, request.Status);
         return NoContent();
     }
+
 }

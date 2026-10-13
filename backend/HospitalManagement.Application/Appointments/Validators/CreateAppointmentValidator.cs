@@ -10,7 +10,10 @@ public class CreateAppointmentValidator : AbstractValidator<CreateAppointmentReq
         RuleFor(x => x.PatientId).GreaterThan(0).WithMessage("Valid patient selection is required.");
         RuleFor(x => x.DoctorId).GreaterThan(0).WithMessage("Valid doctor selection is required.");
         RuleFor(x => x.AppointmentDate).GreaterThanOrEqualTo(DateTime.UtcNow.Date).WithMessage("Appointment date cannot be in the past.");
-        RuleFor(x => x.TimeSlot).NotEmpty().WithMessage("Time slot is required.");
+        RuleFor(x => x.TimeSlot)
+            .NotEmpty().WithMessage("Time slot is required.")
+            .Must(ts => TimeSpan.TryParse(ts, out _)).WithMessage("Time slot must be a valid time (e.g. '09:00' or '14:30').");
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(200).WithMessage("Reason for visit is required.");
+
     }
 }

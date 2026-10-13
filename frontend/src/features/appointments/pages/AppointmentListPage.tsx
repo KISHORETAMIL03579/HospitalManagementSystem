@@ -7,7 +7,9 @@ import {
   useUpdateAppointmentStatus,
 } from "../hooks/useAppointments";
 import { useDoctors } from "../../doctors/hooks/useDoctors";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { BookingModal } from "../components/BookingModal";
+
 import { AppointmentStatus, AppointmentDto } from "../types/appointment.types";
 import {
   PageHeader,
@@ -31,7 +33,6 @@ import {
   ArrowDown,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   X,
   MoreHorizontal,
   CalendarPlus,
@@ -41,8 +42,19 @@ type SortField = "appointmentDate" | "patientName" | "doctorName" | "status";
 type SortOrder = "asc" | "desc";
 
 export const AppointmentListPage: React.FC = () => {
+  const { user } = useAuth();
   const settings = useSettings();
+
+  const roleLower = (user?.roleName || user?.role || "")
+    .toString()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+  const isPatient =
+    roleLower === "patient" || user?.hierarchyLevel === 20 || user?.role === 20;
+  const isStaff = !isPatient;
+
   const [searchParams, setSearchParams] = useSearchParams();
+
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | undefined>(
     () => {
       const docParam = searchParams.get("doctorId");
@@ -221,12 +233,19 @@ export const AppointmentListPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Appointments & Scheduling"
-        subtitle="Book consultations, track patient schedules, and manage status updates."
+        title={isPatient ? "My Appointments" : "Appointments & Scheduling"}
+        subtitle={
+          isPatient
+            ? "View and manage your scheduled doctor consultations and visits."
+            : "Book consultations, track patient schedules, and manage status updates."
+        }
         icon={Calendar}
         actions={
           <button
-            onClick={() => setIsBookingModalOpen(true)}
+            onClick={() => {
+              setBookingContext({});
+              setIsBookingModalOpen(true);
+            }}
             className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition"
           >
             <Plus className="w-5 h-5" />
@@ -642,8 +661,8 @@ export const AppointmentListPage: React.FC = () => {
 
               return (
                 <>
-                  {/* Pending (0) -> Confirm appointment */}
-                  {statusNum === 0 && (
+                  {/* Pending (0) -> Confirm appointment (Staff only) */}
+                  {isStaff && statusNum === 0 && (
                     <button
                       type="button"
                       role="menuitem"
@@ -661,8 +680,8 @@ export const AppointmentListPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* Confirmed (10) -> Mark as arrived (Check In) */}
-                  {statusNum === 10 && (
+                  {/* Confirmed (10) -> Mark as arrived (Check In) (Staff only) */}
+                  {isStaff && statusNum === 10 && (
                     <button
                       type="button"
                       role="menuitem"
@@ -680,8 +699,8 @@ export const AppointmentListPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* CheckedIn (20) -> Start consultation */}
-                  {statusNum === 20 && (
+                  {/* CheckedIn (20) -> Start consultation (Staff only) */}
+                  {isStaff && statusNum === 20 && (
                     <button
                       type="button"
                       role="menuitem"
@@ -699,8 +718,8 @@ export const AppointmentListPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* InConsultation (30) -> Mark as completed */}
-                  {statusNum === 30 && (
+                  {/* InConsultation (30) -> Mark as completed (Staff only) */}
+                  {isStaff && statusNum === 30 && (
                     <button
                       type="button"
                       role="menuitem"
@@ -740,8 +759,8 @@ export const AppointmentListPage: React.FC = () => {
                     </span>
                   </button>
 
-                  {/* CheckedIn (20) -> Record a no-show */}
-                  {statusNum === 20 && (
+                  {/* CheckedIn (20) -> Record a no-show (Staff only) */}
+                  {isStaff && statusNum === 20 && (
                     <button
                       type="button"
                       role="menuitem"
@@ -765,11 +784,13 @@ export const AppointmentListPage: React.FC = () => {
                     </button>
                   )}
 
-                  {/* Active appointments (0, 10, 20, 30) -> Cancel appointment */}
-                  {(statusNum === 0 ||
-                    statusNum === 10 ||
-                    statusNum === 20 ||
-                    statusNum === 30) && (
+                  {/* Active appointments -> Cancel appointment */}
+                  {((isStaff &&
+                    (statusNum === 0 ||
+                      statusNum === 10 ||
+                      statusNum === 20 ||
+                      statusNum === 30)) ||
+                    (!isStaff && (statusNum === 0 || statusNum === 10))) && (
                     <>
                       <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                       <button
@@ -913,7 +934,7 @@ export const AppointmentListPage: React.FC = () => {
 
             <div className="flex justify-between items-center pt-3 border-t border-slate-100">
               <div className="flex gap-2">
-                {getStatusVal(selectedAppointment.status) === 0 && (
+                {isStaff && getStatusVal(selectedAppointment.status) === 0 && (
                   <button
                     onClick={() =>
                       handleStatusChange(
@@ -926,7 +947,7 @@ export const AppointmentListPage: React.FC = () => {
                     Confirm Appointment
                   </button>
                 )}
-                {getStatusVal(selectedAppointment.status) === 10 && (
+                {isStaff && getStatusVal(selectedAppointment.status) === 10 && (
                   <button
                     onClick={() =>
                       handleStatusChange(
@@ -939,7 +960,7 @@ export const AppointmentListPage: React.FC = () => {
                     Check In Patient
                   </button>
                 )}
-                {getStatusVal(selectedAppointment.status) === 20 && (
+                {isStaff && getStatusVal(selectedAppointment.status) === 20 && (
                   <button
                     onClick={() =>
                       handleStatusChange(
@@ -952,7 +973,7 @@ export const AppointmentListPage: React.FC = () => {
                     Start Visit
                   </button>
                 )}
-                {getStatusVal(selectedAppointment.status) === 30 && (
+                {isStaff && getStatusVal(selectedAppointment.status) === 30 && (
                   <button
                     onClick={() =>
                       handleStatusChange(
@@ -965,7 +986,28 @@ export const AppointmentListPage: React.FC = () => {
                     Complete Visit
                   </button>
                 )}
+                {(getStatusVal(selectedAppointment.status) === 0 ||
+                  getStatusVal(selectedAppointment.status) === 10) && (
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to cancel this appointment?",
+                        )
+                      ) {
+                        handleStatusChange(
+                          selectedAppointment.appointmentId,
+                          AppointmentStatus.Cancelled,
+                        );
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg transition"
+                  >
+                    Cancel Appointment
+                  </button>
+                )}
               </div>
+
               <button
                 onClick={() => setSelectedAppointment(null)}
                 className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"

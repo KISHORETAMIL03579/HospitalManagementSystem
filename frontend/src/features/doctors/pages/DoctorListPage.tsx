@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   useDoctorDirectory,
   useDepartments,
@@ -37,9 +37,23 @@ import {
   PageHeader,
   EmptyState,
 } from "../../../components/common";
+import { useAuth } from "../../auth/hooks/useAuth";
 
 export const DoctorListPage: React.FC = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const roleLower = (user?.roleName || user?.role || "")
+    .toString()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+  const isPatient =
+    roleLower === "patient" || user?.hierarchyLevel === 20 || user?.role === 20;
+  const isStaff = !isPatient;
+  const canManageDoctors =
+    roleLower === "admin" ||
+    roleLower === "hospitalmanager" ||
+    (user?.hierarchyLevel ?? 0) >= 90;
   const [selectedDepartment, setSelectedDepartment] = useState<
     number | undefined
   >(undefined);
@@ -177,6 +191,10 @@ export const DoctorListPage: React.FC = () => {
     });
   };
 
+  if (isPatient) {
+    return <Navigate to="/appointments" replace />;
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -184,13 +202,15 @@ export const DoctorListPage: React.FC = () => {
         subtitle="Doctor directory, real-time availability calendar, and consultation scheduling."
         icon={Stethoscope}
         actions={
-          <button
-            onClick={() => setIsAddDoctorModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition"
-          >
-            <Plus className="w-5 h-5" />
-            Add New Doctor
-          </button>
+          canManageDoctors ? (
+            <button
+              onClick={() => setIsAddDoctorModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition"
+            >
+              <Plus className="w-5 h-5" />
+              Add New Doctor
+            </button>
+          ) : undefined
         }
       />
 
@@ -449,33 +469,37 @@ export const DoctorListPage: React.FC = () => {
                 }}
                 className="fixed z-50 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    const doc = openMenuDoctor.doctor;
-                    setOpenMenuDoctor(null);
-                    setSelectedDoctorForSchedule(doc);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Settings className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span>Manage availability / schedule</span>
-                </button>
+                {isStaff && (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        const doc = openMenuDoctor.doctor;
+                        setOpenMenuDoctor(null);
+                        setSelectedDoctorForSchedule(doc);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                      <span>Manage availability / schedule</span>
+                    </button>
 
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    const docId = openMenuDoctor.doctor.doctorId;
-                    setOpenMenuDoctor(null);
-                    navigate(`/appointments?doctorId=${docId}`);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span>View appointments</span>
-                </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        const docId = openMenuDoctor.doctor.doctorId;
+                        setOpenMenuDoctor(null);
+                        navigate(`/appointments?doctorId=${docId}`);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>View appointments</span>
+                    </button>
+                  </>
+                )}
 
                 <button
                   type="button"
