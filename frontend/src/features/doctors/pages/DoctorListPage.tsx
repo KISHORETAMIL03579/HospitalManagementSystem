@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useDoctorDirectory,
   useDepartments,
@@ -27,10 +28,13 @@ import {
   Settings,
   Star,
   Award,
+  MoreHorizontal,
+  CalendarPlus,
 } from "lucide-react";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 
 export const DoctorListPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedDepartment, setSelectedDepartment] = useState<
     number | undefined
   >(undefined);
@@ -49,6 +53,11 @@ export const DoctorListPage: React.FC = () => {
     useState<DoctorDirectoryItemDto | null>(null);
   const [selectedDoctorForSchedule, setSelectedDoctorForSchedule] =
     useState<DoctorDirectoryItemDto | null>(null);
+  const [openMenuDoctor, setOpenMenuDoctor] = useState<{
+    doctor: DoctorDirectoryItemDto;
+    top: number;
+    right: number;
+  } | null>(null);
   const [bookingModalState, setBookingModalState] = useState<{
     isOpen: boolean;
     doctorId?: number;
@@ -57,6 +66,23 @@ export const DoctorListPage: React.FC = () => {
   }>({
     isOpen: false,
   });
+
+  // Close ⋯ menu on Escape or scroll
+  useEffect(() => {
+    if (!openMenuDoctor) return;
+    const handleClose = () => setOpenMenuDoctor(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuDoctor(null);
+    };
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuDoctor]);
 
   const { data: doctors, isLoading: isDoctorsLoading } = useDoctorDirectory(
     selectedDepartment,
@@ -272,19 +298,27 @@ export const DoctorListPage: React.FC = () => {
                 <div className="space-y-3">
                   {/* Top: Avatar, Name, Badge */}
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                    <div
+                      onClick={() => setSelectedDoctorForDetails(doc)}
+                      className="flex items-center gap-3 cursor-pointer group"
+                      title={`Click to view ${doc.fullName}'s profile and availability`}
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0 group-hover:ring-2 group-hover:ring-indigo-400 transition">
                         {doc.fullName
                           ? doc.fullName.replace("Dr. ", "")[0]
                           : "D"}
                       </div>
                       <div>
-                        <h3
-                          onClick={() => setSelectedDoctorForDetails(doc)}
-                          className="text-base font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition"
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDoctorForDetails(doc);
+                          }}
+                          className="text-base font-bold text-left text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline transition"
                         >
                           {doc.fullName}
-                        </h3>
+                        </button>
                         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           <span className="font-semibold text-indigo-600 dark:text-indigo-400">
                             {doc.specialization}
@@ -343,37 +377,114 @@ export const DoctorListPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons: Primary Book + Three-Dot (⋯) Menu */}
                 <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDoctorForDetails(doc)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition"
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                    Calendar & Slots
-                  </button>
-
                   <button
                     type="button"
                     onClick={() => handleOpenBooking(doc)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
                   >
-                    Book
+                    <CalendarPlus className="w-3.5 h-3.5" />
+                    <span>Book Consultation</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedDoctorForSchedule(doc)}
-                    className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded-xl transition"
-                    title="Manage schedule and exceptions"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (openMenuDoctor?.doctor.doctorId === doc.doctorId) {
+                        setOpenMenuDoctor(null);
+                        return;
+                      }
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const menuHeight = 136;
+                      const openUpward =
+                        rect.bottom + menuHeight > window.innerHeight;
+                      setOpenMenuDoctor({
+                        doctor: doc,
+                        top: openUpward
+                          ? rect.top - menuHeight - 6
+                          : rect.bottom + 6,
+                        right: window.innerWidth - rect.right,
+                      });
+                    }}
+                    aria-label={`More actions for ${doc.fullName}`}
+                    aria-expanded={
+                      openMenuDoctor?.doctor.doctorId === doc.doctorId
+                    }
+                    className={`p-2 border rounded-xl transition ${
+                      openMenuDoctor?.doctor.doctorId === doc.doctorId
+                        ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    }`}
+                    title="Doctor actions"
                   >
-                    <Settings className="w-4 h-4" />
+                    <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Three-Dot (⋯) Menu Dropdown for Doctor Card */}
+          {openMenuDoctor && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setOpenMenuDoctor(null)}
+              />
+              <div
+                role="menu"
+                style={{
+                  top: openMenuDoctor.top,
+                  right: openMenuDoctor.right,
+                }}
+                className="fixed z-50 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const doc = openMenuDoctor.doctor;
+                    setOpenMenuDoctor(null);
+                    setSelectedDoctorForSchedule(doc);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Manage availability / schedule</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const docId = openMenuDoctor.doctor.doctorId;
+                    setOpenMenuDoctor(null);
+                    navigate(`/appointments?doctorId=${docId}`);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>View appointments</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const doc = openMenuDoctor.doctor;
+                    setOpenMenuDoctor(null);
+                    handleOpenBooking(doc);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Book consultation</span>
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Pagination Controls */}
           <div className="bg-white dark:bg-slate-900 px-6 py-4 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">

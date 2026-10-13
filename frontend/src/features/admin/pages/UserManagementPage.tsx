@@ -18,6 +18,8 @@ import {
   EyeOff,
   Building2,
   X,
+  MoreHorizontal,
+  KeyRound,
 } from "lucide-react";
 import {
   authApi,
@@ -27,12 +29,14 @@ import {
   isApprovedStatus,
   isRejectedStatus,
 } from "../../auth/api/authApi";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { doctorApi } from "../../doctors/api/doctorApi";
 import { DepartmentDto } from "../../doctors/types/doctor.types";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 export const UserManagementPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AdminUserDto[]>([]);
   const [requests, setRequests] = useState<StaffRegistrationRequest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -66,6 +70,33 @@ export const UserManagementPage: React.FC = () => {
     null,
   );
   const [deletingUser, setDeletingUser] = useState<AdminUserDto | null>(null);
+  const [openMenuUser, setOpenMenuUser] = useState<{
+    user: AdminUserDto;
+    top: number;
+    right: number;
+  } | null>(null);
+  const [openMenuRequest, setOpenMenuRequest] = useState<{
+    req: StaffRegistrationRequest;
+    top: number;
+    right: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!openMenuUser && !openMenuRequest) return;
+    const handleDismiss = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key !== "Escape") return;
+      setOpenMenuUser(null);
+      setOpenMenuRequest(null);
+    };
+    window.addEventListener("keydown", handleDismiss);
+    window.addEventListener("resize", handleDismiss);
+    window.addEventListener("scroll", handleDismiss, true);
+    return () => {
+      window.removeEventListener("keydown", handleDismiss);
+      window.removeEventListener("resize", handleDismiss);
+      window.removeEventListener("scroll", handleDismiss, true);
+    };
+  }, [openMenuUser, openMenuRequest]);
 
   // Approval & Rejection Modals for Pending Onboarding Requests
   const [approveRequest, setApproveRequest] =
@@ -875,7 +906,7 @@ export const UserManagementPage: React.FC = () => {
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="w-full overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
@@ -888,367 +919,159 @@ export const UserManagementPage: React.FC = () => {
               No pending staff onboarding requests matching criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-amber-50/60 border-b border-amber-200/60 text-[11px] font-semibold text-amber-900 uppercase tracking-wider">
-                  <tr>
-                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[200px]">
-                      Applicant & Contact
-                    </th>
-                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[140px]">
-                      Requested Role & Dept
-                    </th>
-                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[110px]">
-                      Invitation Code
-                    </th>
-                    <th className="py-3 px-3.5 whitespace-nowrap min-w-[120px]">
-                      Submitted Date
-                    </th>
-                    <th className="py-3 px-3.5 text-right pr-5 whitespace-nowrap min-w-[300px]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredRequests.map((req) => (
-                    <tr
-                      key={req.id}
-                      className="hover:bg-amber-50/40 transition-colors"
-                    >
-                      {/* Applicant details (Clickable to view full details) */}
-                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                        <div
-                          onClick={() => setViewingRequest(req)}
-                          className="flex items-center gap-3 cursor-pointer group"
-                          title="Click to view full application details"
-                        >
-                          <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-amber-400 transition">
-                            {req.fullName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .substring(0, 2)
-                              .toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900 text-sm flex items-center gap-2 group-hover:text-amber-700 transition">
-                              <span>{req.fullName}</span>
-                              <Eye className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
-                              <span className="text-[11px] text-slate-400 font-normal">
-                                ({req.username})
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5">
-                              <a
-                                href={`mailto:${req.email}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="hover:underline text-blue-600 font-medium"
-                              >
-                                {req.email}
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+            <table className="w-full min-w-[820px] table-fixed border-collapse text-left text-sm text-slate-700 dark:text-slate-200">
+              <colgroup>
+                <col style={{ width: "36%" }} />
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "10%" }} />
+              </colgroup>
 
-                      {/* Requested Role & Dept */}
-                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                        <div className="space-y-1">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                              req.requestedRoleName,
-                            )}`}
-                          >
-                            <User className="w-3 h-3" />
-                            {req.requestedRoleName}
-                          </span>
-                          {req.departmentName && (
-                            <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                              <Building2 className="w-3 h-3 text-slate-400" />
-                              <span>Dept: {req.departmentName}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Invitation Code */}
-                      <td className="py-3.5 px-4 align-middle whitespace-nowrap font-mono font-bold text-slate-700 text-xs">
-                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-bold border border-slate-200">
-                          {req.invitationCode}
-                        </span>
-                      </td>
-
-                      {/* Submitted Date */}
-                      <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
-                        {formatDateByPattern(
-                          req.submittedAt,
-                          "MMM dd, yyyy - hh:mm a",
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 pr-5 text-right align-middle whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                          {/* View Full Application Details */}
-                          <button
-                            onClick={() => setViewingRequest(req)}
-                            className="h-8 px-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shrink-0 shadow-2xs"
-                            title="View complete application details"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-blue-600" />
-                            <span>Details</span>
-                          </button>
-                          <button
-                            onClick={() => openEditRequestModal(req)}
-                            className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
-                            title="Edit applicant details & stage"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setApproveRequest(req);
-                              setApproveRoleId(req.requestedRoleId);
-                            }}
-                            className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-colors shrink-0"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Approve</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setRejectRequest(req);
-                              setRejectionReason("");
-                              setRejectError("");
-                            }}
-                            className="h-8 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            <span>Reject</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
-        ) : filteredUsers.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
-            <UserCog className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            No user accounts found matching the criteria.
-          </div>
-        ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-3.5 min-w-[210px] whitespace-nowrap">
-                    User & Contact
-                  </th>
-                  <th className="py-3 px-3.5 min-w-[120px] whitespace-nowrap">
-                    Role
-                  </th>
-                  <th className="py-3 px-3.5 min-w-[95px] whitespace-nowrap">
-                    Status
-                  </th>
-                  <th className="py-3 px-3.5 min-w-[120px] whitespace-nowrap">
-                    Last Login
-                  </th>
-                  <th className="py-3 px-3.5 min-w-[105px] whitespace-nowrap">
-                    Created Date
-                  </th>
-                  <th className="py-3 px-3.5 min-w-[320px] pr-5 text-right whitespace-nowrap">
-                    Actions
-                  </th>
+              <thead>
+                <tr className="h-11 border-b border-amber-200/60 dark:border-amber-800/40 bg-amber-50/60 dark:bg-amber-950/30 text-left text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-300">
+                  <th className="px-3 py-2.5">Applicant &amp; Contact</th>
+                  <th className="px-3 py-2.5">Requested Role &amp; Dept</th>
+                  <th className="px-3 py-2.5">Invitation Code</th>
+                  <th className="px-3 py-2.5">Submitted Date</th>
+                  <th className="px-3 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((u) => (
+
+              <tbody>
+                {filteredRequests.map((req) => (
                   <tr
-                    key={u.userId}
-                    className="hover:bg-slate-50/80 transition-colors"
+                    key={req.id}
+                    className="h-[72px] border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-amber-50/40 dark:hover:bg-slate-800/50 transition-colors"
                   >
-                    {/* User Details (Clickable to view full profile) */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
+                    {/* Applicant & Contact */}
+                    <td className="px-3 py-3 align-middle">
                       <div
-                        onClick={() => setViewingUser(u)}
-                        className="flex items-center gap-3 cursor-pointer group"
-                        title="Click to view full user profile"
+                        onClick={() => setViewingRequest(req)}
+                        className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 cursor-pointer group"
+                        title={
+                          req.employeeId
+                            ? `Employee ID: ${req.employeeId} — Click to view full application details`
+                            : "Click to view full application details"
+                        }
                       >
-                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition">
-                          {u.fullName
+                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-amber-400 transition">
+                          {req.fullName
                             .split(" ")
                             .map((n) => n[0])
                             .join("")
                             .substring(0, 2)
                             .toUpperCase()}
                         </div>
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm flex items-center gap-2 group-hover:text-blue-600 transition">
-                            <span>{u.fullName}</span>
-                            <Eye className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
-                            <span className="text-[11px] text-slate-400 font-normal">
-                              ({u.username})
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                            <a
-                              href={`mailto:${u.email}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="hover:underline text-blue-600 font-medium"
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingRequest(req);
+                              }}
+                              className="truncate text-left text-sm font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400 group-hover:underline transition focus-visible:outline-none focus-visible:underline"
                             >
-                              {u.email}
+                              {req.fullName}
+                            </button>
+                            {req.employeeId && (
+                              <span className="shrink-0 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                                · {req.employeeId}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                            <a
+                              href={`mailto:${req.email}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="truncate font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              {req.email}
                             </a>
-                            {u.employeeId && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono font-semibold">
-                                {u.employeeId}
-                              </span>
-                            )}
-                            {u.phone && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">
-                                📞 {u.phone}
-                              </span>
-                            )}
+                            <span
+                              aria-hidden="true"
+                              className="shrink-0 text-slate-300 dark:text-slate-600"
+                            >
+                              ·
+                            </span>
+                            <span className="shrink-0 text-slate-500 dark:text-slate-400">
+                              {req.username}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Role Badge */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                          u.roleName,
-                        )}`}
-                      >
-                        <User className="w-3 h-3" />
-                        {u.roleName}
+                    {/* Requested Role & Dept */}
+                    <td className="px-3 py-3 align-middle">
+                      <div className="space-y-0.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${getRoleBadgeColor(
+                            req.requestedRoleName,
+                          )}`}
+                        >
+                          <User className="w-3 h-3 shrink-0" />
+                          <span>{req.requestedRoleName}</span>
+                        </span>
+                        {req.departmentName && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 truncate">
+                            <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate">
+                              {req.departmentName}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Invitation Code */}
+                    <td className="px-3 py-3 align-middle">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-mono text-xs font-semibold border border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                        {req.invitationCode}
                       </span>
                     </td>
 
-                    {/* Status Pill */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                      {u.isActive ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                          <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                          Inactive
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Last Login */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
-                      {u.lastLoginAt ? (
-                        <div>
-                          <div>
-                            {formatDateByPattern(u.lastLoginAt, "MMM dd, yyyy")}
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            {formatDateByPattern(u.lastLoginAt, "hh:mm a")}
-                          </div>
+                    {/* Submitted Date */}
+                    <td className="px-3 py-3 align-middle">
+                      <div className="leading-tight">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                          {formatDateByPattern(req.submittedAt, "MMM dd, yyyy")}
                         </div>
-                      ) : (
-                        <span className="text-slate-400 italic">
-                          Never logged in
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Created Date */}
-                    <td className="py-3.5 px-4 align-middle whitespace-nowrap text-slate-500 text-xs">
-                      {formatDateByPattern(u.createdAt, "MMM dd, yyyy")}
+                        <div className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                          {formatDateByPattern(req.submittedAt, "hh:mm a")}
+                        </div>
+                      </div>
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 pr-5 align-middle text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                        {/* Details View Button */}
+                    <td className="px-3 py-3 align-middle text-right">
+                      <div className="flex items-center justify-end">
                         <button
-                          onClick={() => setViewingUser(u)}
-                          title="View complete user profile details"
-                          className="h-8 px-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors shrink-0 shadow-2xs"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span>Details</span>
-                        </button>
-
-                        {/* Edit Account */}
-                        <button
-                          onClick={() => {
-                            setEditingUser(u);
-                            setShowEditPassword(false);
-                            setEditForm({
-                              fullName: u.fullName,
-                              email: u.email,
-                              phone: u.phone || "",
-                              employeeId: u.employeeId || "",
-                              password: "",
-                              roleId: u.roleId,
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (openMenuRequest?.req.id === req.id) {
+                              setOpenMenuRequest(null);
+                              return;
+                            }
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            setOpenMenuRequest({
+                              req,
+                              top: rect.bottom + 6,
+                              right: window.innerWidth - rect.right,
                             });
                           }}
-                          title="Edit Account Details"
-                          className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors shrink-0"
-                        >
-                          <Edit className="w-3.5 h-3.5 shrink-0" />
-                          Edit
-                        </button>
-
-                        {/* Quick Role Switcher */}
-                        <button
-                          onClick={() => {
-                            setRoleChangeUser(u);
-                            setTargetRoleId(u.roleId);
-                          }}
-                          title="Change Assigned Role"
-                          className="h-8 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors shrink-0"
-                        >
-                          <UserCog className="w-3.5 h-3.5 shrink-0" />
-                          Role
-                        </button>
-
-                        {/* Activate / Deactivate Toggle (Fixed width to prevent column shifting) */}
-                        <button
-                          onClick={() => handleToggleStatus(u)}
-                          disabled={actionLoadingId === u.userId}
-                          title={
-                            u.isActive
-                              ? "Deactivate Account"
-                              : "Activate Account"
-                          }
-                          className={`h-8 w-[104px] px-2 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition-colors shrink-0 ${
-                            u.isActive
-                              ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200"
-                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                          aria-label={`More actions for ${req.fullName}`}
+                          aria-expanded={openMenuRequest?.req.id === req.id}
+                          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+                            openMenuRequest?.req.id === req.id
+                              ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                           }`}
                         >
-                          {u.isActive ? (
-                            <>
-                              <UserX className="w-3.5 h-3.5 shrink-0" />
-                              <span>Deactivate</span>
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="w-3.5 h-3.5 shrink-0" />
-                              <span>Activate</span>
-                            </>
-                          )}
-                        </button>
-
-                        {/* Remove / Soft Delete */}
-                        <button
-                          onClick={() => setDeletingUser(u)}
-                          title="Remove Account (Archive)"
-                          className="h-8 w-8 inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg transition-colors shrink-0"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -1256,9 +1079,413 @@ export const UserManagementPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          )
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 text-xs">
+            <UserCog className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            No user accounts found matching the criteria.
           </div>
+        ) : (
+          <table className="w-full min-w-[780px] table-fixed border-collapse text-left text-sm text-slate-700 dark:text-slate-200">
+            <colgroup>
+              <col style={{ width: "35%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "8%" }} />
+            </colgroup>
+
+            <thead>
+              <tr className="h-11 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                <th className="px-3 py-2.5">User &amp; Contact</th>
+                <th className="px-3 py-2.5">Role</th>
+                <th className="px-3 py-2.5 text-center">Status</th>
+                <th className="px-3 py-2.5">Last Login</th>
+                <th className="px-3 py-2.5">Created Date</th>
+                <th className="px-3 py-2.5 text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredUsers.map((u) => (
+                <tr
+                  key={u.userId}
+                  className="h-[72px] border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
+                >
+                  {/* User & Contact (40px avatar + 2-line compact info area) */}
+                  <td className="px-3 py-3 align-middle">
+                    <div
+                      onClick={() => setViewingUser(u)}
+                      className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 cursor-pointer group"
+                      title={
+                        u.employeeId
+                          ? `${u.fullName} (${u.employeeId}) — Click to view full user profile`
+                          : `${u.fullName} — Click to view full user profile`
+                      }
+                    >
+                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition">
+                        {u.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingUser(u);
+                            }}
+                            className="truncate text-left text-sm font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition focus-visible:outline-none focus-visible:underline"
+                          >
+                            {u.fullName}
+                          </button>
+                          {u.employeeId && (
+                            <span className="shrink-0 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                              · {u.employeeId}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                          <a
+                            href={`mailto:${u.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            {u.email}
+                          </a>
+                          <span
+                            aria-hidden="true"
+                            className="shrink-0 text-slate-300 dark:text-slate-600"
+                          >
+                            ·
+                          </span>
+                          <span className="shrink-0 text-slate-500 dark:text-slate-400">
+                            {u.username}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Role Badge */}
+                  <td className="px-3 py-3 align-middle">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap ${getRoleBadgeColor(
+                        u.roleName,
+                      )}`}
+                    >
+                      <User className="w-3 h-3 shrink-0" />
+                      <span>{u.roleName}</span>
+                    </span>
+                  </td>
+
+                  {/* Status Badge (Centered in column) */}
+                  <td className="px-3 py-3 align-middle text-center">
+                    {u.isActive ? (
+                      <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>Active</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 whitespace-nowrap">
+                        <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
+                        <span>Inactive</span>
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Last Login */}
+                  <td className="px-3 py-3 align-middle">
+                    {u.lastLoginAt ? (
+                      <div className="leading-tight">
+                        <div className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                          {formatDateByPattern(u.lastLoginAt, "MMM dd, yyyy")}
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                          {formatDateByPattern(u.lastLoginAt, "hh:mm a")}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500 italic whitespace-nowrap">
+                        Never logged in
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Created Date */}
+                  <td className="px-3 py-3 align-middle">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                      {formatDateByPattern(u.createdAt, "MMM dd, yyyy")}
+                    </span>
+                  </td>
+
+                  {/* Actions (More Actions ⋯ Menu) */}
+                  <td className="px-3 py-3 align-middle text-right">
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openMenuUser?.user.userId === u.userId) {
+                            setOpenMenuUser(null);
+                            return;
+                          }
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const menuHeight = 220;
+                          const openUpward =
+                            rect.bottom + menuHeight > window.innerHeight;
+                          setOpenMenuUser({
+                            user: u,
+                            top: openUpward
+                              ? rect.top - menuHeight - 6
+                              : rect.bottom + 6,
+                            right: window.innerWidth - rect.right,
+                          });
+                        }}
+                        aria-label={`More actions for ${u.fullName}`}
+                        aria-expanded={openMenuUser?.user.userId === u.userId}
+                        title="Account actions"
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+                          openMenuUser?.user.userId === u.userId
+                            ? "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                        }`}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* PENDING ONBOARDING REQUESTS (⋯) DROPDOWN MENU */}
+      {openMenuRequest && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpenMenuRequest(null)}
+          />
+          <div
+            role="menu"
+            aria-label={`Actions for ${openMenuRequest.req.fullName}`}
+            style={{
+              top: Math.min(openMenuRequest.top, window.innerHeight - 200),
+              right: Math.max(openMenuRequest.right, 16),
+            }}
+            className="fixed z-50 w-52 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+          >
+            <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 mb-1">
+              <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate">
+                {openMenuRequest.req.fullName}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                {openMenuRequest.req.requestedRoleName} · #
+                {openMenuRequest.req.id}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuRequest.req;
+                setOpenMenuRequest(null);
+                setApproveRequest(target);
+                setApproveRoleId(target.requestedRoleId);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span>Approve request</span>
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuRequest.req;
+                setOpenMenuRequest(null);
+                openEditRequestModal(target);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Edit className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+              <span>Edit permitted fields</span>
+            </button>
+
+            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuRequest.req;
+                setOpenMenuRequest(null);
+                setRejectRequest(target);
+                setRejectionReason("");
+                setRejectError("");
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+            >
+              <XCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>Reject request</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* USERS MORE ACTIONS (⋯) DROPDOWN MENU */}
+      {openMenuUser && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpenMenuUser(null)}
+          />
+          <div
+            role="menu"
+            aria-label={`Actions for ${openMenuUser.user.fullName}`}
+            style={{
+              top: `${openMenuUser.top}px`,
+              right: `${openMenuUser.right}px`,
+            }}
+            className="fixed z-50 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+          >
+            <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 mb-1">
+              <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate">
+                {openMenuUser.user.fullName}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                {openMenuUser.user.roleName} · @{openMenuUser.user.username}
+              </p>
+            </div>
+
+            {/* 1. Edit user */}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuUser.user;
+                setOpenMenuUser(null);
+                setEditingUser(target);
+                setShowEditPassword(false);
+                setEditForm({
+                  fullName: target.fullName,
+                  email: target.email,
+                  phone: target.phone || "",
+                  employeeId: target.employeeId || "",
+                  password: "",
+                  roleId: target.roleId,
+                });
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Edit className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+              <span>Edit user</span>
+            </button>
+
+            {/* 2. Initiate password reset / temporary password workflow */}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuUser.user;
+                setOpenMenuUser(null);
+                setEditingUser(target);
+                setShowEditPassword(true);
+                setEditForm({
+                  fullName: target.fullName,
+                  email: target.email,
+                  phone: target.phone || "",
+                  employeeId: target.employeeId || "",
+                  password: "",
+                  roleId: target.roleId,
+                });
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            >
+              <KeyRound className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>Reset password</span>
+            </button>
+
+            {/* Self-protection rule: Do not allow changing own role, deactivating own account, or deleting own account */}
+            {openMenuUser.user.userId !== currentUser?.userId &&
+              openMenuUser.user.username !== currentUser?.username && (
+                <>
+                  {/* 3. Change role */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      const target = openMenuUser.user;
+                      setOpenMenuUser(null);
+                      setRoleChangeUser(target);
+                      setTargetRoleId(target.roleId);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    <UserCog className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span>Change role</span>
+                  </button>
+
+                  {/* 4. Activate / Deactivate account */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={actionLoadingId === openMenuUser.user.userId}
+                    onClick={() => {
+                      const target = openMenuUser.user;
+                      setOpenMenuUser(null);
+                      handleToggleStatus(target);
+                    }}
+                    className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
+                      openMenuUser.user.isActive
+                        ? "text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                        : "text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                    }`}
+                  >
+                    {openMenuUser.user.isActive ? (
+                      <>
+                        <UserX className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Deactivate account</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>Activate account</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                  {/* 5. Delete account */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      const target = openMenuUser.user;
+                      setOpenMenuUser(null);
+                      setDeletingUser(target);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <span>Delete account</span>
+                  </button>
+                </>
+              )}
+          </div>
+        </>
+      )}
 
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (

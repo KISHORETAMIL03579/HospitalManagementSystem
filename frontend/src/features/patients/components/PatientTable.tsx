@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePatients } from "../hooks/usePatients";
 import { formatDate, calculateAge } from "../../../lib/utils";
 import { Gender, PatientDto } from "../types/patient.types";
+import { BookingModal } from "../../appointments/components/BookingModal";
 import {
   Search,
   ChevronLeft,
@@ -16,6 +18,9 @@ import {
   Mail,
   Calendar,
   ShieldAlert,
+  MoreHorizontal,
+  CalendarPlus,
+  History,
 } from "lucide-react";
 
 type SortField =
@@ -23,17 +28,58 @@ type SortField =
 type SortOrder = "asc" | "desc";
 
 export const PatientTable: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selectedPatient, setSelectedPatient] = useState<PatientDto | null>(
     null,
   );
+  const [bookingPatientId, setBookingPatientId] = useState<number | undefined>(
+    undefined,
+  );
+  const [openMenuPatient, setOpenMenuPatient] = useState<{
+    patient: PatientDto;
+    top: number;
+    right: number;
+  } | null>(null);
 
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const { data, isLoading, isError } = usePatients(searchTerm, page, pageSize);
+
+  // Close ⋯ menu on Escape or scroll
+  useEffect(() => {
+    if (!openMenuPatient) return;
+    const handleClose = () => setOpenMenuPatient(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuPatient(null);
+    };
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuPatient]);
+
+  // Open patient details if navigated with ?patientId=
+  useEffect(() => {
+    const paramId = searchParams.get("patientId");
+    if (paramId && data?.items) {
+      const match = data.items.find((p) => String(p.patientId) === paramId);
+      if (match) {
+        setSelectedPatient(match);
+        const next = new URLSearchParams(searchParams);
+        next.delete("patientId");
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [searchParams, data, setSearchParams]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -145,9 +191,9 @@ export const PatientTable: React.FC = () => {
   }, [items, sortField, sortOrder]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       {/* Table Header Controls */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -158,11 +204,11 @@ export const PatientTable: React.FC = () => {
               setSearchTerm(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+            className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
           />
         </div>
 
-        <div className="text-xs font-medium text-slate-500">
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
           {data
             ? `Showing ${sortedItems.length} of ${data.totalCount} patients`
             : "Loading patients..."}
@@ -171,15 +217,15 @@ export const PatientTable: React.FC = () => {
 
       {/* Table Content */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+          <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">
             <tr>
               <th
                 onClick={() => handleSort("medicalRecordNumber")}
                 className={`px-6 py-3.5 cursor-pointer select-none transition ${
                   sortField === "medicalRecordNumber"
-                    ? "bg-indigo-50/80 text-indigo-900 font-bold border-b-2 border-indigo-600"
-                    : "hover:bg-slate-100 text-slate-700"
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-bold border-b-2 border-indigo-600"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -199,8 +245,8 @@ export const PatientTable: React.FC = () => {
                 onClick={() => handleSort("fullName")}
                 className={`px-6 py-3.5 cursor-pointer select-none transition ${
                   sortField === "fullName"
-                    ? "bg-indigo-50/80 text-indigo-900 font-bold border-b-2 border-indigo-600"
-                    : "hover:bg-slate-100 text-slate-700"
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-bold border-b-2 border-indigo-600"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -220,8 +266,8 @@ export const PatientTable: React.FC = () => {
                 onClick={() => handleSort("dateOfBirth")}
                 className={`px-6 py-3.5 cursor-pointer select-none transition ${
                   sortField === "dateOfBirth"
-                    ? "bg-indigo-50/80 text-indigo-900 font-bold border-b-2 border-indigo-600"
-                    : "hover:bg-slate-100 text-slate-700"
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-bold border-b-2 border-indigo-600"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -241,8 +287,8 @@ export const PatientTable: React.FC = () => {
                 onClick={() => handleSort("gender")}
                 className={`px-6 py-3.5 cursor-pointer select-none transition ${
                   sortField === "gender"
-                    ? "bg-indigo-50/80 text-indigo-900 font-bold border-b-2 border-indigo-600"
-                    : "hover:bg-slate-100 text-slate-700"
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-bold border-b-2 border-indigo-600"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -264,8 +310,8 @@ export const PatientTable: React.FC = () => {
                 onClick={() => handleSort("createdAt")}
                 className={`px-6 py-3.5 cursor-pointer select-none transition ${
                   sortField === "createdAt"
-                    ? "bg-indigo-50/80 text-indigo-900 font-bold border-b-2 border-indigo-600"
-                    : "hover:bg-slate-100 text-slate-700"
+                    ? "bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 font-bold border-b-2 border-indigo-600"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -281,35 +327,42 @@ export const PatientTable: React.FC = () => {
                   )}
                 </div>
               </th>
+              <th className="px-6 py-3.5 text-right w-16">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={idx} className="animate-pulse">
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-24" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24" />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-36" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-36" />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-20" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20" />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-16" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16" />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-28" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-28" />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="h-4 bg-slate-200 rounded w-20" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-20" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-8 ml-auto" />
                   </td>
                 </tr>
               ))
             ) : isError ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-rose-500">
+                <td colSpan={8} className="px-6 py-8 text-center text-rose-500">
                   Failed to load patient directory. Please check backend
                   connection.
                 </td>
@@ -317,11 +370,11 @@ export const PatientTable: React.FC = () => {
             ) : sortedItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-6 py-12 text-center text-slate-400"
                 >
                   <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium text-slate-600">
+                  <p className="font-medium text-slate-600 dark:text-slate-300">
                     No patients registered yet
                   </p>
                   <p className="text-xs text-slate-400">
@@ -334,22 +387,30 @@ export const PatientTable: React.FC = () => {
               sortedItems.map((patient) => (
                 <tr
                   key={patient.patientId}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                   onClick={() => setSelectedPatient(patient)}
+                  title={`Click to view ${patient.fullName}'s profile`}
                 >
-                  <td className="px-6 py-4 font-mono text-xs font-semibold text-blue-600">
+                  <td className="px-6 py-4 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">
                     {patient.medicalRecordNumber}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-xs">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-700 dark:text-blue-300 font-semibold text-xs shrink-0">
                         {patient.firstName[0]}
                         {patient.lastName[0]}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-800">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPatient(patient);
+                          }}
+                          className="font-semibold text-left text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition-colors"
+                        >
                           {patient.fullName}
-                        </div>
+                        </button>
                         {patient.email && (
                           <div className="text-xs text-slate-400">
                             {patient.email}
@@ -359,7 +420,7 @@ export const PatientTable: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-slate-700">
+                    <div className="text-slate-700 dark:text-slate-200">
                       {formatDate(patient.dateOfBirth)}
                     </div>
                     <div className="text-xs text-slate-400">
@@ -372,14 +433,55 @@ export const PatientTable: React.FC = () => {
                   <td className="px-6 py-4">
                     {getBloodGroupBadge(patient.bloodGroup)}
                   </td>
-                  <td className="px-6 py-4 text-slate-700">
+                  <td className="px-6 py-4 text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-slate-400" />
                       <span>{patient.phone}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">
+                  <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">
                     {formatDate(patient.createdAt)}
+                  </td>
+                  <td
+                    className="px-6 py-4 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          openMenuPatient?.patient.patientId ===
+                          patient.patientId
+                        ) {
+                          setOpenMenuPatient(null);
+                          return;
+                        }
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const menuHeight = 104;
+                        const openUpward =
+                          rect.bottom + menuHeight > window.innerHeight;
+                        setOpenMenuPatient({
+                          patient,
+                          top: openUpward
+                            ? rect.top - menuHeight - 6
+                            : rect.bottom + 6,
+                          right: window.innerWidth - rect.right,
+                        });
+                      }}
+                      aria-label={`More actions for ${patient.fullName}`}
+                      aria-expanded={
+                        openMenuPatient?.patient.patientId === patient.patientId
+                      }
+                      title="Patient actions"
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                        openMenuPatient?.patient.patientId === patient.patientId
+                          ? "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -390,28 +492,81 @@ export const PatientTable: React.FC = () => {
 
       {/* Pagination Controls */}
       {data && data.totalPages > 1 && (
-        <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center text-sm">
-          <div className="text-xs text-slate-500">
+        <div className="px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-between items-center text-sm">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             Page {data.page} of {data.totalPages}
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1.5 border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
+              className="p-1.5 border border-slate-300 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page >= data.totalPages}
-              className="p-1.5 border border-slate-300 rounded hover:bg-slate-100 disabled:opacity-40"
+              className="p-1.5 border border-slate-300 dark:border-slate-700 rounded hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
+
+      {/* Three-Dot (⋯) Menu Dropdown for Patient Row */}
+      {openMenuPatient && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpenMenuPatient(null)}
+          />
+          <div
+            role="menu"
+            style={{
+              top: openMenuPatient.top,
+              right: openMenuPatient.right,
+            }}
+            className="fixed z-50 w-52 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const pid = openMenuPatient.patient.patientId;
+                setOpenMenuPatient(null);
+                setBookingPatientId(pid);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <CalendarPlus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span>Book appointment</span>
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const mrn = openMenuPatient.patient.medicalRecordNumber;
+                setOpenMenuPatient(null);
+                navigate(`/appointments?search=${encodeURIComponent(mrn)}`);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <span>View appointment history</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Book Appointment Modal from Patient Row */}
+      <BookingModal
+        isOpen={bookingPatientId !== undefined}
+        onClose={() => setBookingPatientId(undefined)}
+        preselectedPatientId={bookingPatientId}
+      />
 
       {/* Patient Details Modal */}
       {selectedPatient && (

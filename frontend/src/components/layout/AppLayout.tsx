@@ -39,6 +39,7 @@ interface NavItem {
   icon: LucideIcon;
   roles?: readonly string[];
   badge?: string;
+  disabled?: boolean;
   children?: NavSubItem[];
 }
 
@@ -101,6 +102,7 @@ const NAV_ITEMS: NavItem[] = [
     path: "/prescriptions",
     icon: Pill,
     badge: "Soon",
+    disabled: true,
     roles: [
       "admin",
       "hospitalmanager",
@@ -115,6 +117,7 @@ const NAV_ITEMS: NavItem[] = [
     path: "/laboratory",
     icon: TestTube,
     badge: "Soon",
+    disabled: true,
     roles: ["admin", "hospitalmanager", "doctor", "labtechnician", "nurse"],
   },
   {
@@ -122,6 +125,7 @@ const NAV_ITEMS: NavItem[] = [
     path: "/billing",
     icon: CreditCard,
     badge: "Soon",
+    disabled: true,
     roles: ["admin", "hospitalmanager", "receptionist"],
   },
   {
@@ -261,6 +265,13 @@ export const AppLayout: React.FC = () => {
     (item) => !item.roles || item.roles.includes(userRole),
   );
 
+  const primaryNavItems = visibleNavItems.filter(
+    (item) => item.path !== "/settings",
+  );
+  const bottomNavItems = visibleNavItems.filter(
+    (item) => item.path === "/settings",
+  );
+
   const pageTitle = getPageTitle(location.pathname);
 
   const closeMobileNav = () => {
@@ -272,171 +283,227 @@ export const AppLayout: React.FC = () => {
     logout();
   };
 
-  const renderNavigation = (_mobile = false) => (
-    <nav
-      aria-label="Main navigation"
-      className="flex-1 space-y-1 overflow-y-auto p-3"
-    >
-      {visibleNavItems.map((item) => {
-        const Icon = item.icon;
+  const renderNavItem = (item: NavItem, subnavId: string) => {
+    const Icon = item.icon;
 
-        if (item.children && item.children.length > 0) {
-          const isAnyChildActive = item.children.some(
-            (child) =>
-              location.pathname === child.path ||
-              location.pathname.startsWith(`${child.path}/`),
-          );
+    if (item.children && item.children.length > 0) {
+      const isAnyChildActive = item.children.some(
+        (child) =>
+          location.pathname === child.path ||
+          location.pathname.startsWith(`${child.path}/`),
+      );
 
-          return (
-            <div key={item.path} className="space-y-1">
-              <button
-                type="button"
-                onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
-                className={[
-                  "w-full flex items-center justify-between gap-3 rounded-lg",
-                  "px-3.5 py-2.5 text-sm font-medium transition-colors text-left",
-                  "focus-visible:outline-none focus-visible:ring-2",
-                  "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
-                  "focus-visible:ring-offset-slate-900",
-                  isAnyChildActive
-                    ? "bg-slate-800/80 text-white font-semibold"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white",
-                ].join(" ")}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <Icon
-                    aria-hidden="true"
-                    className={`h-4 w-4 shrink-0 ${
-                      isAnyChildActive ? "text-blue-400" : ""
-                    }`}
-                  />
-                  <span className="truncate">{item.label}</span>
-                </span>
-
-                <span className="flex items-center gap-1.5 shrink-0 text-slate-400">
-                  {item.badge && (
-                    <span className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
-                      {item.badge}
-                    </span>
-                  )}
-                  {isAdminDropdownOpen ? (
-                    <ChevronDown className="h-4 w-4 text-slate-400 transition-transform" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-slate-400 transition-transform" />
-                  )}
-                </span>
-              </button>
-
-              {isAdminDropdownOpen && (
-                <div className="ml-4 pl-3 border-l border-slate-800 space-y-1 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                  {item.children.map((sub) => {
-                    const SubIcon = sub.icon;
-                    const isSubActive =
-                      sub.path === "/admin"
-                        ? location.pathname === "/admin"
-                        : location.pathname === sub.path ||
-                          location.pathname.startsWith(`${sub.path}/`);
-
-                    return (
-                      <Link
-                        key={sub.path}
-                        to={sub.path}
-                        onClick={closeMobileNav}
-                        aria-current={isSubActive ? "page" : undefined}
-                        className={[
-                          "flex items-center justify-between gap-2.5 rounded-lg",
-                          "px-3 py-2 text-xs font-medium transition-colors",
-                          "focus-visible:outline-none focus-visible:ring-2",
-                          "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
-                          "focus-visible:ring-offset-slate-900",
-                          isSubActive
-                            ? "bg-blue-600 text-white shadow-sm font-semibold"
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white",
-                        ].join(" ")}
-                      >
-                        <span className="flex min-w-0 items-center gap-2.5">
-                          {SubIcon && (
-                            <SubIcon
-                              aria-hidden="true"
-                              className={`h-3.5 w-3.5 shrink-0 ${
-                                isSubActive ? "text-white" : "text-slate-500"
-                              }`}
-                            />
-                          )}
-                          <span className="truncate">{sub.label}</span>
-                        </span>
-
-                        {sub.badge && (
-                          <span className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
-                            {sub.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        const isExactMatch = location.pathname === item.path;
-        const isChildMatch =
-          item.path !== "/" &&
-          location.pathname.startsWith(`${item.path}/`) &&
-          !visibleNavItems.some(
-            (other) =>
-              other.path !== item.path &&
-              other.path.startsWith(`${item.path}/`) &&
-              (location.pathname === other.path ||
-                location.pathname.startsWith(`${other.path}/`)),
-          );
-        const isActive = isExactMatch || isChildMatch;
-
-        return (
-          <Link
-            key={item.path}
-            to={item.path}
-            onClick={closeMobileNav}
-            aria-current={isActive ? "page" : undefined}
+      return (
+        <div key={item.path} className="space-y-0.5">
+          <button
+            type="button"
+            onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+            aria-expanded={isAdminDropdownOpen}
+            aria-controls={subnavId}
             className={[
-              "flex items-center justify-between gap-3 rounded-lg",
-              "px-3.5 py-2.5 text-sm font-medium transition-colors",
+              "w-full h-10 flex items-center justify-between gap-3 rounded-lg",
+              "px-3 py-2 text-sm font-medium transition-colors text-left",
               "focus-visible:outline-none focus-visible:ring-2",
               "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
               "focus-visible:ring-offset-slate-900",
-              isActive
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white",
+              isAnyChildActive
+                ? "bg-slate-800/90 text-white font-semibold"
+                : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
             ].join(" ")}
           >
             <span className="flex min-w-0 items-center gap-3">
-              <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+              <Icon
+                aria-hidden="true"
+                className={`h-[18px] w-[18px] shrink-0 ${
+                  isAnyChildActive ? "text-blue-400" : "text-slate-400"
+                }`}
+              />
               <span className="truncate">{item.label}</span>
             </span>
 
-            {item.badge && (
-              <span className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
-                {item.badge}
-              </span>
-            )}
-          </Link>
-        );
-      })}
+            <span className="flex items-center gap-1.5 shrink-0 text-slate-400">
+              {item.badge && (
+                <span className="rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+                  {item.badge}
+                </span>
+              )}
+              {isAdminDropdownOpen ? (
+                <ChevronDown
+                  aria-hidden="true"
+                  className="h-4 w-4 text-slate-400 transition-transform"
+                />
+              ) : (
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-4 w-4 text-slate-400 transition-transform"
+                />
+              )}
+            </span>
+          </button>
 
-      {visibleNavItems.length === 0 && (
-        <p className="px-3 py-4 text-sm text-slate-400">
-          No navigation items are available for this account.
-        </p>
-      )}
-    </nav>
-  );
+          {isAdminDropdownOpen && (
+            <div
+              id={subnavId}
+              className="ml-5 pl-3 border-l border-slate-700/80 space-y-0.5 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150"
+            >
+              {item.children.map((sub) => {
+                const SubIcon = sub.icon;
+                const isSubActive =
+                  sub.path === "/admin"
+                    ? location.pathname === "/admin"
+                    : location.pathname === sub.path ||
+                      location.pathname.startsWith(`${sub.path}/`);
+
+                return (
+                  <Link
+                    key={sub.path}
+                    to={sub.path}
+                    onClick={closeMobileNav}
+                    aria-current={isSubActive ? "page" : undefined}
+                    className={[
+                      "h-9 flex items-center justify-between gap-2.5 rounded-lg",
+                      "px-3 py-1.5 text-xs font-medium transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2",
+                      "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
+                      "focus-visible:ring-offset-slate-900",
+                      isSubActive
+                        ? "bg-blue-600 text-white shadow-sm font-semibold"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
+                    ].join(" ")}
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      {SubIcon && (
+                        <SubIcon
+                          aria-hidden="true"
+                          className={`h-4 w-4 shrink-0 ${
+                            isSubActive ? "text-white" : "text-slate-400"
+                          }`}
+                        />
+                      )}
+                      <span className="truncate">{sub.label}</span>
+                    </span>
+
+                    {sub.badge && (
+                      <span className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+                        {sub.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (item.disabled || item.badge === "Soon") {
+      return (
+        <div
+          key={item.path}
+          role="link"
+          aria-disabled="true"
+          title="Coming soon"
+          className="h-10 flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 opacity-60 cursor-not-allowed select-none"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <Icon
+              aria-hidden="true"
+              className="h-[18px] w-[18px] shrink-0 text-slate-500"
+            />
+            <span className="truncate">{item.label}</span>
+          </span>
+
+          {item.badge && (
+            <span className="shrink-0 rounded-md border border-slate-700/80 bg-slate-800/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              {item.badge}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    const isExactMatch = location.pathname === item.path;
+    const isChildMatch =
+      item.path !== "/" &&
+      location.pathname.startsWith(`${item.path}/`) &&
+      !visibleNavItems.some(
+        (other) =>
+          other.path !== item.path &&
+          other.path.startsWith(`${item.path}/`) &&
+          (location.pathname === other.path ||
+            location.pathname.startsWith(`${other.path}/`)),
+      );
+    const isActive = isExactMatch || isChildMatch;
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        onClick={closeMobileNav}
+        aria-current={isActive ? "page" : undefined}
+        className={[
+          "h-10 flex items-center justify-between gap-3 rounded-lg",
+          "px-3 py-2 text-sm font-medium transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2",
+          "focus-visible:ring-blue-400 focus-visible:ring-offset-2",
+          "focus-visible:ring-offset-slate-900",
+          isActive
+            ? "bg-blue-600 text-white shadow-sm font-semibold"
+            : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
+        ].join(" ")}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <Icon
+            aria-hidden="true"
+            className={`h-[18px] w-[18px] shrink-0 ${
+              isActive ? "text-white" : "text-slate-400"
+            }`}
+          />
+          <span className="truncate">{item.label}</span>
+        </span>
+
+        {item.badge && (
+          <span className="shrink-0 rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const renderNavigation = (mobile = false) => {
+    const subnavId = mobile ? "admin-subnav-mobile" : "admin-subnav-desktop";
+
+    return (
+      <nav
+        aria-label="Main navigation"
+        className="cf-sidebar-scroll flex flex-1 flex-col justify-between overflow-y-auto px-3 py-2.5"
+      >
+        <div className="space-y-0.5">
+          {primaryNavItems.map((item) => renderNavItem(item, subnavId))}
+
+          {visibleNavItems.length === 0 && (
+            <p className="px-3 py-4 text-sm text-slate-400">
+              No navigation items are available for this account.
+            </p>
+          )}
+        </div>
+
+        {bottomNavItems.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-slate-800/80 space-y-0.5">
+            {bottomNavItems.map((item) => renderNavItem(item, subnavId))}
+          </div>
+        )}
+      </nav>
+    );
+  };
 
   const renderUserFooter = () => (
-    <div className="flex items-center gap-3 border-t border-slate-800 bg-slate-950/50 p-4">
+    <div className="flex items-center gap-3 border-t border-slate-800 bg-slate-950/50 px-4 py-3">
       <div
         aria-hidden="true"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/20 text-xs font-bold text-blue-300"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/20 text-xs font-bold text-blue-300"
       >
         {getInitials(user?.fullName)}
       </div>
@@ -446,7 +513,7 @@ export const AppLayout: React.FC = () => {
           {user?.fullName || "Authenticated User"}
         </p>
 
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400">
+        <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
           <ShieldCheck
             aria-hidden="true"
             className="h-3 w-3 shrink-0 text-emerald-400"
@@ -473,16 +540,16 @@ export const AppLayout: React.FC = () => {
     <div className="flex h-dvh overflow-hidden bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-white md:flex">
-        <div className="flex items-center gap-3 border-b border-slate-800 p-5">
+        <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-3.5">
           <div className="rounded-xl bg-blue-600 p-2 text-white">
-            <Activity aria-hidden="true" className="h-6 w-6" />
+            <Activity aria-hidden="true" className="h-5 w-5" />
           </div>
 
           <div className="min-w-0">
             <h1 className="text-base font-bold leading-tight tracking-tight">
               CareFlow HMS
             </h1>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-400">
               Hospital System
             </p>
           </div>

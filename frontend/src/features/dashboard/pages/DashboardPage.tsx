@@ -129,9 +129,18 @@ export const DashboardPage: React.FC = () => {
       {/* Real-time Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Total Patients */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow transition-shadow">
+        <div
+          onClick={() => navigate("/patients")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/patients");
+          }}
+          title="Open patient directory"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
+        >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               Total Patients
             </span>
             <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-lg">
@@ -148,9 +157,18 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Metric 2: Appointments */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow transition-shadow">
+        <div
+          onClick={() => navigate("/appointments")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/appointments");
+          }}
+          title="Open appointments list"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer group"
+        >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
               Appointments
             </span>
             <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-lg">
@@ -167,9 +185,18 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Metric 3: Doctors On Duty */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow transition-shadow">
+        <div
+          onClick={() => navigate("/doctors")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/doctors");
+          }}
+          title="Open doctors directory"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all cursor-pointer group"
+        >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               Doctors On Duty
             </span>
             <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-lg">
@@ -189,9 +216,18 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Metric 4: Clinical Departments */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow transition-shadow">
+        <div
+          onClick={() => navigate("/doctors")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") navigate("/doctors");
+          }}
+          title="View clinical departments & specialists"
+          className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group"
+        >
           <div className="flex justify-between items-start mb-3">
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               Clinical Departments
             </span>
             <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg">
@@ -269,14 +305,16 @@ export const DashboardPage: React.FC = () => {
                   patientData.items.map((patient) => (
                     <tr
                       key={patient.patientId}
-                      onClick={() => navigate("/patients")}
+                      onClick={() =>
+                        navigate(`/patients?patientId=${patient.patientId}`)
+                      }
                       className="hover:bg-blue-50/60 dark:hover:bg-slate-800/80 transition-colors cursor-pointer group"
-                      title="Click to view patient directory"
+                      title="Click to open patient profile"
                     >
                       <td className="py-3.5 pl-3 pr-3 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline truncate">
                         {patient.medicalRecordNumber}
                       </td>
-                      <td className="py-3.5 px-3 font-medium text-slate-800 dark:text-slate-100 truncate">
+                      <td className="py-3.5 px-3 font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline truncate">
                         {patient.fullName}
                       </td>
                       <td className="py-3.5 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
@@ -332,14 +370,20 @@ export const DashboardPage: React.FC = () => {
                 appointments.slice(0, 4).map((apt) => (
                   <div
                     key={apt.appointmentId}
-                    onClick={() => navigate("/appointments")}
+                    onClick={() =>
+                      navigate(
+                        `/appointments?appointmentId=${apt.appointmentId}`,
+                      )
+                    }
                     className="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/50 dark:hover:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 flex items-center justify-between text-xs cursor-pointer transition-all shadow-2xs group"
                     role="button"
                     tabIndex={0}
-                    title="Click to view appointments"
+                    title="Click to open appointment details"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
-                        navigate("/appointments");
+                        navigate(
+                          `/appointments?appointmentId=${apt.appointmentId}`,
+                        );
                       }
                     }}
                   >

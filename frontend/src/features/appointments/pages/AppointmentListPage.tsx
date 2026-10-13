@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatTimeSlot } from "../../../utils/dateUtils";
 import { useSettings } from "../../../hooks/useSettings";
 import {
@@ -27,6 +28,8 @@ import {
   ChevronRight,
   Clock3,
   X,
+  MoreHorizontal,
+  CalendarPlus,
 } from "lucide-react";
 
 type SortField = "appointmentDate" | "patientName" | "doctorName" | "status";
@@ -34,13 +37,19 @@ type SortOrder = "asc" | "desc";
 
 export const AppointmentListPage: React.FC = () => {
   const settings = useSettings();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDoctorId, setSelectedDoctorId] = useState<number | undefined>(
-    undefined,
+    () => {
+      const docParam = searchParams.get("doctorId");
+      return docParam ? Number(docParam) : undefined;
+    },
   );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedStatusFilter, setSelectedStatusFilter] =
     useState<string>("ALL");
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>(
+    () => searchParams.get("search") || "",
+  );
 
   const [sortField, setSortField] = useState<SortField>("appointmentDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -49,8 +58,17 @@ export const AppointmentListPage: React.FC = () => {
   const [pageSize, setPageSize] = useState<number>(10);
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingContext, setBookingContext] = useState<{
+    patientId?: number;
+    doctorId?: number;
+  }>({});
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentDto | null>(null);
+  const [openMenuApt, setOpenMenuApt] = useState<{
+    apt: AppointmentDto;
+    top: number;
+    right: number;
+  } | null>(null);
 
   const { data: appointments, isLoading } = useAppointments(
     undefined,
@@ -59,6 +77,39 @@ export const AppointmentListPage: React.FC = () => {
   );
   const { data: doctors } = useDoctors();
   const updateStatusMutation = useUpdateAppointmentStatus();
+
+  // Close ⋯ menu on Escape or scroll
+  useEffect(() => {
+    if (!openMenuApt) return;
+    const handleClose = () => setOpenMenuApt(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuApt(null);
+    };
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuApt]);
+
+  // Open appointment details if navigated with ?appointmentId=
+  useEffect(() => {
+    const aptIdParam = searchParams.get("appointmentId");
+    if (aptIdParam && appointments) {
+      const match = appointments.find(
+        (a) => String(a.appointmentId) === aptIdParam,
+      );
+      if (match) {
+        setSelectedAppointment(match);
+        const next = new URLSearchParams(searchParams);
+        next.delete("appointmentId");
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [searchParams, appointments, setSearchParams]);
 
   const getStatusVal = (status: AppointmentStatus | string | number) => {
     if (typeof status === "number") return status;
@@ -479,24 +530,20 @@ export const AppointmentListPage: React.FC = () => {
                       )}
                     </div>
                   </th>
-                  <th className="px-6 py-3.5 text-center min-w-[190px]">
-                    Actions
-                  </th>
-                  <th className="px-6 py-3.5 text-right w-[100px]">Details</th>
+                  <th className="px-6 py-3.5 text-right w-20">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedAppointments.map((apt: AppointmentDto) => {
-                  const statusNum = getStatusVal(apt.status);
-
                   return (
                     <tr
                       key={apt.appointmentId}
-                      className="hover:bg-slate-50/80 transition cursor-pointer"
+                      className="hover:bg-slate-50/80 transition cursor-pointer group"
                       onClick={() => setSelectedAppointment(apt)}
+                      title="Click to view appointment details"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        <div className="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors flex items-center gap-1.5">
                           <Calendar className="w-4 h-4 text-indigo-600" />
                           {new Date(apt.appointmentDate).toLocaleDateString()}
                         </div>
@@ -510,10 +557,17 @@ export const AppointmentListPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-slate-800 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment(apt);
+                          }}
+                          className="font-medium text-left text-slate-800 group-hover:text-indigo-600 group-hover:underline transition-colors flex items-center gap-1.5"
+                        >
                           <User className="w-4 h-4 text-slate-400" />
-                          {apt.patientName}
-                        </div>
+                          <span>{apt.patientName}</span>
+                        </button>
                         <div className="text-xs text-slate-500 font-mono mt-0.5">
                           MRN: {apt.medicalRecordNumber}
                         </div>
@@ -541,139 +595,45 @@ export const AppointmentListPage: React.FC = () => {
                         {getStatusBadge(apt.status)}
                       </td>
                       <td
-                        className="px-6 py-4 whitespace-nowrap text-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-center gap-1.5 min-h-[28px]">
-                          {(statusNum === 0 ||
-                            statusNum === AppointmentStatus.Pending) && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.Confirmed,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.Cancelled,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                          {(statusNum === 10 ||
-                            statusNum === AppointmentStatus.Confirmed) && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.CheckedIn,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200 rounded-md hover:bg-sky-100 transition-colors"
-                              >
-                                Check In
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.Cancelled,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                          {(statusNum === 20 ||
-                            statusNum === AppointmentStatus.CheckedIn) && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.InConsultation,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded-md hover:bg-purple-100 transition-colors"
-                              >
-                                Start Visit
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.NoShow,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 rounded-md hover:bg-slate-200 transition-colors"
-                              >
-                                No Show
-                              </button>
-                            </>
-                          )}
-                          {(statusNum === 30 ||
-                            statusNum === AppointmentStatus.InConsultation) && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.Completed,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors"
-                              >
-                                Complete
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleStatusChange(
-                                    apt.appointmentId,
-                                    AppointmentStatus.Cancelled,
-                                  )
-                                }
-                                className="px-2.5 py-1 text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 rounded-md hover:bg-rose-100 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                          {(statusNum === 40 ||
-                            statusNum === AppointmentStatus.Completed ||
-                            statusNum === 50 ||
-                            statusNum === AppointmentStatus.Cancelled ||
-                            statusNum === 60 ||
-                            statusNum === AppointmentStatus.NoShow) && (
-                            <span className="text-xs text-slate-400 font-mono">
-                              —
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td
                         className="px-6 py-4 whitespace-nowrap text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
-                          onClick={() => setSelectedAppointment(apt)}
-                          className="px-3 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 border border-indigo-200 rounded-md transition-colors"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              openMenuApt?.apt.appointmentId ===
+                              apt.appointmentId
+                            ) {
+                              setOpenMenuApt(null);
+                              return;
+                            }
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const menuHeight = 160;
+                            const openUpward =
+                              rect.bottom + menuHeight > window.innerHeight;
+                            setOpenMenuApt({
+                              apt,
+                              top: openUpward
+                                ? rect.top - menuHeight - 6
+                                : rect.bottom + 6,
+                              right: window.innerWidth - rect.right,
+                            });
+                          }}
+                          aria-label={`More actions for appointment #${apt.appointmentId}`}
+                          aria-expanded={
+                            openMenuApt?.apt.appointmentId === apt.appointmentId
+                          }
+                          title="Appointment actions"
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                            openMenuApt?.apt.appointmentId === apt.appointmentId
+                              ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                          }`}
                         >
-                          Details
+                          <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
@@ -731,10 +691,196 @@ export const AppointmentListPage: React.FC = () => {
         </div>
       )}
 
+      {/* Three-Dot (⋯) Menu Dropdown for Appointment Row */}
+      {openMenuApt && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpenMenuApt(null)}
+          />
+          <div
+            role="menu"
+            style={{
+              top: openMenuApt.top,
+              right: openMenuApt.right,
+            }}
+            className="fixed z-50 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+          >
+            {(() => {
+              const apt = openMenuApt.apt;
+              const statusNum = getStatusVal(apt.status);
+
+              return (
+                <>
+                  {/* Pending (0) -> Confirm appointment */}
+                  {statusNum === 0 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuApt(null);
+                        handleStatusChange(
+                          apt.appointmentId,
+                          AppointmentStatus.Confirmed,
+                        );
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>Confirm appointment</span>
+                    </button>
+                  )}
+
+                  {/* Confirmed (10) -> Mark as arrived (Check In) */}
+                  {statusNum === 10 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuApt(null);
+                        handleStatusChange(
+                          apt.appointmentId,
+                          AppointmentStatus.CheckedIn,
+                        );
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition-colors"
+                    >
+                      <UserCheck className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                      <span>Mark as arrived (Check In)</span>
+                    </button>
+                  )}
+
+                  {/* CheckedIn (20) -> Start consultation */}
+                  {statusNum === 20 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuApt(null);
+                        handleStatusChange(
+                          apt.appointmentId,
+                          AppointmentStatus.InConsultation,
+                        );
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-colors"
+                    >
+                      <Stethoscope className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                      <span>Start consultation</span>
+                    </button>
+                  )}
+
+                  {/* InConsultation (30) -> Mark as completed */}
+                  {statusNum === 30 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuApt(null);
+                        handleStatusChange(
+                          apt.appointmentId,
+                          AppointmentStatus.Completed,
+                        );
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>Mark as completed</span>
+                    </button>
+                  )}
+
+                  {/* Reschedule / Book follow-up appointment */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpenMenuApt(null);
+                      setBookingContext({
+                        patientId: apt.patientId,
+                        doctorId: apt.doctorId,
+                      });
+                      setIsBookingModalOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <CalendarPlus className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span>
+                      {statusNum === 0 || statusNum === 10
+                        ? "Reschedule appointment"
+                        : "Book follow-up visit"}
+                    </span>
+                  </button>
+
+                  {/* CheckedIn (20) -> Record a no-show */}
+                  {statusNum === 20 && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenMenuApt(null);
+                        if (
+                          window.confirm(
+                            `Record ${apt.patientName} as a No-Show for this appointment?`,
+                          )
+                        ) {
+                          handleStatusChange(
+                            apt.appointmentId,
+                            AppointmentStatus.NoShow,
+                          );
+                        }
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors"
+                    >
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>Record a no-show</span>
+                    </button>
+                  )}
+
+                  {/* Active appointments (0, 10, 20, 30) -> Cancel appointment */}
+                  {(statusNum === 0 ||
+                    statusNum === 10 ||
+                    statusNum === 20 ||
+                    statusNum === 30) && (
+                    <>
+                      <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpenMenuApt(null);
+                          if (
+                            window.confirm(
+                              `Are you sure you want to cancel the appointment for ${apt.patientName}?`,
+                            )
+                          ) {
+                            handleStatusChange(
+                              apt.appointmentId,
+                              AppointmentStatus.Cancelled,
+                            );
+                          }
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                      >
+                        <XCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>Cancel appointment</span>
+                      </button>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </>
+      )}
+
       {/* Booking Modal */}
       <BookingModal
         isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setBookingContext({});
+        }}
+        preselectedPatientId={bookingContext.patientId}
+        preselectedDoctorId={bookingContext.doctorId}
       />
 
       {/* Appointment Details Modal */}

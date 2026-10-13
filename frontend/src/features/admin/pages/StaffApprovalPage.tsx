@@ -16,6 +16,7 @@ import {
   Edit,
   Eye,
   X,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   authApi,
@@ -36,6 +37,13 @@ export const StaffApprovalPage: React.FC = () => {
   >("pending");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+
+  // Three-Dot Menu State
+  const [openMenuRequest, setOpenMenuRequest] = useState<{
+    req: StaffRegistrationRequest;
+    top: number;
+    right: number;
+  } | null>(null);
 
   // Application Details View Modal State
   const [viewingRequest, setViewingRequest] =
@@ -75,6 +83,22 @@ export const StaffApprovalPage: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!openMenuRequest) return;
+    const handleClose = () => setOpenMenuRequest(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenMenuRequest(null);
+    };
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenuRequest]);
 
   const fetchRequests = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -605,7 +629,7 @@ export const StaffApprovalPage: React.FC = () => {
       </div>
 
       {/* Staff Requests Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="w-full overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
@@ -617,265 +641,351 @@ export const StaffApprovalPage: React.FC = () => {
             No staff registration requests match the selected criteria.
           </div>
         ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[190px]">
-                    Applicant & Details
-                  </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[130px]">
-                    Requested Role
-                  </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[110px]">
-                    Invitation Code
-                  </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[105px]">
-                    Submitted At
-                  </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[180px]">
-                    Approval Status
-                  </th>
-                  <th className="py-3 px-3.5 whitespace-nowrap min-w-[100px]">
-                    Email Status
-                  </th>
-                  <th className="py-3 px-3.5 pr-5 text-right whitespace-nowrap min-w-[320px]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRequests.map((req) => (
-                  <tr
-                    key={req.id}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
-                    {/* Applicant & Details (Clickable to view details) */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
-                      <div
-                        onClick={() => setViewingRequest(req)}
-                        className="flex items-center gap-2.5 cursor-pointer group"
-                        title="Click to view complete application details"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition">
-                          {req.fullName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .substring(0, 2)
-                            .toUpperCase()}
+          <table className="w-full min-w-[900px] table-fixed border-collapse text-left text-sm text-slate-700 dark:text-slate-200">
+            <colgroup>
+              <col style={{ width: "28%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
+            </colgroup>
+
+            <thead>
+              <tr className="h-11 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                <th className="px-3 py-2.5">Applicant &amp; Contact</th>
+                <th className="px-3 py-2.5">Requested Role</th>
+                <th className="px-3 py-2.5">Invitation Code</th>
+                <th className="px-3 py-2.5">Submitted At</th>
+                <th className="px-3 py-2.5">Approval Status</th>
+                <th className="px-3 py-2.5">Email Status</th>
+                <th className="px-3 py-2.5 text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredRequests.map((req) => (
+                <tr
+                  key={req.id}
+                  className="h-[72px] border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
+                >
+                  {/* Applicant & Contact */}
+                  <td className="px-3 py-3 align-middle">
+                    <div
+                      onClick={() => setViewingRequest(req)}
+                      className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3 cursor-pointer group"
+                      title={
+                        req.employeeId
+                          ? `${req.fullName} (${req.employeeId}) — Click to view complete application details`
+                          : "Click to view complete application details"
+                      }
+                    >
+                      <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold flex items-center justify-center text-xs shrink-0 group-hover:ring-2 group-hover:ring-blue-400 transition">
+                        {req.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingRequest(req);
+                            }}
+                            className="truncate text-left text-sm font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition focus-visible:outline-none focus-visible:underline"
+                          >
+                            {req.fullName}
+                          </button>
+                          {req.employeeId && (
+                            <span className="shrink-0 font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                              · {req.employeeId}
+                            </span>
+                          )}
                         </div>
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition flex items-center gap-1.5">
-                            <span>{req.fullName}</span>
-                            <Eye className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition" />
-                          </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                            <a
-                              href={`mailto:${req.email}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="hover:underline text-blue-600 font-medium"
-                            >
-                              {req.email}
-                            </a>
-                            {req.employeeId && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono font-semibold">
-                                {req.employeeId}
-                              </span>
-                            )}
-                          </div>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                          <a
+                            href={`mailto:${req.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="truncate font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            {req.email}
+                          </a>
+                          <span
+                            aria-hidden="true"
+                            className="shrink-0 text-slate-300 dark:text-slate-600"
+                          >
+                            ·
+                          </span>
+                          <span className="shrink-0 text-slate-500 dark:text-slate-400">
+                            {req.username}
+                          </span>
                         </div>
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    {/* Requested Role & Department */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
-                      <div className="space-y-0.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                          <User className="w-3 h-3 text-blue-500" />
-                          {req.requestedRoleName}
-                        </span>
-                        {req.departmentName && (
-                          <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                            <Building2 className="w-3 h-3 text-slate-400" />
-                            {req.departmentName}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Invitation Code */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap font-mono font-semibold text-slate-600 text-xs">
-                      <span className="px-2 py-0.5 bg-slate-100 rounded-lg border border-slate-200 text-slate-800">
-                        {req.invitationCode}
+                  {/* Requested Role & Department */}
+                  <td className="px-3 py-3 align-middle">
+                    <div className="space-y-0.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 whitespace-nowrap">
+                        <User className="w-3 h-3 text-blue-500 shrink-0" />
+                        <span>{req.requestedRoleName}</span>
                       </span>
-                    </td>
+                      {req.departmentName && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
+                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{req.departmentName}</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
 
-                    {/* Submitted At */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap text-slate-500 text-xs">
-                      <div>
+                  {/* Invitation Code */}
+                  <td className="px-3 py-3 align-middle">
+                    <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono text-xs font-semibold whitespace-nowrap">
+                      {req.invitationCode}
+                    </span>
+                  </td>
+
+                  {/* Submitted At */}
+                  <td className="px-3 py-3 align-middle">
+                    <div className="leading-tight">
+                      <div className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
                         {formatDateByPattern(req.submittedAt, "MMM dd, yyyy")}
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
+                      <div className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
                         {formatDateByPattern(req.submittedAt, "hh:mm a")}
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    {/* Approval Status */}
-                    <td className="py-3 px-3.5 align-middle">
-                      {isPendingStatus(req.status) ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                          <Clock className="w-3.5 h-3.5 text-amber-600" />
-                          Pending Review
-                        </span>
-                      ) : isApprovedStatus(req.status) ? (
-                        <div>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            Approved
-                          </span>
-                          {req.reviewedByName && (
-                            <div className="text-[10px] text-slate-400 mt-0.5 whitespace-nowrap">
-                              by {req.reviewedByName}
-                            </div>
-                          )}
-                        </div>
-                      ) : isRejectedStatus(req.status) ? (
-                        <div>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
-                            <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                            Rejected
-                          </span>
-                          {req.rejectionReason && (
-                            <div
-                              onClick={() => setViewingRequest(req)}
-                              className="mt-1 flex items-start gap-1 max-w-[220px] cursor-pointer group"
-                              title="Click to view complete application details"
-                            >
-                              <AlertCircle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
-                              <p className="text-[11px] text-rose-600 font-medium leading-snug line-clamp-2 group-hover:underline">
-                                {req.rejectionReason}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-                          {String(req.status)}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Email Status */}
-                    <td className="py-3 px-3.5 align-middle whitespace-nowrap">
+                  {/* Approval Status */}
+                  <td className="px-3 py-3 align-middle">
+                    {isPendingStatus(req.status) ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 whitespace-nowrap">
+                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Pending Review</span>
+                      </span>
+                    ) : isApprovedStatus(req.status) ? (
                       <div className="space-y-0.5">
-                        {getEmailStatusBadge(
-                          req.emailStatus,
-                          req.emailErrorMessage,
-                        )}
-                        {req.lastEmailAttempt && (
-                          <div className="text-[10px] text-slate-400">
-                            {formatDateByPattern(
-                              req.lastEmailAttempt,
-                              "hh:mm a",
-                            )}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>Approved</span>
+                        </span>
+                        {req.reviewedByName && (
+                          <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                            by {req.reviewedByName}
                           </div>
                         )}
                       </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3 px-3.5 pr-5 text-right align-middle whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                        {/* View Full Application Details */}
-                        <button
-                          onClick={() => setViewingRequest(req)}
-                          title="View Full Application Details"
-                          className="h-8 px-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Details</span>
-                        </button>
-
-                        {/* Edit Button for all stages */}
-                        <button
-                          onClick={() => openEditModal(req)}
-                          disabled={actionLoadingId === req.id}
-                          title="Edit request details & workflow stage"
-                          className="h-8 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 shrink-0"
-                        >
-                          <Edit className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Edit</span>
-                        </button>
-
-                        {/* Stage Action Buttons */}
-                        {isPendingStatus(req.status) ? (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedRequestForApprove(req);
-                                setSelectedRoleId(req.requestedRoleId);
-                              }}
-                              disabled={actionLoadingId === req.id}
-                              className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm flex items-center gap-1 shrink-0"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Approve</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedRequestForReject(req);
-                                setRejectionReason("");
-                                setRejectError("");
-                              }}
-                              disabled={actionLoadingId === req.id}
-                              className="h-8 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1 shrink-0"
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span>Reject</span>
-                            </button>
-                          </>
-                        ) : isRejectedStatus(req.status) ? (
-                          <button
-                            onClick={() => {
-                              setSelectedRequestForApprove(req);
-                              setSelectedRoleId(req.requestedRoleId);
-                            }}
-                            disabled={actionLoadingId === req.id}
-                            className="h-8 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold text-xs transition-colors shadow-sm flex items-center gap-1 shrink-0"
+                    ) : isRejectedStatus(req.status) ? (
+                      <div className="space-y-0.5">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 whitespace-nowrap">
+                          <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <span>Rejected</span>
+                        </span>
+                        {req.rejectionReason && (
+                          <div
+                            onClick={() => setViewingRequest(req)}
+                            className="flex items-start gap-1 cursor-pointer group"
+                            title="Click to view complete application details"
                           >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            <span>Re-approve</span>
-                          </button>
-                        ) : null}
-
-                        {/* Retry Email Button if email failed */}
-                        {req.emailStatus === 3 && (
-                          <button
-                            onClick={() =>
-                              handleRetryEmail(req.id, req.fullName)
-                            }
-                            disabled={actionLoadingId === req.id}
-                            title="Re-send notification email"
-                            className="h-8 px-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-semibold text-xs flex items-center gap-1 transition-colors shrink-0"
-                          >
-                            <RefreshCw
-                              className={`w-3.5 h-3.5 ${
-                                actionLoadingId === req.id ? "animate-spin" : ""
-                              }`}
-                            />
-                            Retry
-                          </button>
+                            <AlertCircle className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                            <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium leading-snug line-clamp-1 group-hover:underline">
+                              {req.rejectionReason}
+                            </p>
+                          </div>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                        {String(req.status)}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Email Status */}
+                  <td className="px-3 py-3 align-middle">
+                    <div className="space-y-0.5">
+                      {getEmailStatusBadge(
+                        req.emailStatus,
+                        req.emailErrorMessage,
+                      )}
+                      {req.lastEmailAttempt && (
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                          {formatDateByPattern(req.lastEmailAttempt, "hh:mm a")}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-3 py-3 align-middle text-right">
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        aria-label={`More actions for ${req.fullName}`}
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuRequest?.req.id === req.id}
+                        disabled={actionLoadingId === req.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openMenuRequest?.req.id === req.id) {
+                            setOpenMenuRequest(null);
+                            return;
+                          }
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setOpenMenuRequest({
+                            req,
+                            top: rect.bottom + 6,
+                            right: window.innerWidth - rect.right,
+                          });
+                        }}
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
+                      >
+                        {actionLoadingId === req.id ? (
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      {/* THREE-DOT ACTIONS MENU PORTAL / FIXED OVERLAY */}
+      {openMenuRequest && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpenMenuRequest(null)}
+        >
+          <div
+            role="menu"
+            style={{
+              top: Math.min(openMenuRequest.top, window.innerHeight - 230),
+              right: Math.max(openMenuRequest.right, 16),
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed z-50 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+          >
+            <div className="px-2.5 py-1.5 border-b border-slate-100 dark:border-slate-800 mb-1">
+              <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate">
+                {openMenuRequest.req.fullName}
+              </p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                {openMenuRequest.req.requestedRoleName} · #
+                {openMenuRequest.req.id}
+              </p>
+            </div>
+
+            {/* Pending Request Actions */}
+            {isPendingStatus(openMenuRequest.req.status) && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  const target = openMenuRequest.req;
+                  setOpenMenuRequest(null);
+                  setSelectedRequestForApprove(target);
+                  setSelectedRoleId(target.requestedRoleId);
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <span>Approve request</span>
+              </button>
+            )}
+
+            {/* Rejected Request Re-Approve Action */}
+            {isRejectedStatus(openMenuRequest.req.status) && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  const target = openMenuRequest.req;
+                  setOpenMenuRequest(null);
+                  setSelectedRequestForApprove(target);
+                  setSelectedRoleId(target.requestedRoleId);
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+                <span>Re-approve request</span>
+              </button>
+            )}
+
+            {/* Edit Request Details (Available for all statuses) */}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                const target = openMenuRequest.req;
+                setOpenMenuRequest(null);
+                openEditModal(target);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Edit className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+              <span>Edit request details</span>
+            </button>
+
+            {/* Retry / Resend Email */}
+            {(openMenuRequest.req.emailStatus === 3 ||
+              isApprovedStatus(openMenuRequest.req.status) ||
+              isRejectedStatus(openMenuRequest.req.status)) && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  const target = openMenuRequest.req;
+                  setOpenMenuRequest(null);
+                  handleRetryEmail(target.id, target.fullName);
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {openMenuRequest.req.emailStatus === 3
+                    ? "Retry failed email delivery"
+                    : "Resend notification email"}
+                </span>
+              </button>
+            )}
+
+            {/* Consequential Reject Action for Pending Requests */}
+            {isPendingStatus(openMenuRequest.req.status) && (
+              <>
+                <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    const target = openMenuRequest.req;
+                    setOpenMenuRequest(null);
+                    setSelectedRequestForReject(target);
+                    setRejectionReason("");
+                    setRejectError("");
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>Reject request</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* APPROVE MODAL */}
       {selectedRequestForApprove && (
