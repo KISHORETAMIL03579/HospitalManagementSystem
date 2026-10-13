@@ -696,9 +696,9 @@ export const NotificationPage: React.FC = () => {
                 </div>
 
                 {/* Right Section: Visual Dot / Checkmark & Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 self-start sm:self-center">
                   {/* Status Indicator Icon: Blue Dot vs Checkmark */}
-                  <div className="hidden sm:flex items-center justify-center mr-0.5">
+                  <div className="hidden sm:flex w-5 items-center justify-center shrink-0">
                     {isUnread ? (
                       <span
                         title="Unread notification"
@@ -712,22 +712,26 @@ export const NotificationPage: React.FC = () => {
                   </div>
 
                   {/* Action Link (View related item) */}
-                  {item.actionUrl && (
+                  {item.actionUrl ? (
                     <button
                       type="button"
                       onClick={() => {
                         markAsRead(item.id);
                         navigate(item.actionUrl!);
                       }}
-                      className={`h-8 px-3.5 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 shadow-2xs active:scale-95 ${
+                      className={`h-8 w-full sm:w-44 px-3 text-xs font-semibold rounded-xl border transition flex items-center justify-center gap-1.5 shrink-0 shadow-2xs active:scale-95 ${
                         isUnread
                           ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                           : "bg-slate-50 hover:bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700"
                       }`}
                     >
-                      <span>{item.actionLabel || "View related item"}</span>
-                      <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
+                      <span className="truncate">
+                        {item.actionLabel || "View related item"}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 shrink-0 stroke-[2.2]" />
                     </button>
+                  ) : (
+                    <div className="hidden sm:block sm:w-44 shrink-0" />
                   )}
 
                   {/* Mark Read / Unread toggle */}
@@ -737,7 +741,7 @@ export const NotificationPage: React.FC = () => {
                     onClick={() =>
                       isUnread ? markAsRead(item.id) : markAsUnread(item.id)
                     }
-                    className={`h-8 px-3 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 shadow-2xs active:scale-95 ${
+                    className={`h-8 w-full sm:w-[136px] px-2.5 text-xs font-semibold rounded-xl border transition flex items-center justify-center gap-1.5 shrink-0 shadow-2xs active:scale-95 ${
                       isUnread
                         ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                         : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700"
@@ -745,13 +749,13 @@ export const NotificationPage: React.FC = () => {
                   >
                     {isUnread ? (
                       <>
-                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span>Mark as read</span>
+                        <Check className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        <span className="truncate">Mark as read</span>
                       </>
                     ) : (
                       <>
-                        <RotateCcw className="w-3 h-3 text-slate-500 dark:text-slate-400 stroke-[2.2]" />
-                        <span>Mark unread</span>
+                        <RotateCcw className="w-3 h-3 shrink-0 text-slate-500 dark:text-slate-400 stroke-[2.2]" />
+                        <span className="truncate">Mark unread</span>
                       </>
                     )}
                   </button>
@@ -762,7 +766,7 @@ export const NotificationPage: React.FC = () => {
                       type="button"
                       title="Restore to active alerts"
                       onClick={() => unarchiveNotification(item.id)}
-                      className="h-8 w-8 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/70 hover:border-emerald-400 transition flex items-center justify-center shadow-2xs active:scale-95"
+                      className="h-8 w-8 shrink-0 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/70 hover:border-emerald-400 transition flex items-center justify-center shadow-2xs active:scale-95"
                     >
                       <RotateCcw className="w-4 h-4 stroke-[2.2]" />
                     </button>
@@ -771,7 +775,7 @@ export const NotificationPage: React.FC = () => {
                       type="button"
                       title="Dismiss / Archive alert"
                       onClick={() => archiveNotification(item.id)}
-                      className="h-8 w-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition flex items-center justify-center shadow-2xs active:scale-95"
+                      className="h-8 w-8 shrink-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition flex items-center justify-center shadow-2xs active:scale-95"
                     >
                       <Archive className="w-4 h-4 text-slate-700 dark:text-slate-200 stroke-[2]" />
                     </button>
@@ -782,7 +786,7 @@ export const NotificationPage: React.FC = () => {
                     type="button"
                     title="Delete permanently"
                     onClick={() => deleteNotification(item.id)}
-                    className="h-8 w-8 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/70 hover:border-rose-300 dark:hover:border-rose-700 transition flex items-center justify-center shadow-2xs active:scale-95"
+                    className="h-8 w-8 shrink-0 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/70 hover:border-rose-300 dark:hover:border-rose-700 transition flex items-center justify-center shadow-2xs active:scale-95"
                   >
                     <Trash2 className="w-4 h-4 stroke-[2]" />
                   </button>
