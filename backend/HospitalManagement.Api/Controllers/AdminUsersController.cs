@@ -8,6 +8,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Admin,HospitalManager")]
+[Tags("Admin - Users")]
 [Route("api/v1/admin/users")]
 public class AdminUsersController : ControllerBase
 {

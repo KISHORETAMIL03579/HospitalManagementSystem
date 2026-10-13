@@ -64,28 +64,48 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "CareFlow Hospital Management System API",
+        Title = "CareFlow HMS Developer Portal",
         Version = "v1",
-        Description = "Production-grade Clean Architecture REST API for Hospital Management System (HMS)"
-    });
+        Description = """
+            ### 🏥 CareFlow Hospital Management System — Developer Portal
+            **Production-grade REST API for Clinical Operations, Patient Records & Healthcare Workflows**
 
-    options.OrderActionsBy(apiDesc =>
-    {
-        var controller = apiDesc.ActionDescriptor.RouteValues["controller"] ?? "";
-        var order = controller switch
+            `API Version: v1` &nbsp;|&nbsp; `OpenAPI: 3.0` &nbsp;|&nbsp; `Auth: JWT Bearer` &nbsp;|&nbsp; `Environment: Development / Local`
+
+            ---
+
+            ### 📋 Core HMS Modules & Capabilities
+
+            | Module | Capabilities & Workflows | Canonical Endpoints |
+            | :--- | :--- | :--- |
+            | **🧑‍⚕️ Patients** | Patient Registration, Demographics, Blood Group, Medical Record Tracking | `/api/v1/patients` |
+            | **📅 Appointments** | Scheduling, Availability Slots, Conflict Detection & Status Workflows | `/api/v1/appointments` |
+            | **🩺 Doctors** | Clinical Profiles, Specialties, Weekly Availability & Schedule Exceptions | `/api/v1/doctors` |
+            | **🏢 Departments** | Hospital Organizational Units, Specialty Allocation & Staff Directory | `/api/v1/doctors/departments` |
+            | **🔐 Authentication** | JWT Bearer Tokens, Role Claims, Password Management & Profile Updates | `/api/v1/auth` |
+            | **👥 Admin Users** | Direct Account Management, Role Elevation & Staff Status Activation | `/api/v1/admin/users` |
+            | **📋 Staff Onboarding** | Self-Service Registration, Invitation Validation & Approvals | `/api/v1/staff-registration` |
+
+            ---
+
+            ### 🔐 Authentication & Security Guidance
+            - **Quick Staff Login**: Click the green/blue **Authorize** button in the header navigation to authenticate with hospital credentials.
+            - **Supported Roles**: `Admin`, `HospitalManager`, `Doctor`, `Nurse`, `Receptionist`, `Pharmacist`, `LabTechnician`, `Patient`.
+            - **Session Isolation**: JWT tokens are retained strictly in client memory during the session and are cleared automatically upon logout or tab closure.
+            """,
+        Contact = new OpenApiContact
         {
-            "Auth" => "1",
-            "AdminUsers" => "2",
-            "StaffRegistration" => "3",
-            "Doctors" => "4",
-            "Appointments" => "5",
-            "Patients" => "6",
-            _ => "9"
-        };
-        return $"{order}_{controller}_{apiDesc.RelativePath}";
+            Name = "CareFlow Engineering Team",
+            Email = "support@careflow.local"
+        }
     });
 
-    options.DocumentFilter<SwaggerTagOrderDocumentFilter>();
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    }
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -144,119 +164,24 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
+app.UseStaticFiles();
+
 // Enable Swagger UI middleware
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "CareFlow HMS API v1");
     options.RoutePrefix = "swagger";
-    options.EnablePersistAuthorization();
-    options.HeadContent = @"
-        <script>
-        window.addEventListener('load', function () {
-            var checkUi = setInterval(function () {
-                if (window.ui) {
-                    clearInterval(checkUi);
-                    var origInterceptor = window.ui.getConfigs().responseInterceptor;
-                    window.ui.getConfigs().responseInterceptor = function (response) {
-                        if (origInterceptor) {
-                            response = origInterceptor(response);
-                        }
-                        try {
-                            if (response && response.status === 200 && response.text) {
-                                var data = JSON.parse(response.text);
-                                if (data && data.token) {
-                                    window.ui.preauthorizeApiKey('Bearer', data.token);
-                                    console.log('CareFlow HMS: Swagger UI automatically authorized Bearer token!');
-                                }
-                            }
-                        } catch (e) {}
-                        return response;
-                    };
+    options.DocumentTitle = "CareFlow HMS Developer Portal";
 
-                    var observer = new MutationObserver(function () {
-                        var modal = document.querySelector('.swagger-ui .dialog-ux .modal-ux-content');
-                        if (modal && !document.getElementById('careflow-modal-login')) {
-                            var container = document.createElement('div');
-                            container.id = 'careflow-modal-login';
-                            container.style.cssText = 'margin-bottom: 20px; padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-family: system-ui, -apple-system, sans-serif;';
-                            container.innerHTML = `
-                                <div style=""margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;"">
-                                    <h4 style=""margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;"">🔑 Option 1: Quick Staff Login (Auto-Fetch Token)</h4>
-                                    <p style=""margin: 4px 0 0 0; font-size: 11px; color: #64748b;"">Enter hospital credentials to automatically fetch & authorize JWT token.</p>
-                                </div>
-                                <div style=""display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;"">
-                                    <div style=""flex: 1; min-width: 180px;"">
-                                        <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Username or Work Email</label>
-                                        <input id=""swag-user"" type=""text"" placeholder=""Enter username or work email"" value="""" style=""width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
-                                    </div>
-                                    <div style=""flex: 1; min-width: 180px;"">
-                                        <label style=""display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;"">Password</label>
-                                        <div style=""position: relative; width: 100%; box-sizing: border-box;"">
-                                            <input id=""swag-pass"" type=""password"" placeholder=""Enter password"" value="""" style=""width: 100%; box-sizing: border-box; padding: 8px 36px 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #ffffff; color: #0f172a;"" />
-                                            <button id=""swag-toggle-pass"" type=""button"" title=""Toggle password visibility"" style=""position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; cursor: pointer; padding: 2px 4px; opacity: 0.7;"">👁️</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style=""display: flex; flex-direction: column; gap: 8px;"">
-                                    <div style=""display: flex; align-items: center; justify-content: space-between;"">
-                                        <button id=""swag-login-btn"" type=""button"" style=""background: #2563eb; color: #ffffff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; transition: background 0.2s;"">
-                                            Login & Authorize Now
-                                        </button>
-                                    </div>
-                                    <div id=""swag-msg"" style=""font-size: 12px; font-weight: 600; min-height: 18px; word-break: break-word;""></div>
-                                </div>
-                                <div style=""margin-top: 16px; border-top: 1px dashed #cbd5e1; padding-top: 12px; font-weight: 700; color: #0f172a; font-size: 13px;"">
-                                    🔒 Option 2: Direct Bearer Token Input (Manual)
-                                </div>
-                            `;
-                            modal.insertBefore(container, modal.firstChild);
+    options.InjectStylesheet("/swagger-ui/careflow.css");
+    options.InjectStylesheet("/swagger-ui/custom-auth.css");
+    options.InjectJavascript("/swagger-ui/custom-auth.js");
 
-                            var passInput = document.getElementById('swag-pass');
-                            var toggleBtn = document.getElementById('swag-toggle-pass');
-                            toggleBtn.addEventListener('click', function () {
-                                if (passInput.type === 'password') {
-                                    passInput.type = 'text';
-                                    toggleBtn.innerText = '🙈';
-                                } else {
-                                    passInput.type = 'password';
-                                    toggleBtn.innerText = '👁️';
-                                }
-                            });
-
-                            document.getElementById('swag-login-btn').addEventListener('click', async function () {
-                                var u = document.getElementById('swag-user').value;
-                                var p = document.getElementById('swag-pass').value;
-                                var msg = document.getElementById('swag-msg');
-                                msg.style.color = '#64748b';
-                                msg.innerText = 'Authenticating...';
-                                try {
-                                    var res = await fetch('/api/v1/auth/login', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ usernameOrEmail: u, password: p })
-                                    });
-                                    var data = await res.json();
-                                    if (res.ok && data.token) {
-                                        window.ui.preauthorizeApiKey('Bearer', data.token);
-                                        msg.style.color = '#16a34a';
-                                        msg.innerText = '✓ Authorized as ' + (data.user ? data.user.fullName : 'User') + '!';
-                                    } else {
-                                        msg.style.color = '#dc2626';
-                                        msg.innerText = '❌ ' + (data.message || 'Login failed.');
-                                    }
-                                } catch (e) {
-                                    msg.style.color = '#dc2626';
-                                    msg.innerText = '❌ Connection error.';
-                                }
-                            });
-                        }
-                    });
-                    observer.observe(document.body, { childList: true, subtree: true });
-                }
-            }, 200);
-        });
-        </script>";
+    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+    options.DefaultModelsExpandDepth(-1);
+    options.DisplayRequestDuration();
+    options.EnableFilter();
 });
 
 app.UseCors("AllowFrontend");
@@ -266,6 +191,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 // Ensure database migration / creation & seed users on startup
 using (var scope = app.Services.CreateScope())
@@ -287,27 +213,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-/// <summary>
-/// Orders Swagger controller tags in the recommended documentation hierarchy:
-/// 1. Auth -> 2. AdminUsers -> 3. StaffRegistration -> 4. Doctors -> 5. Appointments -> 6. Patients
-/// </summary>
-public class SwaggerTagOrderDocumentFilter : Swashbuckle.AspNetCore.SwaggerGen.IDocumentFilter
-{
-    private static readonly string[] ControllerOrder =
-    [
-        "Auth",
-        "AdminUsers",
-        "StaffRegistration",
-        "Doctors",
-        "Appointments",
-        "Patients"
-    ];
-
-    public void Apply(OpenApiDocument swaggerDoc, Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext context)
-    {
-        swaggerDoc.Tags = ControllerOrder
-            .Select(name => new OpenApiTag { Name = name })
-            .ToList();
-    }
-}

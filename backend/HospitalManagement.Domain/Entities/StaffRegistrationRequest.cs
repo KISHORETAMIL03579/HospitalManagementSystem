@@ -22,9 +22,9 @@ public class StaffRegistrationRequest : BaseEntity
     public Department? Department { get; set; }
 
     public int RequestedRoleId { get; set; }
-    public Role RequestedRole { get; set; } = null!;
+    public Role? RequestedRole { get; set; }
 
-    public string InvitationCode { get; set; } = string.Empty;
+    public string? InvitationCode { get; set; }
     public RegistrationStatus Status { get; set; } = RegistrationStatus.Pending;
 
     public int? ReviewedByUserId { get; set; }

@@ -11,6 +11,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [EnableRateLimiting("AuthPolicy")]
+[Tags("Authentication")]
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
+[Tags("Staff Registration")]
 [Route("api/v1/staff-registration")]
 public class StaffRegistrationController : ControllerBase
 {
@@ -78,7 +79,6 @@ public class StaffRegistrationController : ControllerBase
     /// List staff registration requests for administrative review
     /// </summary>
     [HttpGet("/api/v1/admin/staff-registration/requests")]
-    [HttpGet("requests/admin")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(IEnumerable<StaffRegistrationRequestDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStaffRequests([FromQuery] RegistrationStatus? status, CancellationToken cancellationToken)
@@ -108,7 +108,6 @@ public class StaffRegistrationController : ControllerBase
     /// Approve a staff registration request and provision user account
     /// </summary>
     [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/approve")]
-    [HttpPost("requests/{id:int}/approve")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -157,7 +156,6 @@ public class StaffRegistrationController : ControllerBase
     /// Reject a staff registration request
     /// </summary>
     [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/reject")]
-    [HttpPost("requests/{id:int}/reject")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -190,7 +188,6 @@ public class StaffRegistrationController : ControllerBase
     /// Update details and/or stage of a staff registration request
     /// </summary>
     [HttpPut("/api/v1/admin/staff-registration/requests/{id:int}")]
-    [HttpPut("requests/{id:int}")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -230,7 +227,6 @@ public class StaffRegistrationController : ControllerBase
     /// Retry sending notification email for a staff registration request
     /// </summary>
     [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/retry-email")]
-    [HttpPost("requests/{id:int}/retry-email")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

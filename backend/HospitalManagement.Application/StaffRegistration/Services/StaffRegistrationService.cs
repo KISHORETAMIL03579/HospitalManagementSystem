@@ -82,7 +82,7 @@ public class StaffRegistrationService : IStaffRegistrationService
             PasswordHash = _passwordHasher.HashPassword(request.Password),
             RequestedRoleId = targetRole.RoleId,
             DepartmentId = request.DepartmentId,
-            InvitationCode = request.InvitationCode?.Trim(),
+            InvitationCode = request.InvitationCode?.Trim() ?? string.Empty,
             Status = RegistrationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -410,7 +410,7 @@ public class StaffRegistrationService : IStaffRegistrationService
             DepartmentName = s.Department?.Name,
             RequestedRoleId = s.RequestedRoleId,
             RequestedRoleName = s.RequestedRole?.Name ?? "Staff",
-            InvitationCode = s.InvitationCode,
+            InvitationCode = s.InvitationCode ?? string.Empty,
             Status = s.Status,
             SubmittedAt = s.CreatedAt,
             ReviewedAt = s.ReviewedAt,

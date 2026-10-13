@@ -9,6 +9,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[Tags("Appointments")]
 [Route("api/v1/appointments")]
 public class AppointmentsController : ControllerBase
 {
@@ -168,7 +169,6 @@ public class AppointmentsController : ControllerBase
     /// Update appointment status (e.g., Confirmed, Completed, Cancelled, NoShow)
     /// </summary>
     [HttpPatch("{id:int}/status")]
-    [HttpPut("{id:int}/status")]
     [Authorize(Roles = "Admin,HospitalManager,Doctor,Nurse,Receptionist,Patient")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

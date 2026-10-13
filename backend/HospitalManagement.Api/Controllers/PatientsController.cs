@@ -9,6 +9,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[Tags("Patients")]
 [Route("api/v1/patients")]
 public class PatientsController : ControllerBase
 {

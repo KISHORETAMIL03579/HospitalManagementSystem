@@ -620,7 +620,7 @@ public class AuthService : IAuthService
             DepartmentName = s.Department?.Name,
             RequestedRoleId = s.RequestedRoleId,
             RequestedRoleName = s.RequestedRole?.Name ?? "Staff",
-            InvitationCode = s.InvitationCode,
+            InvitationCode = s.InvitationCode ?? string.Empty,
             Status = s.Status,
             SubmittedAt = s.CreatedAt,
             ReviewedAt = s.ReviewedAt,
