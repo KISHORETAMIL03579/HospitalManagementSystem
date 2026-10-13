@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/hooks/useAuth";
+import { formatRoleDisplay } from "../../auth/types/auth.types";
 import { authApi } from "../../auth/api/authApi";
 import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
 import {
@@ -52,11 +53,19 @@ export const SettingsPage: React.FC = () => {
   // Tab 1: Profile State
   const [fullName, setFullName] = useState(user?.fullName || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "+1 (555) 019-2831");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [department, setDepartment] = useState(
     "General Medicine & Clinical Operations",
   );
-  const employeeId = `EMP-2026-0${user?.userId || "101"}`;
+  const employeeId = user?.employeeId || `EMP-2026-0${user?.userId || "101"}`;
+  const displayRoleName = formatRoleDisplay(user?.roleName, user?.role);
+
+  useEffect(() => {
+    if (!user?.userId) return;
+    setFullName(user.fullName || "");
+    setEmail(user.email || "");
+    setPhone(user.phone || "");
+  }, [user?.userId, user?.fullName, user?.email, user?.phone]);
 
   // Tab 2: Appearance State
   const [theme, setTheme] = useState<"light" | "dark" | "system">(
@@ -136,7 +145,7 @@ export const SettingsPage: React.FC = () => {
 
   const initialFullName = user?.fullName || "";
   const initialEmail = user?.email || "";
-  const initialPhone = user?.phone || "+1 (555) 019-2831";
+  const initialPhone = user?.phone || "";
   const initialDepartment = "General Medicine & Clinical Operations";
 
   const isProfileDirty =
@@ -334,8 +343,8 @@ export const SettingsPage: React.FC = () => {
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               {user?.fullName || "Account Settings"}
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 capitalize">
-                {user?.roleName || "User"}
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {displayRoleName}
               </span>
             </h1>
             <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-3">
@@ -519,8 +528,8 @@ export const SettingsPage: React.FC = () => {
                     <Building2 className="w-4 h-4 text-slate-400" />
                     <div>
                       <span className="text-slate-500">Assigned Role:</span>
-                      <span className="ml-2 font-semibold text-indigo-700 capitalize">
-                        {user?.roleName || "User"}
+                      <span className="ml-2 font-semibold text-indigo-700">
+                        {displayRoleName}
                       </span>
                     </div>
                   </div>

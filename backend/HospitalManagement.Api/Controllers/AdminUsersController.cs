@@ -8,7 +8,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Admin,HospitalManager")]
-[Route("api/v1/Admin/users")]
+[Route("api/v1/admin/users")]
 public class AdminUsersController : ControllerBase
 {
     private readonly IAdminUserService _adminUserService;
@@ -37,8 +37,14 @@ public class AdminUsersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserByAdminRequest request, CancellationToken cancellationToken)
     {
+        if (!User.IsInRole("Admin") && request.RoleId == 1)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot create Administrator accounts." });
+        }
+
         try
         {
             var user = await _adminUserService.CreateUserByAdminAsync(request, cancellationToken);
@@ -56,9 +62,18 @@ public class AdminUsersController : ControllerBase
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserByAdminRequest request, CancellationToken cancellationToken)
     {
+        if (!User.IsInRole("Admin"))
+        {
+            if (request.RoleId == 1 || await IsTargetAdminAsync(id, cancellationToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot modify Administrator accounts or elevate users to Administrator." });
+            }
+        }
+
         try
         {
             var updated = await _adminUserService.UpdateUserByAdminAsync(id, request, cancellationToken);
@@ -80,9 +95,18 @@ public class AdminUsersController : ControllerBase
     [HttpPut("{id:int}/role")]
     [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UpdateUserRoleRequest request, CancellationToken cancellationToken)
     {
+        if (!User.IsInRole("Admin"))
+        {
+            if (request.RoleId == 1 || await IsTargetAdminAsync(id, cancellationToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot assign the Administrator role or modify Administrator accounts." });
+            }
+        }
+
         try
         {
             var updated = await _adminUserService.UpdateUserRoleByAdminAsync(id, request.RoleId, cancellationToken);
@@ -104,6 +128,7 @@ public class AdminUsersController : ControllerBase
     [HttpPatch("{id:int}/status")]
     [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleUserStatus(int id, [FromBody] UpdateUserStatusRequest request, CancellationToken cancellationToken)
     {
@@ -111,6 +136,11 @@ public class AdminUsersController : ControllerBase
         if (!int.TryParse(userIdClaim, out var adminUserId))
         {
             return Unauthorized();
+        }
+
+        if (!User.IsInRole("Admin") && await IsTargetAdminAsync(id, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot change the status of Administrator accounts." });
         }
 
         try
@@ -134,6 +164,7 @@ public class AdminUsersController : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
     {
@@ -141,6 +172,11 @@ public class AdminUsersController : ControllerBase
         if (!int.TryParse(userIdClaim, out var adminUserId))
         {
             return Unauthorized();
+        }
+
+        if (!User.IsInRole("Admin") && await IsTargetAdminAsync(id, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot remove Administrator accounts." });
         }
 
         try
@@ -156,5 +192,12 @@ public class AdminUsersController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    private async Task<bool> IsTargetAdminAsync(int targetUserId, CancellationToken cancellationToken)
+    {
+        var users = await _adminUserService.GetAllUsersForAdminAsync(null, null, null, cancellationToken);
+        var target = users.FirstOrDefault(u => u.UserId == targetUserId);
+        return target != null && (target.RoleId == 1 || string.Equals(target.RoleName, "Admin", StringComparison.OrdinalIgnoreCase));
     }
 }

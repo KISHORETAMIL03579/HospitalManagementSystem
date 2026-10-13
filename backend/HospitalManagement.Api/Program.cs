@@ -21,6 +21,10 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseUrls = true;
+});
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -64,6 +68,24 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "Production-grade Clean Architecture REST API for Hospital Management System (HMS)"
     });
+
+    options.OrderActionsBy(apiDesc =>
+    {
+        var controller = apiDesc.ActionDescriptor.RouteValues["controller"] ?? "";
+        var order = controller switch
+        {
+            "Auth" => "1",
+            "AdminUsers" => "2",
+            "StaffRegistration" => "3",
+            "Doctors" => "4",
+            "Appointments" => "5",
+            "Patients" => "6",
+            _ => "9"
+        };
+        return $"{order}_{controller}_{apiDesc.RelativePath}";
+    });
+
+    options.DocumentFilter<SwaggerTagOrderDocumentFilter>();
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -209,7 +231,7 @@ app.UseSwaggerUI(options =>
                                 msg.style.color = '#64748b';
                                 msg.innerText = 'Authenticating...';
                                 try {
-                                    var res = await fetch('/api/v1/Auth/login', {
+                                    var res = await fetch('/api/v1/auth/login', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ usernameOrEmail: u, password: p })
@@ -265,3 +287,27 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+/// <summary>
+/// Orders Swagger controller tags in the recommended documentation hierarchy:
+/// 1. Auth -> 2. AdminUsers -> 3. StaffRegistration -> 4. Doctors -> 5. Appointments -> 6. Patients
+/// </summary>
+public class SwaggerTagOrderDocumentFilter : Swashbuckle.AspNetCore.SwaggerGen.IDocumentFilter
+{
+    private static readonly string[] ControllerOrder =
+    [
+        "Auth",
+        "AdminUsers",
+        "StaffRegistration",
+        "Doctors",
+        "Appointments",
+        "Patients"
+    ];
+
+    public void Apply(OpenApiDocument swaggerDoc, Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext context)
+    {
+        swaggerDoc.Tags = ControllerOrder
+            .Select(name => new OpenApiTag { Name = name })
+            .ToList();
+    }
+}

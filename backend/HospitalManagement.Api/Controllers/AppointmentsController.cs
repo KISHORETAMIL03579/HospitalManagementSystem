@@ -9,7 +9,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/v1/[controller]")]
+[Route("api/v1/appointments")]
 public class AppointmentsController : ControllerBase
 {
     private readonly IAppointmentService _appointmentService;
@@ -22,9 +22,10 @@ public class AppointmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Get list of appointments with optional filters
+    /// Get list of appointments with optional filters (staff gets filtered records, patients get their own appointments based on userId)
     /// </summary>
     [HttpGet]
+    [Authorize]
     [ProducesResponseType(typeof(IEnumerable<AppointmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAppointments(
         [FromQuery] int? patientId,
@@ -32,8 +33,27 @@ public class AppointmentsController : ControllerBase
         [FromQuery] DateTime? date,
         CancellationToken cancellationToken = default)
     {
-        var appointments = await _appointmentService.GetAppointmentsAsync(patientId, doctorId, date, cancellationToken);
-        return Ok(appointments);
+        var isStaff = User.IsInRole("Admin") || User.IsInRole("HospitalManager") ||
+                      User.IsInRole("Doctor") || User.IsInRole("Nurse") ||
+                      User.IsInRole("Receptionist") || User.IsInRole("Pharmacist") ||
+                      User.IsInRole("LabTechnician");
+
+        if (isStaff)
+        {
+            var appointments = await _appointmentService.GetAppointmentsAsync(patientId, doctorId, date, cancellationToken);
+            return Ok(appointments);
+        }
+
+        // For Patient role (or any patient user): automatically retrieve their own appointments based on userId!
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            var myAppointments = await _appointmentService.GetAppointmentsForUserAsync(userId, cancellationToken);
+            return Ok(myAppointments);
+        }
+
+        return Forbid();
     }
 
     /// <summary>
@@ -44,7 +64,8 @@ public class AppointmentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyAppointments(CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             return Unauthorized(new { message = "Authentication token is missing user identifier claim." });
@@ -83,6 +104,20 @@ public class AppointmentsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole("Patient") || request.PatientId <= 0)
+            {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? User.FindFirst("sub")?.Value;
+                if (int.TryParse(userIdClaim, out var userId))
+                {
+                    var resolvedPatientId = await _appointmentService.GetPatientIdForUserAsync(userId, cancellationToken);
+                    if (resolvedPatientId.HasValue && resolvedPatientId.Value > 0)
+                    {
+                        request.PatientId = resolvedPatientId.Value;
+                    }
+                }
+            }
+
             var created = await _appointmentService.CreateAppointmentAsync(request, cancellationToken);
             _logger.LogInformation("Appointment booked successfully with ID {AppointmentId}", created.AppointmentId);
             return CreatedAtAction(nameof(GetAppointmentById), new { id = created.AppointmentId }, created);
@@ -109,7 +144,9 @@ public class AppointmentsController : ControllerBase
     /// <summary>
     /// Update appointment status (e.g., Confirmed, Completed, Cancelled, NoShow)
     /// </summary>
+    [HttpPatch("{id:int}/status")]
     [HttpPut("{id:int}/status")]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Nurse,Receptionist,Patient")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

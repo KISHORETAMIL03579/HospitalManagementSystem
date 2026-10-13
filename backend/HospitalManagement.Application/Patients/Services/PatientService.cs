@@ -22,6 +22,12 @@ public class PatientService : IPatientService
         return patient is null ? null : MapToDto(patient);
     }
 
+    public async Task<PatientDto?> GetPatientForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var patient = await _patientRepository.GetForUserAsync(userId, cancellationToken);
+        return patient is null ? null : MapToDto(patient);
+    }
+
     public async Task<PatientListResponse> GetPatientsAsync(string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);

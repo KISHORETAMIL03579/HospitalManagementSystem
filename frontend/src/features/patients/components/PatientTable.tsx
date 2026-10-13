@@ -22,6 +22,7 @@ import {
   CalendarPlus,
   History,
 } from "lucide-react";
+import { EmptyState } from "../../../components/common/EmptyState";
 
 type SortField =
   "medicalRecordNumber" | "fullName" | "dateOfBirth" | "gender" | "createdAt";
@@ -373,18 +374,16 @@ export const PatientTable: React.FC = () => {
               </tr>
             ) : sortedItems.length === 0 ? (
               <tr>
-                <td
-                  colSpan={8}
-                  className="px-6 py-12 text-center text-slate-400"
-                >
-                  <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium text-slate-600 dark:text-slate-300">
-                    No patients registered yet
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Use the registration form above to create the first patient
-                    record.
-                  </p>
+                <td colSpan={8} className="px-6 py-6 text-center">
+                  <EmptyState
+                    icon={FileText}
+                    title="No patients found"
+                    description={
+                      searchTerm
+                        ? "No patient matched your search criteria."
+                        : "No patient records registered yet."
+                    }
+                  />
                 </td>
               </tr>
             ) : (

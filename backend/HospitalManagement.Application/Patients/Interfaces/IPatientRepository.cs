@@ -5,6 +5,7 @@ namespace HospitalManagement.Application.Patients.Interfaces;
 public interface IPatientRepository
 {
     Task<Patient?> GetByIdAsync(int patientId, CancellationToken cancellationToken = default);
+    Task<Patient?> GetForUserAsync(int userId, CancellationToken cancellationToken = default);
     Task<Patient?> GetByMrnAsync(string mrn, CancellationToken cancellationToken = default);
     Task<(IEnumerable<Patient> Patients, int TotalCount)> GetPagedAsync(
         string? search,

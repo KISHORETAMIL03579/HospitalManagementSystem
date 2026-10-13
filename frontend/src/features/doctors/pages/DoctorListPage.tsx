@@ -32,7 +32,11 @@ import {
   CalendarPlus,
   X,
 } from "lucide-react";
-import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
+import {
+  PhoneNumberInput,
+  PageHeader,
+  EmptyState,
+} from "../../../components/common";
 
 export const DoctorListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -175,26 +179,20 @@ export const DoctorListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <Stethoscope className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-            Medical Staff & Specialists
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Doctor directory, real-time availability calendar, and consultation
-            scheduling.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsAddDoctorModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition"
-        >
-          <Plus className="w-5 h-5" />
-          Add New Doctor
-        </button>
-      </div>
+      <PageHeader
+        title="Medical Staff & Specialists"
+        subtitle="Doctor directory, real-time availability calendar, and consultation scheduling."
+        icon={Stethoscope}
+        actions={
+          <button
+            onClick={() => setIsAddDoctorModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition"
+          >
+            <Plus className="w-5 h-5" />
+            Add New Doctor
+          </button>
+        }
+      />
 
       {/* Search, Filter & Sort Controls */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
@@ -282,14 +280,20 @@ export const DoctorListPage: React.FC = () => {
           Loading medical staff directory & live schedules...
         </div>
       ) : sortedDoctors.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 p-16 text-center border border-slate-200 dark:border-slate-800 rounded-2xl">
-          <UserCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-            No doctors found
-          </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Try adjusting your search query or department filter.
-          </p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+          <EmptyState
+            icon={UserCheck}
+            title="No doctors found"
+            description="Try adjusting your search query or department filter."
+            action={
+              <button
+                onClick={() => setIsAddDoctorModalOpen(true)}
+                className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add New Doctor
+              </button>
+            }
+          />
         </div>
       ) : (
         <div className="space-y-6">

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { formatRoleDisplay } from "../../features/auth/types/auth.types";
 import { useSettings } from "../../hooks/useSettings";
 
 interface NavSubItem {
@@ -149,19 +150,42 @@ const ROUTE_LABELS: Record<string, string> = {
   "/settings": "Settings",
 };
 
-function normalizeRole(role?: string | null): string {
+function normalizeRole(
+  role?: string | null,
+  roleLevel?: number | string | null,
+): string {
   const normalized = role?.trim().toLowerCase() ?? "";
 
-  // Support common variations in role names.
+  // Support common variations and numeric fallbacks in role names.
   const aliases: Record<string, string> = {
     "hospital manager": "hospitalmanager",
     hospital_manager: "hospitalmanager",
     "lab technician": "labtechnician",
     labtech: "labtechnician",
     lab_technician: "labtechnician",
+    "100": "admin",
+    "90": "hospitalmanager",
+    "80": "doctor",
+    "75": "pharmacist",
+    "70": "labtechnician",
+    "60": "nurse",
+    "40": "receptionist",
+    "20": "patient",
   };
 
-  return aliases[normalized] ?? normalized.replace(/[\s_-]/g, "");
+  if (aliases[normalized]) {
+    return aliases[normalized];
+  }
+
+  const cleaned = normalized.replace(/[\s_-]/g, "");
+  if (cleaned && !/^\d+$/.test(cleaned)) {
+    return cleaned;
+  }
+
+  const levelKey = String(roleLevel ?? "")
+    .trim()
+    .toLowerCase();
+  return aliases[levelKey] ?? cleaned;
 }
 
 function getInitials(name?: string | null): string {
@@ -259,7 +283,7 @@ export const AppLayout: React.FC = () => {
   }, [location.pathname]);
 
   // Never assume an unknown or missing role is Admin.
-  const userRole = normalizeRole(user?.roleName);
+  const userRole = normalizeRole(user?.roleName, user?.role);
 
   const visibleNavItems = NAV_ITEMS.filter(
     (item) => !item.roles || item.roles.includes(userRole),
@@ -519,7 +543,7 @@ export const AppLayout: React.FC = () => {
             className="h-3 w-3 shrink-0 text-emerald-400"
           />
           <span className="truncate">
-            {user?.roleName || "Role unavailable"}
+            {formatRoleDisplay(user?.roleName, user?.role)}
           </span>
         </p>
       </div>

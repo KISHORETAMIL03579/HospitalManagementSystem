@@ -28,6 +28,7 @@ import {
 import { doctorApi } from "../../doctors/api/doctorApi";
 import { DepartmentDto } from "../../doctors/types/doctor.types";
 import { formatDateByPattern } from "../../../utils/dateUtils";
+import { PageHeader, StatusBadge } from "../../../components/common";
 
 export const StaffApprovalPage: React.FC = () => {
   const [requests, setRequests] = useState<StaffRegistrationRequest[]>([]);
@@ -376,90 +377,37 @@ export const StaffApprovalPage: React.FC = () => {
     emailStatus: number | string,
     errorMessage?: string,
   ) => {
-    const statusStr = String(emailStatus).toLowerCase();
-    if (
-      emailStatus === 1 ||
-      statusStr === "sent" ||
-      statusStr === "delivered"
-    ) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <MailCheck className="w-3.5 h-3.5 text-emerald-600" />
-          SENT
-        </span>
-      );
-    }
-    if (emailStatus === 0 || statusStr === "queued") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-          <Send className="w-3.5 h-3.5 text-blue-500" />
-          QUEUED
-        </span>
-      );
-    }
-    if (
-      emailStatus === 3 ||
-      statusStr === "failed" ||
-      statusStr === "bounced"
-    ) {
-      return (
-        <span
-          title={errorMessage || "Email delivery failed"}
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 cursor-help"
-        >
-          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-          FAILED
-        </span>
-      );
-    }
-    if (emailStatus === 5 || statusStr === "retrying") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-          <RefreshCw className="w-3.5 h-3.5 text-purple-600 animate-spin" />
-          RETRYING
-        </span>
-      );
-    }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-        <Mail className="w-3.5 h-3.5" />
-        PENDING
-      </span>
+      <StatusBadge
+        type="email"
+        status={emailStatus}
+        title={errorMessage}
+        size="sm"
+      />
     );
   };
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                Staff Approval Requests
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review staff onboarding applications, assign RBAC permissions,
-                and track email delivery.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={() => fetchRequests(true)}
-          disabled={loading}
-          className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors self-start sm:self-auto"
-        >
-          <RefreshCw
-            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
-          />
-          Refresh Requests
-        </button>
-      </div>
+      <PageHeader
+        variant="banner"
+        title="Staff Approval Requests"
+        subtitle="Review staff onboarding applications, assign RBAC permissions, and track email delivery."
+        icon={ShieldCheck}
+        iconBgColor="bg-blue-100 text-blue-600"
+        actions={
+          <button
+            onClick={() => fetchRequests(true)}
+            disabled={loading}
+            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors self-start sm:self-auto"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh Requests
+          </button>
+        }
+      />
 
       {/* Feedback Toast Banner */}
       {feedback && (

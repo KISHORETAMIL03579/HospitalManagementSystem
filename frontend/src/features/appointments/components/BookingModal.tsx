@@ -5,6 +5,7 @@ import {
 } from "../../doctors/hooks/useDoctors";
 import { usePatients } from "../../patients/hooks/usePatients";
 import { useCreateAppointment } from "../hooks/useAppointments";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { formatCurrency } from "../../../lib/utils";
 import {
   Calendar,
@@ -35,8 +36,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   preselectedDate,
   preselectedTimeSlot,
 }) => {
+  const { user } = useAuth();
+  const roleLower = (user?.roleName || user?.role || "")
+    .toString()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+  const isPatient =
+    roleLower === "patient" || user?.hierarchyLevel === 20 || user?.role === 20;
+  const isStaff = !isPatient;
+
   const { data: doctors } = useDoctors();
-  const { data: patientResponse } = usePatients("", 1, 100);
+  const { data: patientResponse } = usePatients("", 1, 100, {
+    enabled: isOpen && isStaff,
+  });
   const createAppointment = useCreateAppointment();
 
   const minDate = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -107,14 +119,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!patientId || !doctorId || !appointmentDate || !timeSlot || !reason) {
+    if (
+      (!patientId && !isPatient) ||
+      !doctorId ||
+      !appointmentDate ||
+      !timeSlot ||
+      !reason
+    ) {
       setErrorMessage("Please fill in all required fields.");
       return;
     }
 
     try {
       await createAppointment.mutateAsync({
-        patientId: Number(patientId),
+        patientId: Number(patientId || 0),
         doctorId: Number(doctorId),
         appointmentDate,
         timeSlot: timeSlot.length === 5 ? `${timeSlot}:00` : timeSlot,
@@ -170,21 +188,32 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Patient Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
-              <User className="w-3.5 h-3.5 text-slate-400" /> Select Patient *
+              <User className="w-3.5 h-3.5 text-slate-400" /> Patient *
             </label>
-            <select
-              required
-              value={patientId}
-              onChange={(e) => setPatientId(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-indigo-600"
-            >
-              <option value={0}>Choose a patient...</option>
-              {patientResponse?.items.map((p) => (
-                <option key={p.patientId} value={p.patientId}>
-                  {p.fullName} ({p.medicalRecordNumber})
-                </option>
-              ))}
-            </select>
+            {isPatient ? (
+              <div className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                <span className="font-semibold">
+                  {user?.fullName || "Myself"}
+                </span>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60">
+                  Your Account
+                </span>
+              </div>
+            ) : (
+              <select
+                required
+                value={patientId}
+                onChange={(e) => setPatientId(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-indigo-600"
+              >
+                <option value={0}>Choose a patient...</option>
+                {patientResponse?.items.map((p) => (
+                  <option key={p.patientId} value={p.patientId}>
+                    {p.fullName} ({p.medicalRecordNumber})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Doctor Selection */}

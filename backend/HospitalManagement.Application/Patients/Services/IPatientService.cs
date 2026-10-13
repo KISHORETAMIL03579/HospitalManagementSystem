@@ -5,6 +5,7 @@ namespace HospitalManagement.Application.Patients.Services;
 public interface IPatientService
 {
     Task<PatientDto?> GetByIdAsync(int patientId, CancellationToken cancellationToken = default);
+    Task<PatientDto?> GetPatientForUserAsync(int userId, CancellationToken cancellationToken = default);
     Task<PatientListResponse> GetPatientsAsync(string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
     Task<PatientDto> CreatePatientAsync(CreatePatientRequest request, CancellationToken cancellationToken = default);
 }

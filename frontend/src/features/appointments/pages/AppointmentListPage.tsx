@@ -10,6 +10,11 @@ import { useDoctors } from "../../doctors/hooks/useDoctors";
 import { BookingModal } from "../components/BookingModal";
 import { AppointmentStatus, AppointmentDto } from "../types/appointment.types";
 import {
+  PageHeader,
+  StatusBadge,
+  EmptyState,
+} from "../../../components/common";
+import {
   Calendar,
   Clock,
   Plus,
@@ -154,85 +159,7 @@ export const AppointmentListPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: AppointmentStatus | string) => {
-    const statusVal =
-      typeof status === "number"
-        ? status
-        : status === "Pending" || status === "0"
-          ? 0
-          : status === "Confirmed" ||
-              status === "Scheduled" ||
-              status === "10" ||
-              status === "1"
-            ? 10
-            : status === "CheckedIn" || status === "20" || status === "2"
-              ? 20
-              : status === "InConsultation" || status === "30" || status === "3"
-                ? 30
-                : status === "Completed" || status === "40" || status === "4"
-                  ? 40
-                  : status === "Cancelled" || status === "50" || status === "5"
-                    ? 50
-                    : status === "NoShow" || status === "60" || status === "6"
-                      ? 60
-                      : 10;
-
-    switch (statusVal) {
-      case AppointmentStatus.Pending:
-      case 0:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock3 className="w-3.5 h-3.5" /> Pending
-          </span>
-        );
-      case AppointmentStatus.Confirmed:
-      case 10:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <Clock3 className="w-3.5 h-3.5" /> Confirmed
-          </span>
-        );
-      case AppointmentStatus.CheckedIn:
-      case 20:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-            <UserCheck className="w-3.5 h-3.5" /> Checked In
-          </span>
-        );
-      case AppointmentStatus.InConsultation:
-      case 30:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <Stethoscope className="w-3.5 h-3.5" /> In Consultation
-          </span>
-        );
-      case AppointmentStatus.Completed:
-      case 40:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle className="w-3.5 h-3.5" /> Completed
-          </span>
-        );
-      case AppointmentStatus.Cancelled:
-      case 50:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-            <XCircle className="w-3.5 h-3.5" /> Cancelled
-          </span>
-        );
-      case AppointmentStatus.NoShow:
-      case 60:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            <AlertCircle className="w-3.5 h-3.5" /> No Show
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            {String(status)}
-          </span>
-        );
-    }
+    return <StatusBadge type="appointment" status={status} />;
   };
 
   // Filtered & Sorted Appointments
@@ -293,26 +220,20 @@ export const AppointmentListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Calendar className="w-7 h-7 text-indigo-600" />
-            Appointments & Scheduling
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Book consultations, track patient schedules, and manage status
-            updates.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsBookingModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition"
-        >
-          <Plus className="w-5 h-5" />
-          Book Appointment
-        </button>
-      </div>
+      <PageHeader
+        title="Appointments & Scheduling"
+        subtitle="Book consultations, track patient schedules, and manage status updates."
+        icon={Calendar}
+        actions={
+          <button
+            onClick={() => setIsBookingModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm transition"
+          >
+            <Plus className="w-5 h-5" />
+            Book Appointment
+          </button>
+        }
+      />
 
       {/* Controls & Filters */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
@@ -411,14 +332,20 @@ export const AppointmentListPage: React.FC = () => {
           Loading appointments...
         </div>
       ) : filteredAndSortedAppointments.length === 0 ? (
-        <div className="bg-white p-12 text-center border border-slate-200 rounded-xl">
-          <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-700">
-            No matching appointments found
-          </h3>
-          <p className="text-slate-500 text-sm mt-1">
-            Try adjusting your search filters or book a new appointment.
-          </p>
+        <div className="bg-white p-6 border border-slate-200 rounded-xl">
+          <EmptyState
+            icon={Calendar}
+            title="No matching appointments found"
+            description="Try adjusting your search filters or book a new appointment."
+            action={
+              <button
+                onClick={() => setIsBookingModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition"
+              >
+                <Plus className="w-3.5 h-3.5" /> Book Appointment
+              </button>
+            }
+          />
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">

@@ -103,6 +103,12 @@ public class StaffRegistrationService : IStaffRegistrationService
         return request is null ? null : await MapToStaffRequestDtoAsync(request, cancellationToken);
     }
 
+    public async Task<StaffRegistrationRequestDto?> GetStaffRegistrationRequestByIdAsync(int requestId, CancellationToken cancellationToken = default)
+    {
+        var request = await _userRepository.GetStaffRegistrationRequestByIdAsync(requestId, cancellationToken);
+        return request is null ? null : await MapToStaffRequestDtoAsync(request, cancellationToken);
+    }
+
     public async Task<IEnumerable<StaffRegistrationRequestDto>> GetStaffRegistrationRequestsAsync(RegistrationStatus? status = null, CancellationToken cancellationToken = default)
     {
         var requests = await _userRepository.GetStaffRegistrationRequestsAsync(status, cancellationToken);

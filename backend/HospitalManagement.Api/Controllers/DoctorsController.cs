@@ -9,7 +9,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/v1/[controller]")]
+[Route("api/v1/doctors")]
 public class DoctorsController : ControllerBase
 {
     private readonly IDoctorService _doctorService;
@@ -69,6 +69,7 @@ public class DoctorsController : ControllerBase
     /// Register a new doctor
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(DoctorDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateDoctor(
@@ -153,6 +154,7 @@ public class DoctorsController : ControllerBase
     /// Save or replace recurring schedules for a doctor (supports multiple sessions per day)
     /// </summary>
     [HttpPut("{id:int}/schedules")]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Receptionist")]
     [ProducesResponseType(typeof(IEnumerable<DoctorScheduleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -209,6 +211,7 @@ public class DoctorsController : ControllerBase
     /// Create a date-specific schedule exception
     /// </summary>
     [HttpPost("{id:int}/schedule-exceptions")]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Receptionist")]
     [ProducesResponseType(typeof(DoctorScheduleExceptionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -236,6 +239,7 @@ public class DoctorsController : ControllerBase
     /// Delete a schedule exception
     /// </summary>
     [HttpDelete("{id:int}/schedule-exceptions/{exceptionId:int}")]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Receptionist")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteDoctorException(
         int id,

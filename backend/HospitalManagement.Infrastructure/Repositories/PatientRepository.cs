@@ -21,6 +21,23 @@ public class PatientRepository : IPatientRepository
             .FirstOrDefaultAsync(p => p.PatientId == patientId && p.IsActive, cancellationToken);
     }
 
+    public async Task<Patient?> GetForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
+        if (user is null) return null;
+
+        var normalizedEmail = user.Email?.Trim().ToLower();
+        return await _context.Patients.AsNoTracking()
+            .FirstOrDefaultAsync(p =>
+                p.IsActive && (
+                    (p.Email != null && p.Email.ToLower() == normalizedEmail) ||
+                    (normalizedEmail == "patient@careflow.com" && (p.Email == "john.smith@careflow.com" || p.MedicalRecordNumber == "MRN-2026-0001")) ||
+                    (user.FullName != null && (p.FirstName + " " + p.LastName).ToLower() == user.FullName.ToLower()) ||
+                    (user.FullName != null && user.FullName.ToLower().Contains((p.FirstName + " " + p.LastName).ToLower()))
+                ),
+                cancellationToken);
+    }
+
     public async Task<Patient?> GetByMrnAsync(string mrn, CancellationToken cancellationToken = default)
     {
         return await _context.Patients

@@ -32,7 +32,7 @@ import {
 import { useAuth } from "../../auth/hooks/useAuth";
 import { doctorApi } from "../../doctors/api/doctorApi";
 import { DepartmentDto } from "../../doctors/types/doctor.types";
-import { PhoneNumberInput } from "../../../components/common/PhoneNumberInput";
+import { PhoneNumberInput, PageHeader } from "../../../components/common";
 import { formatDateByPattern } from "../../../utils/dateUtils";
 
 export const UserManagementPage: React.FC = () => {
@@ -664,46 +664,35 @@ export const UserManagementPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-full overflow-hidden">
-      {/* Top Banner & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
-              <UserCog className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                User Management
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Manage all hospital personnel accounts, assign dynamic RBAC
-                roles, and control access in real time.
-              </p>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        variant="banner"
+        title="User Management"
+        subtitle="Manage all hospital personnel accounts, assign dynamic RBAC roles, and control access in real time."
+        icon={UserCog}
+        iconBgColor="bg-blue-100 text-blue-600"
+        actions={
+          <>
+            <button
+              onClick={() => fetchUsers(true)}
+              disabled={loading}
+              className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </button>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <button
-            onClick={() => fetchUsers(true)}
-            disabled={loading}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </button>
-
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Create User Account
-          </button>
-        </div>
-      </div>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Create User Account
+            </button>
+          </>
+        }
+      />
 
       {/* Feedback Notification Toast */}
       {feedback && (

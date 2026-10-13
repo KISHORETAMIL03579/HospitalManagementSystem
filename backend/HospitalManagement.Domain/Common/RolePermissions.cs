@@ -148,6 +148,44 @@ public static class RolePermissions
             Permissions.ViewInvoice,
             Permissions.CreatePayment
         },
+        [UserRole.HospitalManager] = new List<string>
+        {
+            Permissions.ManageUsers,
+            Permissions.UserView,
+            Permissions.UserCreate,
+            Permissions.UserUpdate,
+            Permissions.UserDeactivate,
+            Permissions.UserAssignRole,
+            Permissions.AuditView,
+            Permissions.ViewPatient,
+            Permissions.RegisterPatient,
+            Permissions.UpdatePatient,
+            Permissions.SearchPatient,
+            Permissions.CreateAppointment,
+            Permissions.ViewAppointment,
+            Permissions.UpdateAppointment,
+            Permissions.CancelAppointment,
+            Permissions.CheckInPatient,
+            Permissions.RescheduleAppointment,
+            Permissions.ViewEncounter,
+            Permissions.ViewLabResult,
+            Permissions.ViewInvoice
+        },
+        [UserRole.Pharmacist] = new List<string>
+        {
+            Permissions.ViewPatient,
+            Permissions.ViewPrescription,
+            Permissions.DispenseMedication,
+            Permissions.ViewLabResult
+        },
+        [UserRole.LabTechnician] = new List<string>
+        {
+            Permissions.ViewPatient,
+            Permissions.ViewLabOrder,
+            Permissions.ViewLabResult,
+            Permissions.EnterLabResult,
+            Permissions.VerifyLabResult
+        },
         [UserRole.Patient] = new List<string>
         {
             Permissions.ViewOwnProfile,

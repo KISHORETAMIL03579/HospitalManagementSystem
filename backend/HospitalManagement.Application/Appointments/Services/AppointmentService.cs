@@ -29,6 +29,11 @@ public class AppointmentService : IAppointmentService
         return appointments.Select(MapToDto);
     }
 
+    public async Task<int?> GetPatientIdForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _appointmentRepository.GetPatientIdForUserAsync(userId, cancellationToken);
+    }
+
     public async Task<AppointmentDto?> GetAppointmentByIdAsync(int appointmentId, CancellationToken cancellationToken = default)
     {
         var appointment = await _appointmentRepository.GetByIdAsync(appointmentId, cancellationToken);

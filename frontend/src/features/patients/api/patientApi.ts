@@ -31,4 +31,9 @@ export const patientApi = {
     const response = await apiClient.post<PatientDto>("/patients", data);
     return response.data;
   },
+
+  getMyProfile: async (): Promise<PatientDto> => {
+    const response = await apiClient.get<PatientDto>("/patients/me");
+    return response.data;
+  },
 };

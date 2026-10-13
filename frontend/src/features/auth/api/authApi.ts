@@ -215,16 +215,25 @@ export const authApi = {
   submitStaffRegistration: async (
     data: any,
   ): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.post("/StaffRegistration/requests", data);
+    const response = await apiClient.post("/staff-registration/requests", data);
     return response.data;
   },
 
   getStaffRequests: async (
     status?: number,
   ): Promise<StaffRegistrationRequest[]> => {
-    const response = await apiClient.get("/StaffRegistration/requests/admin", {
+    const response = await apiClient.get("/admin/staff-registration/requests", {
       params: { status },
     });
+    return response.data;
+  },
+
+  getStaffRequestById: async (
+    id: number,
+  ): Promise<StaffRegistrationRequest> => {
+    const response = await apiClient.get(
+      `/admin/staff-registration/requests/${id}`,
+    );
     return response.data;
   },
 
@@ -233,7 +242,7 @@ export const authApi = {
     data: { authorizedRoleId?: number; notes?: string },
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/StaffRegistration/requests/${requestId}/approve`,
+      `/admin/staff-registration/requests/${requestId}/approve`,
       data,
     );
     return response.data;
@@ -244,7 +253,7 @@ export const authApi = {
     reason: string,
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/StaffRegistration/requests/${requestId}/reject`,
+      `/admin/staff-registration/requests/${requestId}/reject`,
       { reason },
     );
     return response.data;
@@ -263,7 +272,7 @@ export const authApi = {
     },
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.put(
-      `/StaffRegistration/requests/${requestId}`,
+      `/admin/staff-registration/requests/${requestId}`,
       data,
     );
     return response.data;
@@ -273,7 +282,7 @@ export const authApi = {
     requestId: number,
   ): Promise<StaffRegistrationRequest> => {
     const response = await apiClient.post(
-      `/StaffRegistration/requests/${requestId}/retry-email`,
+      `/admin/staff-registration/requests/${requestId}/retry-email`,
     );
     return response.data;
   },
@@ -281,7 +290,7 @@ export const authApi = {
   getRegistrationStatus: async (
     email: string,
   ): Promise<StaffRegistrationRequest> => {
-    const response = await apiClient.get("/StaffRegistration/status", {
+    const response = await apiClient.get("/staff-registration/status", {
       params: { email },
     });
     return response.data;

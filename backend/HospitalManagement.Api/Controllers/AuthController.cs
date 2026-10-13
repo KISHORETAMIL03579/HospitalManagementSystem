@@ -11,7 +11,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [EnableRateLimiting("AuthPolicy")]
-[Route("api/v1/[controller]")]
+[Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -207,6 +207,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetRoles(CancellationToken cancellationToken)
     {
         var roles = await _authService.GetRolesAsync(cancellationToken);
+        if (User?.Identity?.IsAuthenticated != true || !User.IsInRole("Admin"))
+        {
+            roles = roles.Where(r => !string.Equals(r.Name, "Admin", StringComparison.OrdinalIgnoreCase)).ToList();
+        }
         return Ok(roles);
     }
 

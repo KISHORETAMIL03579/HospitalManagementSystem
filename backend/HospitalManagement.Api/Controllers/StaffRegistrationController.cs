@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/staff-registration")]
 public class StaffRegistrationController : ControllerBase
 {
     private readonly IStaffRegistrationService _staffRegistrationService;
@@ -32,7 +32,7 @@ public class StaffRegistrationController : ControllerBase
         try
         {
             var created = await _staffRegistrationService.SubmitStaffRegistrationRequestAsync(request, cancellationToken);
-            return CreatedAtAction(nameof(GetRegistrationStatus), new { email = created.Email }, created);
+            return CreatedAtAction(nameof(GetRegistrationStatusById), new { id = created.Id }, created);
         }
         catch (Exception ex)
         {
@@ -41,7 +41,24 @@ public class StaffRegistrationController : ControllerBase
     }
 
     /// <summary>
-    /// Check registration status for a staff onboarding request
+    /// Check registration status by request ID
+    /// </summary>
+    [HttpGet("requests/{id:int}/status")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetRegistrationStatusById(int id, CancellationToken cancellationToken)
+    {
+        var status = await _staffRegistrationService.GetStaffRegistrationRequestByIdAsync(id, cancellationToken);
+        if (status is null)
+        {
+            return NotFound(new { message = $"No registration record found for request #{id}." });
+        }
+        return Ok(status);
+    }
+
+    /// <summary>
+    /// Check registration status for a staff onboarding request by email
     /// </summary>
     [HttpGet("status")]
     [AllowAnonymous]
@@ -60,6 +77,7 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// List staff registration requests for administrative review
     /// </summary>
+    [HttpGet("/api/v1/admin/staff-registration/requests")]
     [HttpGet("requests/admin")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(IEnumerable<StaffRegistrationRequestDto>), StatusCodes.Status200OK)]
@@ -70,12 +88,31 @@ public class StaffRegistrationController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieve single staff registration request details for admin review
+    /// </summary>
+    [HttpGet("/api/v1/admin/staff-registration/requests/{id:int}")]
+    [Authorize(Roles = "Admin,HospitalManager")]
+    [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetStaffRequestById(int id, CancellationToken cancellationToken)
+    {
+        var request = await _staffRegistrationService.GetStaffRegistrationRequestByIdAsync(id, cancellationToken);
+        if (request is null)
+        {
+            return NotFound(new { message = $"Staff registration request #{id} not found." });
+        }
+        return Ok(request);
+    }
+
+    /// <summary>
     /// Approve a staff registration request and provision user account
     /// </summary>
+    [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/approve")]
     [HttpPost("requests/{id:int}/approve")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ApproveStaffRequest(int id, [FromBody] ApproveStaffRequest request, CancellationToken cancellationToken)
     {
@@ -83,6 +120,21 @@ public class StaffRegistrationController : ControllerBase
         if (!int.TryParse(userIdClaim, out var adminUserId))
         {
             return Unauthorized();
+        }
+
+        // Privilege escalation guard: Hospital Managers cannot approve or assign Admin role
+        if (!User.IsInRole("Admin"))
+        {
+            if (request.AuthorizedRoleId == 1)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot grant Administrator role." });
+            }
+
+            var existing = await _staffRegistrationService.GetStaffRegistrationRequestByIdAsync(id, cancellationToken);
+            if (existing != null && (!request.AuthorizedRoleId.HasValue || request.AuthorizedRoleId == 0) && (existing.RequestedRoleId == 1 || string.Equals(existing.RequestedRoleName, "Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot approve requests for Administrator accounts." });
+            }
         }
 
         try
@@ -104,6 +156,7 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// Reject a staff registration request
     /// </summary>
+    [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/reject")]
     [HttpPost("requests/{id:int}/reject")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
@@ -136,10 +189,12 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// Update details and/or stage of a staff registration request
     /// </summary>
+    [HttpPut("/api/v1/admin/staff-registration/requests/{id:int}")]
     [HttpPut("requests/{id:int}")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStaffRequest(int id, [FromBody] UpdateStaffRegistrationRequest request, CancellationToken cancellationToken)
     {
@@ -147,6 +202,12 @@ public class StaffRegistrationController : ControllerBase
         if (!int.TryParse(userIdClaim, out var adminUserId))
         {
             return Unauthorized();
+        }
+
+        // Privilege escalation guard: Hospital Managers cannot assign Admin role
+        if (!User.IsInRole("Admin") && request.RequestedRoleId == 1)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Hospital Managers cannot assign Administrator privileges." });
         }
 
         try
@@ -168,6 +229,7 @@ public class StaffRegistrationController : ControllerBase
     /// <summary>
     /// Retry sending notification email for a staff registration request
     /// </summary>
+    [HttpPost("/api/v1/admin/staff-registration/requests/{id:int}/retry-email")]
     [HttpPost("requests/{id:int}/retry-email")]
     [Authorize(Roles = "Admin,HospitalManager")]
     [ProducesResponseType(typeof(StaffRegistrationRequestDto), StatusCodes.Status200OK)]

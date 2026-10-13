@@ -41,6 +41,6 @@ export const appointmentApi = {
     id: number,
     data: UpdateAppointmentStatusRequest,
   ): Promise<void> => {
-    await apiClient.put(`/appointments/${id}/status`, data);
+    await apiClient.patch(`/appointments/${id}/status`, data);
   },
 };

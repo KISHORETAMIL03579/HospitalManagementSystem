@@ -9,7 +9,7 @@ namespace HospitalManagement.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/v1/[controller]")]
+[Route("api/v1/patients")]
 public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
@@ -22,9 +22,10 @@ public class PatientsController : ControllerBase
     }
 
     /// <summary>
-    /// Get paginated list of patients with optional search query
+    /// Get paginated list of patients with optional search query (hospital staff only)
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Nurse,Receptionist,Pharmacist,LabTechnician")]
     [ProducesResponseType(typeof(PatientListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPatients(
         [FromQuery] string? search,
@@ -37,13 +38,60 @@ public class PatientsController : ControllerBase
     }
 
     /// <summary>
+    /// Get current authenticated patient's record
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            var myPatient = await _patientService.GetPatientForUserAsync(userId, cancellationToken);
+            if (myPatient != null)
+            {
+                return Ok(myPatient);
+            }
+        }
+        return NotFound(new { message = "Patient record not found for authenticated user." });
+    }
+
+
+    /// <summary>
     /// Get patient details by Patient ID
     /// </summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPatientById(int id, CancellationToken cancellationToken = default)
     {
+        var isStaff = User.IsInRole("Admin") || User.IsInRole("HospitalManager") ||
+                      User.IsInRole("Doctor") || User.IsInRole("Nurse") ||
+                      User.IsInRole("Receptionist") || User.IsInRole("Pharmacist") ||
+                      User.IsInRole("LabTechnician");
+
+        if (!isStaff)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                var myPatient = await _patientService.GetPatientForUserAsync(userId, cancellationToken);
+                if (myPatient == null || myPatient.PatientId != id)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "You are not authorized to view another patient's medical records." });
+                }
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
         var patient = await _patientService.GetByIdAsync(id, cancellationToken);
         if (patient is null)
         {
@@ -57,6 +105,7 @@ public class PatientsController : ControllerBase
     /// Register a new patient
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Admin,HospitalManager,Doctor,Nurse,Receptionist")]
     [ProducesResponseType(typeof(PatientDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreatePatient(
